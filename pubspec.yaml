@@ -1,0 +1,56 @@
+name: flutter_ai_music
+description: "A new Flutter project."
+publish_to: 'none'
+version: 1.0.0+1
+environment:
+  sdk: ^3.9.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  rxdart: ^0.28.0
+  go_router: ^17.0.0
+  just_audio: ^0.10.5
+  audio_service: ^0.18.18
+  supabase_flutter: ^2.10.3
+  flutter_riverpod: ^3.0.3
+  cached_network_image: ^3.4.1
+  just_audio_background: ^0.0.1-beta.17
+  google_fonts: ^6.3.3
+  dio: ^5.9.0
+  marquee: ^2.3.0
+  lottie: ^3.3.2
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/animations/
+    - assets/images/
+    - assets/icons/
+
+
+  fonts:
+    - family: SpotifyMixUI
+      fonts:
+        - asset: assets/fonts/SpotifyMixUI/spotifymixui-regular.ttf
+        - asset: assets/fonts/SpotifyMixUI/spotifymixui-bold.ttf
+          weight: 700
+        - asset: assets/fonts/SpotifyMixUI/spotifymixui-title-extrabold.ttf
+          weight: 800
+
+    - family: Klavika
+      fonts:
+        - asset: assets/fonts/Klavika/klavika-light.otf
+          weight: 100
+        - asset: assets/fonts/Klavika/klavika-medium.otf
+          weight: 300
+        - asset: assets/fonts/Klavika/klavika-bold.otf
+          weight: 700
