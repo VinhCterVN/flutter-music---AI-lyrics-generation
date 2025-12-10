@@ -82,7 +82,6 @@ final currentTrackProvider = StreamProvider<Track?>((ref) {
 
     final src = queue.tracks[index];
 
-    // AudioSource.uri has tag property
     if (src is UriAudioSource) {
       final tag = src.tag;
 
@@ -116,13 +115,11 @@ final progressProvider = StreamProvider<TrackProgress>((ref) {
   );
 });
 
-// Provider cho playing state
 final isPlayingProvider = StreamProvider<bool>((ref) {
   final player = ref.watch(audioPlayerProvider);
   return player.playingStream;
 });
 
-// Provider cho buffering state
 final isBufferingProvider = StreamProvider<bool>((ref) {
   final player = ref.watch(audioPlayerProvider);
   return player.processingStateStream.map(

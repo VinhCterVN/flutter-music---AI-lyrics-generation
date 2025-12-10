@@ -2,7 +2,6 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
-import 'package:flutter_ai_music/ui/component/navigation/now_playing_screen.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
@@ -43,8 +42,9 @@ GoRouter createRouter(WidgetRef ref) {
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const SettingPage())],
-          ),          StatefulShellBranch(
-            routes: [GoRoute(path: '/playing', name: 'PlayingPage', builder: (context, state) => const NowPlayingScreen())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/playing', name: 'PlayingPage', builder: (context, state) => const Placeholder())],
           ),
         ],
       ),

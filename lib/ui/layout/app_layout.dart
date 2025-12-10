@@ -36,7 +36,6 @@ class _AppLayoutState extends ConsumerState<AppLayout> {
   @override
   Widget build(BuildContext context) {
     final currentIndex = widget.navigationShell.currentIndex;
-    final authController = ref.read(authenticationServiceProvider);
     ref.watch(ambientColorControllerProvider);
     return Scaffold(
       endDrawerEnableOpenDragGesture: true,

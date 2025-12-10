@@ -41,6 +41,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     for (var controller in _scaleControllers.values) {
       controller.dispose();
     }
+    _sub?.cancel();
     super.dispose();
   }
 

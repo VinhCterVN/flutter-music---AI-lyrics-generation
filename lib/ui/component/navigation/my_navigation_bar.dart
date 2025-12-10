@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MyNavigationBar extends StatelessWidget {
+import 'now_playing_bar.dart';
+import 'playing_screen.dart';
+
+class MyNavigationBar extends ConsumerWidget {
   final List<Map<String, dynamic>> items;
   final int currentIndex;
   final Function(int) onTap;
@@ -8,9 +12,9 @@ class MyNavigationBar extends StatelessWidget {
   const MyNavigationBar({super.key, required this.items, required this.currentIndex, required this.onTap});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
-      height: 100,
+      height: 140,
       child: Stack(
         children: [
           Positioned.fill(
@@ -21,6 +25,31 @@ class MyNavigationBar extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [Colors.transparent, Colors.black],
                 ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: AlignmentGeometry.topCenter,
+            child: NowPlayingBar(
+              onTap: () => showModalBottomSheet(
+                context: context,
+                useRootNavigator: true,
+                isScrollControlled: true,
+                enableDrag: true,
+                barrierColor: Colors.black54,
+                backgroundColor: Colors.transparent,
+                builder: (context) {
+                  return DraggableScrollableSheet(
+                    initialChildSize: 1.0,
+                    minChildSize: 0.5,
+                    maxChildSize: 1.0,
+                    snap: true,
+                    snapSizes: const [1.0],
+                    builder: (context, scrollController) {
+                      return PlayingScreen(scrollController: scrollController);
+                    },
+                  );
+                },
               ),
             ),
           ),
@@ -152,43 +181,6 @@ class _NavBarItemState extends State<NavBarItem> with SingleTickerProviderStateM
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-// Example usage:
-class ExampleScreen extends StatefulWidget {
-  const ExampleScreen({super.key});
-
-  @override
-  State<ExampleScreen> createState() => _ExampleScreenState();
-}
-
-class _ExampleScreenState extends State<ExampleScreen> {
-  int _currentIndex = 0;
-
-  final routes = [
-    {"name": "Home", "icon": Icons.home_outlined, "active_icon": Icons.home},
-    {"name": "Search", "icon": Icons.search_outlined, "active_icon": Icons.search},
-    {"name": "Library", "icon": Icons.library_music_outlined, "active_icon": Icons.library_music},
-    {"name": "Settings", "icon": Icons.settings_outlined, "active_icon": Icons.settings},
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(child: Text('Current Index: $_currentIndex')),
-      bottomNavigationBar: MyNavigationBar(
-        items: routes,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-          // Use with go_router:
-          // widget.navigationShell.goBranch(index, initialLocation: false);
-        },
       ),
     );
   }

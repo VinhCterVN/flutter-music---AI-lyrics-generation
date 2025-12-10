@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../provider/audio_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -55,28 +54,40 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final authService = ref.read(authenticationServiceProvider);
     return CustomScrollView(
       controller: _controller,
       slivers: [
-        SliverPersistentHeader(delegate: MyStickyHeader(), floating: true),
+        SliverPersistentHeader(delegate: MyStickyHeader(onLogout: authService.signOut), floating: true),
         SliverList(
           delegate: SliverChildBuilderDelegate(
-            (context, index) => ListTile(
-              leading: CircleAvatar(
-                child: Container(
-                  clipBehavior: Clip.antiAlias,
-                  decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.all(Radius.circular(4))),
-                  child: CachedNetworkImage(
-                    imageUrl: tracks[index].images.first,
-                    fit: BoxFit.contain,
-                    errorWidget: (context, url, error) => Icon(Icons.image_outlined),
+                (context, index) =>
+                ListTile(
+                  leading: CircleAvatar(
+                    child: Container(
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.all(Radius.circular(4))),
+                      child: CachedNetworkImage(
+                        imageUrl: tracks[index].images.first,
+                        fit: BoxFit.contain,
+                        errorWidget: (context, url, error) => Icon(Icons.image_outlined),
+                      ),
+                    ),
                   ),
+                  title: Text(tracks[index].name, maxLines: 1, style: TextStyle(fontWeight: FontWeight.w600)),
+                  subtitle: Text(tracks[index].createdAt.toString()),
+                  onTap: () => _playTrack(context, ref, tracks, index),
+                  onLongPress: () =>
+                      showModalBottomSheet(
+                        context: context,
+                        useRootNavigator: true,
+                        builder: (context) =>
+                            BottomSheet(
+                              onClosing: () => Navigator.pop(context),
+                              builder: (c) => Padding(padding: EdgeInsets.all(8), child: Text(tracks[index].name)),
+                            ),
+                      ),
                 ),
-              ),
-              title: Text(tracks[index].name, maxLines: 1, style: TextStyle(fontWeight: FontWeight.w600)),
-              subtitle: Text(tracks[index].createdAt.toString()),
-              onTap: () => _playTrack(context, ref, tracks, index),
-            ),
             childCount: tracks.length,
           ),
         ),
@@ -86,30 +97,53 @@ class _HomePageState extends ConsumerState<HomePage> {
 }
 
 class MyStickyHeader extends SliverPersistentHeaderDelegate {
+  final VoidCallback? onLogout;
+
+  MyStickyHeader({
+    required this.onLogout
+  });
+
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final topPadding = MediaQuery.of(context).padding.top;
-
+    final topPadding = MediaQuery
+        .of(context)
+        .padding
+        .top;
     return Container(
       padding: EdgeInsets.only(top: topPadding),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        boxShadow: [
-          BoxShadow(color: Colors.black.withAlpha(55), offset: Offset(0, 4), blurRadius: 6, spreadRadius: 0),
-        ],
+        color: Theme
+            .of(context)
+            .colorScheme
+            .surfaceContainerHigh,
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(55), offset: Offset(0, 4), blurRadius: 6, spreadRadius: 0)],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text('Container with bottom shadow', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Container with bottom shadow', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            IconButton(onPressed: onLogout, icon: Icon(Icons.logout))
+          ],
+        ),
       ),
     );
   }
 
   @override
-  double get maxExtent => 80 + MediaQueryData.fromWindow(WidgetsBinding.instance.window).padding.top;
+  double get maxExtent =>
+      80 + MediaQueryData
+          .fromView(WidgetsBinding.instance.window)
+          .padding
+          .top;
 
   @override
-  double get minExtent => 60 + MediaQueryData.fromWindow(WidgetsBinding.instance.window).padding.top;
+  double get minExtent =>
+      60 + MediaQueryData
+          .fromView(WidgetsBinding.instance.window)
+          .padding
+          .top;
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;

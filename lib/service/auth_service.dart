@@ -93,11 +93,6 @@ class AuthenticationService {
   }
 
   Future<void> signOut() async {
-    final user = currentUser;
-    if (user != null) {
-      await _supabase.from('users').update({'last_active': DateTime.now().toIso8601String()}).eq('id', user.id);
-    }
-
     await _supabase.auth.signOut();
   }
 }
