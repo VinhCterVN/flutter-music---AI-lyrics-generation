@@ -58,6 +58,28 @@ class PlayerController {
 
   Future<void> pause() => player.pause();
 
+  Future<void> toggleShuffle() async {
+    final isEnabled = player.shuffleModeEnabled;
+    await player.setShuffleModeEnabled(!isEnabled);
+  }
+
+  Future<void> switchRepeatMode() async {
+    final mode = player.loopMode;
+    LoopMode newMode;
+    switch (mode) {
+      case LoopMode.off:
+        newMode = LoopMode.all;
+        break;
+      case LoopMode.all:
+        newMode = LoopMode.one;
+        break;
+      case LoopMode.one:
+        newMode = LoopMode.off;
+        break;
+    }
+    await player.setLoopMode(newMode);
+  }
+
   Future<void> skipNext() async {
     ref.read(queueProvider.notifier).next();
     await player.seekToNext();

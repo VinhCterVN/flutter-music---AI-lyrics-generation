@@ -41,7 +41,7 @@ class MyNavigationBar extends ConsumerWidget {
                 builder: (context) {
                   return DraggableScrollableSheet(
                     initialChildSize: 1.0,
-                    minChildSize: 0.5,
+                    minChildSize: 0.25,
                     maxChildSize: 1.0,
                     snap: true,
                     snapSizes: const [1.0],

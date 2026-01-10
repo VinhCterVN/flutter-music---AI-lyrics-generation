@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/ui/component/element/track_card_demo.dart';
@@ -100,21 +101,28 @@ class _SearchPageState extends ConsumerState<SearchPage> {
             delegate: SliverChildBuilderDelegate(
               (context, index) => TrackCardDemo(
                 track: mockTracks[index],
-                onPlay: () => showModalBottomSheet(
-                  context: context,
-                  useRootNavigator: true,
-                  isScrollControlled: true,
-                  enableDrag: true,
-                  barrierColor: Colors.black54,
-                  backgroundColor: Colors.transparent,
-                  sheetAnimationStyle: AnimationStyle(curve: Curves.easeOut, duration: const Duration(seconds: 1)),
-                  builder: (context) => Dismissible(
-                    key: const ValueKey("TrackSheet"),
-                    direction: DismissDirection.horizontal,
-                    onDismissed: (_) => Navigator.pop(context),
-                    child: PlayingScreen(),
-                  ),
-                ),
+                onPlay: () {
+                  showModalBottomSheet(
+                    context: context,
+                    useRootNavigator: true,
+                    isScrollControlled: true,
+                    enableDrag: true,
+                    barrierColor: Colors.black54,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) {
+                      return DraggableScrollableSheet(
+                        initialChildSize: 1.0,
+                        minChildSize: 0.5,
+                        maxChildSize: 1.0,
+                        snap: true,
+                        snapSizes: const [1.0],
+                        builder: (context, scrollController) {
+                          return PlayingScreen(scrollController: scrollController);
+                        },
+                      );
+                    },
+                  );
+                },
                 onFavorite: () {},
               ),
               childCount: mockTracks.length,

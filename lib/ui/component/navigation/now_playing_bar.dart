@@ -152,8 +152,9 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                       ? Marquee(
                                           text: currentTrack.name,
                                           style: const TextStyle(
+                                            fontFamily: "SpotifyMixUI",
                                             fontSize: 14,
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w700,
                                             color: Colors.white,
                                             letterSpacing: -0.5,
                                           ),
@@ -166,6 +167,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                       : Text(
                                           currentTrack.name,
                                           style: const TextStyle(
+                                            fontFamily: "SpotifyMixUI",
                                             fontSize: 14,
                                             fontWeight: FontWeight.bold,
                                             color: Colors.white,
@@ -177,7 +179,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  currentTrack.artistId,
+                                  currentTrack.artistType.name,
                                   style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.9)),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -235,7 +237,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                         color: Colors.white.withOpacity(0.8),
                                       ),
                                     ),
-                              const SizedBox(width: 4)
+                              const SizedBox(width: 4),
                             ],
                           ),
                         ],

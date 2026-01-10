@@ -1,8 +1,11 @@
+import 'dart:developer';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
-import '../../../data/models/track.dart';
+import 'package:just_audio/just_audio.dart';
 
 class QueueBottomSheet extends ConsumerStatefulWidget {
   const QueueBottomSheet({super.key});
@@ -15,161 +18,133 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final queue = ref.read(queueProvider);
-    final currentTrack =  ref.watch(currentTrackProvider).value!;
+    final currentTrack = ref.watch(currentTrackProvider).value!;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF18181B),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      child: Column(
-        children: [
-          // Handle
-          Container(
-            margin: const EdgeInsets.only(top: 12, bottom: 16),
-            width: 48,
-            height: 4,
-            decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)),
-          ),
-
-          // Title
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Danh sách chờ',
-                  style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold),
+    return Column(
+      children: [
+        // Current Track
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
+                child: ClipRRect(
+                  clipBehavior: Clip.hardEdge,
+                  borderRadius: BorderRadius.circular(4),
+                  child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
                 ),
-                const SizedBox(height: 4),
-                Text('Đề xuất cho bạn', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Current Track
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [Colors.purple.shade500, Colors.pink.shade500]),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.music_note, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      currentTrack.name,
+                      style: const TextStyle(color: Colors.green, fontSize: 16, fontWeight: FontWeight.w500),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      currentTrack.artistType.name,
+                      style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const SizedBox(width: 12),
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                child: const Icon(Icons.play_arrow, color: Colors.black, size: 28),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+          child: Row(
+            children: [
+              Icon(Icons.shuffle, color: Colors.grey.shade400, size: 16),
+              const SizedBox(width: 8),
+              Text('Phát ngẫu nhiên từ:', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
+            ],
+          ),
+        ),
+
+        // Queue List
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: queue.tracks.length,
+            itemBuilder: (context, index) {
+              final track = queue.tracks[index] as UriAudioSource;
+              final tag = track.tag as Map<String, Object>;
+              log('tag: $tag');
+              return InkWell(
+                onTap: () {},
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                  child: Row(
                     children: [
-                      Text(
-                        currentTrack.name,
-                        style: const TextStyle(color: Colors.green, fontSize: 16, fontWeight: FontWeight.w500),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
+                        child: ClipRRect(
+                          clipBehavior: Clip.hardEdge,
+                          borderRadius: BorderRadius.circular(4),
+                          child: CachedNetworkImage(imageUrl: (tag["images"] as List<String>).first, fit: BoxFit.cover),
+                        ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        currentTrack.artistType.name,
-                        style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tag["title"] as String? ?? 'Unknown',
+                              style: const TextStyle(
+                                fontFamily: "SpotifyMixUI",
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              (tag["artistType"] as ArtistType).name,
+                              style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                        onPressed: () {},
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(width: 12),
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-                  child: const Icon(Icons.play_arrow, color: Colors.black, size: 28),
-                ),
-              ],
-            ),
+              );
+            },
           ),
-
-          const SizedBox(height: 16),
-
-          // Queue Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              children: [
-                Icon(Icons.shuffle, color: Colors.grey.shade400, size: 16),
-                const SizedBox(width: 8),
-                Text('Phát ngẫu nhiên từ:', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
-              ],
-            ),
-          ),
-
-          // Queue List
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.only(bottom: 100),
-              itemCount: queue.tracks.length,
-              itemBuilder: (context, index) {
-                final track = queue.tracks[index];
-                return InkWell(
-                  onTap: () {},
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(colors: [Colors.blue.shade500, Colors.cyan.shade500]),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: const Icon(Icons.music_note, color: Colors.white, size: 24),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                track.toString(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                track.runtimeType.toString(),
-                                style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
-                          onPressed: () {},
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

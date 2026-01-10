@@ -11,7 +11,7 @@ class TrackService {
     return supabase
         .from('full_tracks_view')
         .stream(primaryKey: ['id'])
-        .order('id')
+        .order('name', ascending: true)
         .map((rows) => rows.map((e) => Track.fromJson(e)).toList());
   }
 }

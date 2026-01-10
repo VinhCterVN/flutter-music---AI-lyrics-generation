@@ -61,33 +61,36 @@ class _HomePageState extends ConsumerState<HomePage> {
         SliverPersistentHeader(delegate: MyStickyHeader(onLogout: authService.signOut), floating: true),
         SliverList(
           delegate: SliverChildBuilderDelegate(
-                (context, index) =>
-                ListTile(
-                  leading: CircleAvatar(
-                    child: Container(
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.all(Radius.circular(4))),
-                      child: CachedNetworkImage(
-                        imageUrl: tracks[index].images.first,
-                        fit: BoxFit.contain,
-                        errorWidget: (context, url, error) => Icon(Icons.image_outlined),
-                      ),
-                    ),
+            (context, index) => ListTile(
+              leading: CircleAvatar(
+                child: Container(
+                  clipBehavior: Clip.antiAlias,
+                  width: 150,
+                  height: 150,
+                  decoration: BoxDecoration(borderRadius: BorderRadiusGeometry.all(Radius.circular(4))),
+                  child: CachedNetworkImage(
+                    imageUrl: tracks[index].images.first,
+                    fit: BoxFit.contain,
+                    errorWidget: (context, url, error) => Icon(Icons.image_outlined),
                   ),
-                  title: Text(tracks[index].name, maxLines: 1, style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(tracks[index].createdAt.toString()),
-                  onTap: () => _playTrack(context, ref, tracks, index),
-                  onLongPress: () =>
-                      showModalBottomSheet(
-                        context: context,
-                        useRootNavigator: true,
-                        builder: (context) =>
-                            BottomSheet(
-                              onClosing: () => Navigator.pop(context),
-                              builder: (c) => Padding(padding: EdgeInsets.all(8), child: Text(tracks[index].name)),
-                            ),
-                      ),
                 ),
+              ),
+              title: Text(
+                tracks[index].name,
+                maxLines: 1,
+                style: TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(tracks[index].artistType.name, style: TextStyle(fontFamily: "SpotifyMixUI")),
+              onTap: () => _playTrack(context, ref, tracks, index),
+              onLongPress: () => showModalBottomSheet(
+                context: context,
+                useRootNavigator: true,
+                builder: (context) => BottomSheet(
+                  onClosing: () => Navigator.pop(context),
+                  builder: (c) => Padding(padding: EdgeInsets.all(8), child: Text(tracks[index].name)),
+                ),
+              ),
+            ),
             childCount: tracks.length,
           ),
         ),
@@ -99,23 +102,15 @@ class _HomePageState extends ConsumerState<HomePage> {
 class MyStickyHeader extends SliverPersistentHeaderDelegate {
   final VoidCallback? onLogout;
 
-  MyStickyHeader({
-    required this.onLogout
-  });
+  MyStickyHeader({required this.onLogout});
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final topPadding = MediaQuery
-        .of(context)
-        .padding
-        .top;
+    final topPadding = MediaQuery.of(context).padding.top;
     return Container(
       padding: EdgeInsets.only(top: topPadding),
       decoration: BoxDecoration(
-        color: Theme
-            .of(context)
-            .colorScheme
-            .surfaceContainerHigh,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [BoxShadow(color: Colors.black.withAlpha(55), offset: Offset(0, 4), blurRadius: 6, spreadRadius: 0)],
       ),
       child: Padding(
@@ -124,7 +119,7 @@ class MyStickyHeader extends SliverPersistentHeaderDelegate {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text('Container with bottom shadow', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            IconButton(onPressed: onLogout, icon: Icon(Icons.logout))
+            IconButton(onPressed: onLogout, icon: Icon(Icons.logout)),
           ],
         ),
       ),
@@ -132,18 +127,10 @@ class MyStickyHeader extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  double get maxExtent =>
-      80 + MediaQueryData
-          .fromView(WidgetsBinding.instance.window)
-          .padding
-          .top;
+  double get maxExtent => 80 + MediaQueryData.fromView(WidgetsBinding.instance.window).padding.top;
 
   @override
-  double get minExtent =>
-      60 + MediaQueryData
-          .fromView(WidgetsBinding.instance.window)
-          .padding
-          .top;
+  double get minExtent => 60 + MediaQueryData.fromView(WidgetsBinding.instance.window).padding.top;
 
   @override
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;

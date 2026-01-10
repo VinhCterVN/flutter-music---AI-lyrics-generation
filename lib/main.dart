@@ -30,7 +30,9 @@ class MyApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: createRouter(ref),
       title: "Flutter AI Music",
-      theme: theme.light(),
+      theme: theme.light().copyWith(
+        
+      ),
       darkTheme: theme.dark(),
       themeMode: ThemeMode.system,
       debugShowCheckedModeBanner: false,

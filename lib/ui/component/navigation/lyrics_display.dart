@@ -1,5 +1,7 @@
 import 'dart:developer';
+import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
@@ -11,18 +13,10 @@ import '../../../provider/lyrics_provider.dart';
 import '../../../service/lyrics_service.dart';
 
 class LyricsDisplayWidget extends ConsumerStatefulWidget {
-  final int trackId; // Changed from List<LyricsLine> lyrics
+  final Track track;
   final Color backgroundColor;
-  final String trackTitle;
-  final String artistName;
 
-  const LyricsDisplayWidget({
-    super.key,
-    required this.trackId,
-    this.backgroundColor = const Color(0xFFD4837D),
-    required this.trackTitle,
-    required this.artistName,
-  });
+  const LyricsDisplayWidget({super.key, required this.track, this.backgroundColor = const Color(0xFFD4837D)});
 
   @override
   ConsumerState<LyricsDisplayWidget> createState() => _LyricsDisplayWidgetState();
@@ -43,45 +37,66 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final lyricsAsync = ref.watch(lyricsStreamProvider(widget.trackId));
+    final lyricsAsync = ref.watch(lyricsStreamProvider(widget.track.id));
     final progressAsync = ref.watch(progressProvider);
     final lyricService = ref.read(lyricsServiceProvider);
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(color: widget.backgroundColor),
-        child: SafeArea(
-          child: lyricsAsync.when(
-            data: (lyrics) {
-              if (_cachedLyrics == null || _cachedLyrics!.length != lyrics.length) {
-                _cachedLyrics = lyrics;
-                _initializeLineKeys(lyrics.length);
-              }
-
-              if (lyrics.isEmpty && !isFetchCalled) {
-                lyricService.getLyrics(widget.trackId);
-                setState(() => isFetchCalled = true);
-                log("Fetch Lyrics Called");
-              }
-
-              return progressAsync.when(
-                data: (progress) {
-                  final currentPosition = progress.position;
-                  _updateCurrentLineFromPosition(currentPosition, lyrics);
-                  return _buildContent(lyrics, currentPosition, progress);
-                },
-                loading: () => _buildLoadingState(),
-                error: (error, stack) => _buildErrorState('Error loading progress'),
-              );
-            },
-            loading: () => _buildLoadingState(),
-            error: (error, stack) {
-              if (error is LyricsNotFoundException) {
-                return _buildGeneratingState();
-              }
-              return _buildErrorState('Error loading lyrics: ${error.toString()}');
-            },
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: CachedNetworkImage(imageUrl: widget.track.images.first, fit: BoxFit.cover),
           ),
-        ),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaY: 15, sigmaX: 15),
+              child: Container(color: Colors.black.withAlpha(55)),
+            ),
+          ),
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.black.withAlpha(45), Colors.black.withAlpha(55)],
+                ),
+              ),
+            ),
+          ),
+          SafeArea(
+            child: lyricsAsync.when(
+              data: (lyrics) {
+                if (_cachedLyrics == null || _cachedLyrics!.length != lyrics.length) {
+                  _cachedLyrics = lyrics;
+                  _initializeLineKeys(lyrics.length);
+                }
+
+                if (lyrics.isEmpty && !isFetchCalled) {
+                  lyricService.getLyrics(widget.track.id);
+                  setState(() => isFetchCalled = true);
+                  log("Fetch Lyrics Called");
+                }
+
+                return progressAsync.when(
+                  data: (progress) {
+                    final currentPosition = progress.position;
+                    _updateCurrentLineFromPosition(currentPosition, lyrics);
+                    return _buildContent(lyrics, currentPosition, progress);
+                  },
+                  loading: () => _buildLoadingState(),
+                  error: (error, stack) => _buildErrorState('Error loading progress'),
+                );
+              },
+              loading: () => _buildLoadingState(),
+              error: (error, stack) {
+                if (error is LyricsNotFoundException) {
+                  return _buildGeneratingState();
+                }
+                return _buildErrorState('Error loading lyrics: ${error.toString()}');
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -125,10 +140,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
       final targetOffset = itemOffset - (viewportHeight / 2) - 50;
 
       _scrollController.animateTo(
-        targetOffset.clamp(
-          _scrollController.position.minScrollExtent,
-          _scrollController.position.maxScrollExtent,
-        ),
+        targetOffset.clamp(_scrollController.position.minScrollExtent, _scrollController.position.maxScrollExtent),
         duration: const Duration(milliseconds: 400),
         curve: Curves.easeInOut,
       );
@@ -140,35 +152,39 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
       children: [
         _buildHeader(),
         Expanded(
-          child: lyrics.isEmpty ? Center(child: Column(
-            children: [
-              Lottie.asset("assets/animations/impress.json", repeat: false),
-              Text("Lyrics is being created, wait a minutes...")
-            ],
-          )) : ListView.builder(
-            controller: _scrollController,
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-            itemCount: lyrics.length,
-            itemBuilder: (context, index) {
-              final line = lyrics[index];
-              final isActive = index == _currentLineIndex;
-
-              return Padding(
-                key: _lineKeys[index],
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: TextStyle(
-                    color: isActive ? Colors.white : Colors.black.withAlpha((0.5 * 255).round()),
-                    fontSize: isActive ? 32 : 24,
-                    fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                    height: 1.3,
+          child: lyrics.isEmpty
+              ? Center(
+                  child: Column(
+                    children: [
+                      Lottie.asset("assets/animations/impress.json", repeat: false),
+                      Text("Lyrics is being created, wait a minutes..."),
+                    ],
                   ),
-                  child: Text(line.text, textAlign: TextAlign.left),
+                )
+              : ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+                  itemCount: lyrics.length,
+                  itemBuilder: (context, index) {
+                    final line = lyrics[index];
+                    final isActive = index == _currentLineIndex;
+
+                    return Padding(
+                      key: _lineKeys[index],
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          color: isActive ? Colors.white : Colors.black.withAlpha((0.5 * 255).round()),
+                          fontSize: isActive ? 32 : 24,
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+                          height: 1.3,
+                        ),
+                        child: Text(line.text, textAlign: TextAlign.left),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         _buildBottomControls(currentPosition, progress),
       ],
@@ -186,20 +202,22 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
           ),
           const SizedBox(height: 8),
           Text(
-            widget.trackTitle,
+            widget.track.name,
             style: const TextStyle(
               fontFamily: "SpotifyMixUI",
               color: Colors.white,
               fontSize: 18,
               fontWeight: FontWeight.w700,
+              shadows: [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
             ),
             textAlign: TextAlign.center,
           ),
           Text(
-            widget.artistName,
+            widget.track.artistType.name,
             style: TextStyle(
               color: Colors.white.withAlpha((0.8 * 255).round()),
               fontSize: 14,
+              shadows: const [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
             ),
             textAlign: TextAlign.center,
           ),
@@ -213,9 +231,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
       children: [
         _buildHeader(),
         const Expanded(
-          child: Center(
-            child: CircularProgressIndicator(color: Colors.white),
-          ),
+          child: Center(child: CircularProgressIndicator(color: Colors.white)),
         ),
       ],
     );
@@ -234,18 +250,12 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                 const SizedBox(height: 20),
                 Text(
                   'Generating lyrics...',
-                  style: TextStyle(
-                    color: Colors.white.withAlpha((0.8 * 255).round()),
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha((0.8 * 255).round()), fontSize: 16),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'This may take a moment',
-                  style: TextStyle(
-                    color: Colors.white.withAlpha((0.6 * 255).round()),
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha((0.6 * 255).round()), fontSize: 14),
                 ),
               ],
             ),
@@ -263,10 +273,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
           child: Center(
             child: Text(
               'No lyrics available',
-              style: TextStyle(
-                color: Colors.white.withAlpha((0.8 * 255).round()),
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.white.withAlpha((0.8 * 255).round()), fontSize: 16),
             ),
           ),
         ),
@@ -287,10 +294,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                 const SizedBox(height: 16),
                 Text(
                   message,
-                  style: TextStyle(
-                    color: Colors.white.withAlpha((0.8 * 255).round()),
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha((0.8 * 255).round()), fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -349,17 +353,11 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
               children: [
                 Text(
                   _formatDuration(position),
-                  style: TextStyle(
-                    color: Colors.white.withAlpha((0.7 * 255).round()),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha((0.7 * 255).round()), fontSize: 12),
                 ),
                 Text(
                   _formatDuration(duration),
-                  style: TextStyle(
-                    color: Colors.white.withAlpha((0.7 * 255).round()),
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.white.withAlpha((0.7 * 255).round()), fontSize: 12),
                 ),
               ],
             ),
@@ -377,10 +375,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
             child: Container(
               width: 70,
               height: 70,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
+              decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
               child: Icon(
                 ref.watch(audioPlayerProvider).playing ? Icons.pause : Icons.play_arrow,
                 size: 40,

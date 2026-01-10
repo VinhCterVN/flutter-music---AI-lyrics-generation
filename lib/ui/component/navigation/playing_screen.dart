@@ -1,27 +1,28 @@
+import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_ai_music/provider/uistate_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
-import 'package:flutter_ai_music/utils/functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../../data/models/lyric_line.dart';
 import '../../../data/models/track.dart';
 import '../../../provider/audio_provider.dart';
 import '../element/artist_card.dart';
 
 class PlayingScreen extends ConsumerStatefulWidget {
-  final ScrollController? scrollController;
+  final ScrollController scrollController;
 
-  const PlayingScreen({super.key, this.scrollController});
+  const PlayingScreen({super.key, required this.scrollController});
 
   @override
   ConsumerState<PlayingScreen> createState() => _PlayingScreenState();
 }
 
 class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProviderStateMixin {
+  bool _showControls = false;
   bool _isUserSeeking = false;
   double _sliderProgress = 0.0;
   Color? _previousColor;
@@ -35,6 +36,16 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
+
+    widget.scrollController.addListener(() {
+      final offset = widget.scrollController.offset;
+
+      if (offset > 200 && !_showControls) {
+        setState(() => _showControls = true);
+      } else if (offset <= 200 && _showControls) {
+        setState(() => _showControls = false);
+      }
+    });
 
     _pulseController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this)
       ..repeat(reverse: true);
@@ -78,25 +89,10 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    final surfaceColor = Theme
-        .of(context)
-        .colorScheme
-        .surface;
     final currentTrackAsync = ref.watch(currentTrackProvider);
-    final screenHeight =
-        MediaQuery
-            .of(context)
-            .size
-            .height -
-            MediaQuery
-                .of(context)
-                .padding
-                .top -
-            MediaQuery
-                .of(context)
-                .padding
-                .bottom -
-            40;
+
+    final padding = MediaQuery.of(context).padding;
+    final screenHeight = MediaQuery.of(context).size.height - padding.top - padding.bottom - 100;
     ref.listen<Color>(ambientColorProvider, (previous, next) {
       if (previous != next && mounted) {
         final currentAnimatedValue = _colorAnimation.value ?? previous;
@@ -136,210 +132,176 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
               final animatedColor = _colorAnimation.value;
               if (animatedColor == null) return const SizedBox.shrink();
 
-              return RepaintBoundary(
-                child: _AnimatedGradientBackground(
-                  animatedColor: animatedColor,
-                  surfaceColor: surfaceColor,
-                  child: CustomScrollView(
-                    controller: widget.scrollController,
-                    slivers: <Widget>[
-                      SliverToBoxAdapter(
-                        child: SizedBox(
-                          height: screenHeight,
-                          child: Column(
-                            children: [
-                              _AnimatedAppBar(
-                                animatedColor: animatedColor,
-                                surfaceColor: surfaceColor,
-                                onBackPressed: () => Navigator.of(context).pop(),
+              return Stack(
+                children: [
+                  Positioned.fill(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 500),
+                      child: SizedBox.expand(
+                        key: ValueKey(currentTrack.images.first),
+                        child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: ListenableBuilder(
+                      listenable: widget.scrollController,
+                      builder: (context, child) {
+                        final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
+                        final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
+                        return BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+                          child: Container(color: Colors.black.withAlpha(55)),
+                        );
+                      },
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [Colors.transparent, Colors.black.withAlpha(200)],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: CustomScrollView(
+                      controller: widget.scrollController,
+                      slivers: <Widget>[
+                        SliverAppBar(
+                          toolbarHeight: kToolbarHeight + 10,
+                          leading: Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: IconButton(
+                              onPressed: () => Navigator.pop(context),
+                              icon: const Icon(Icons.keyboard_arrow_down),
+                            ),
+                          ),
+                          actions: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: IconButton(
+                                // dart
+                                onPressed: () {},
+                                icon: const Icon(Icons.more_vert_rounded),
                               ),
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      _AlbumArtwork(
-                                        imageUrl: currentTrack.images.first,
-                                        ambientColor: animatedColor,
-                                        pulseAnimation: _pulseAnimation,
-                                      ),
-                                      const SizedBox(height: 50),
-                                      _TrackInfo(track: currentTrack),
-                                      const SizedBox(height: 16),
-                                      _ProgressBar(
-                                        isUserSeeking: _isUserSeeking,
-                                        sliderProgress: _sliderProgress,
-                                        onChanged: (value) {
-                                          setState(() {
-                                            _sliderProgress = value;
-                                            _isUserSeeking = true;
-                                          });
-                                        },
-                                        onChangeEnd: (value) async {
-                                          setState(() {
-                                            _isUserSeeking = false;
-                                          });
-                                          await ref
-                                              .read(audioPlayerProvider)
-                                              .seek(Duration(milliseconds: value.toInt()));
-                                        },
-                                      ),
-                                      const SizedBox(height: 8),
-                                      const _PlaybackControls(),
-                                    ],
+                            ),
+                          ],
+                          flexibleSpace: FlexibleSpaceBar(
+                            title: const Text(
+                              'Playing View',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontFamily: "SpotifyMixUI",
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            centerTitle: true,
+                          ),
+                          backgroundColor: Colors.transparent,
+                        ),
+
+                        SliverToBoxAdapter(
+                          child: SizedBox(
+                            height: screenHeight,
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(12.0),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        _AlbumArtwork(
+                                          imageUrl: currentTrack.images.first,
+                                          ambientColor: animatedColor,
+                                          pulseAnimation: _pulseAnimation,
+                                        ),
+                                        const SizedBox(height: 50),
+                                        _TrackInfo(track: currentTrack),
+                                        const SizedBox(height: 16),
+                                        _ProgressBar(
+                                          isUserSeeking: _isUserSeeking,
+                                          sliderProgress: _sliderProgress,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _sliderProgress = value;
+                                              _isUserSeeking = true;
+                                            });
+                                          },
+                                          onChangeEnd: (value) async {
+                                            setState(() => _isUserSeeking = false);
+                                            await ref
+                                                .read(audioPlayerProvider)
+                                                .seek(Duration(milliseconds: value.toInt()));
+                                          },
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const _PlaybackControls(),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: ArtistCard(
-                          borderRadius: BorderRadius.circular(20),
-                          imageBorderRadius: BorderRadius.circular(12),
-                          artistId: currentTrack.artistId,
-                          artistType: currentTrack.artistType,
+                        SliverToBoxAdapter(
+                          child: ArtistCard(
+                            borderRadius: BorderRadius.circular(20),
+                            imageBorderRadius: BorderRadius.circular(12),
+                            artistId: currentTrack.artistId,
+                            artistType: currentTrack.artistType,
+                          ),
                         ),
-                      ),
-                      SliverToBoxAdapter(
-                        child: Container(
-                          margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                final lyricsFile = await rootBundle.loadString('assets/lyrics.txt');
-                                final lines = lyricsFile.split('\n');
-                                final lyrics = lines
-                                    .where((line) =>
-                                line
-                                    .trim()
-                                    .isNotEmpty)
-                                    .map((line) => LyricsLine.fromString(line))
-                                    .toList();
-
+                        SliverToBoxAdapter(
+                          child: Container(
+                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+                            child: ElevatedButton(
+                              onPressed: () async {
                                 if (!context.mounted) return;
-
                                 await Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        LyricsDisplayWidget(
-                                          trackId: currentTrack.id,
-                                          trackTitle: currentTrack.name,
-                                          artistName: currentTrack.artistType.name,
-                                          backgroundColor: animatedColor,
-                                        ),
+                                        LyricsDisplayWidget(track: currentTrack, backgroundColor: animatedColor),
                                   ),
                                 );
-                              } catch (e) {
-                                print('Error loading lyrics: $e');
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _colorAnimation.value,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text(
-                              'Bấm xem trước lời bài hát',
-                              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _colorAnimation.value,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              child: const Text(
+                                'Bấm xem trước lời bài hát',
+                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
+                ],
               );
             },
           ),
         );
       },
       loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stack) =>
-          Scaffold(
-            body: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Lottie.asset("assets/animations/Error 404.json", width: 300, repeat: false),
-                  Text("Error happened"),
-                ],
-              ),
-            ),
-          ),
-    );
-  }
-}
-
-class _AnimatedGradientBackground extends StatelessWidget {
-  final Color animatedColor;
-  final Color surfaceColor;
-  final Widget child;
-
-  const _AnimatedGradientBackground({required this.animatedColor, required this.surfaceColor, required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    final containerColor = mixColors([MapEntry(surfaceColor, 0.3), MapEntry(animatedColor, 0.7)]);
-    final color1 = mixColors([MapEntry(containerColor, 0.8), MapEntry(surfaceColor, 0.2)]);
-    final color2 = mixColors([MapEntry(containerColor, 0.8), MapEntry(surfaceColor, 0.4)]);
-    final color3 = mixColors([MapEntry(containerColor, 0.2), MapEntry(surfaceColor, 0.8)]);
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [color1, color2, color3],
-        ),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _AnimatedAppBar extends StatelessWidget {
-  final Color animatedColor;
-  final Color surfaceColor;
-  final VoidCallback onBackPressed;
-
-  const _AnimatedAppBar({required this.animatedColor, required this.surfaceColor, required this.onBackPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    final containerColor = mixColors([MapEntry(surfaceColor, 0.3), MapEntry(animatedColor, 0.7)]);
-    final color1 = mixColors([MapEntry(containerColor, 0.9), MapEntry(surfaceColor, 0.1)]);
-    final color2 = mixColors([MapEntry(containerColor, 0.8), MapEntry(surfaceColor, 0.2)]);
-
-    return RepaintBoundary(
-      child: Container(
-        padding: EdgeInsets.only(top: MediaQuery
-            .of(context)
-            .padding
-            .top),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [color1, color2]),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 16.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      error: (error, stack) => Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              IconButton(icon: const Icon(Icons.keyboard_arrow_down, size: 32), onPressed: onBackPressed),
-              const Text(
-                'Playing View',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontFamily: "SpotifyMixUI",
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              IconButton(icon: const Icon(Icons.more_vert, size: 28), onPressed: () {}),
+              Lottie.asset("assets/animations/Error 404.json", width: 300, repeat: false),
+              Text("Error happened"),
             ],
           ),
         ),
@@ -357,9 +319,7 @@ class _AlbumArtwork extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref
-        .watch(isPlayingProvider)
-        .value ?? false;
+    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
     return RepaintBoundary(
       child: AnimatedBuilder(
         animation: pulseAnimation,
@@ -367,49 +327,24 @@ class _AlbumArtwork extends ConsumerWidget {
           return Transform.scale(
             scale: isPlaying ? pulseAnimation.value : 1.0,
             child: Container(
-              width: MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.9,
-              height: MediaQuery
-                  .of(context)
-                  .size
-                  .width * 0.9,
+              width: MediaQuery.of(context).size.width * 0.9,
+              height: MediaQuery.of(context).size.width * 0.9,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [BoxShadow(color: ambientColor.withAlpha(85), blurRadius: 30, spreadRadius: 5)],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  cacheWidth: (MediaQuery
-                      .of(context)
-                      .size
-                      .width * 0.9 * MediaQuery
-                      .of(context)
-                      .devicePixelRatio)
-                      .round(),
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      color: Colors.grey[900],
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                              : null,
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+                child: Hero(
+                  tag: imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
+                    fit: BoxFit.cover,
+                    errorWidget: (context, error, stackTrace) => Container(
                       color: Colors.grey[900],
                       child: const Icon(Icons.music_note, size: 100, color: Colors.white54),
-                    );
-                  },
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -439,21 +374,17 @@ class _TrackInfo extends StatelessWidget {
               children: [
                 Text(
                   track.name,
-                  style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  track.artistId,
+                  track.artistType.name,
                   style: TextStyle(
+                    fontFamily: "SpotifyMixUI",
                     fontSize: 16,
-                    color: Theme
-                        .of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.color
-                        ?.withAlpha((0.7 * 255).toInt()),
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                   ),
                 ),
               ],
@@ -461,13 +392,18 @@ class _TrackInfo extends StatelessWidget {
           ),
           Row(
             children: [
-              IconButton(icon: const Icon(Icons.queue_music), iconSize: 24, onPressed: () =>
-                  showModalBottomSheet(
-                      context: context,
-                      useRootNavigator: true,
-                      enableDrag: true,
-                      builder: (context) => QueueBottomSheet()
-                  )),
+              IconButton(
+                icon: const Icon(Icons.queue_music),
+                iconSize: 24,
+                onPressed: () => showModalBottomSheet(
+                  context: context,
+                  useRootNavigator: true,
+                  enableDrag: true,
+                  showDragHandle: true,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  builder: (context) => QueueBottomSheet(),
+                ),
+              ),
               IconButton(
                 icon: Icon(
                   track.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -505,9 +441,7 @@ class _ProgressBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final progress = ref
-        .watch(progressProvider)
-        .value;
+    final progress = ref.watch(progressProvider).value;
 
     if (progress == null) return const SizedBox.shrink();
 
@@ -518,22 +452,9 @@ class _ProgressBar extends ConsumerWidget {
             trackHeight: 3,
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            activeTrackColor: Theme
-                .of(context)
-                .textTheme
-                .bodyLarge
-                ?.color,
-            inactiveTrackColor: Theme
-                .of(context)
-                .textTheme
-                .bodyLarge
-                ?.color
-                ?.withAlpha((0.2 * 255).toInt()),
-            thumbColor: Theme
-                .of(context)
-                .textTheme
-                .bodyLarge
-                ?.color,
+            activeTrackColor: Theme.of(context).textTheme.bodyLarge?.color,
+            inactiveTrackColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha((0.2 * 255).toInt()),
+            thumbColor: Theme.of(context).textTheme.bodyLarge?.color,
           ),
           child: Slider(
             value: isUserSeeking ? sliderProgress : progress.position.inMilliseconds.toDouble(),
@@ -552,24 +473,14 @@ class _ProgressBar extends ConsumerWidget {
                 _formatDuration(progress.position),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme
-                      .of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.color
-                      ?.withAlpha((0.7 * 255).toInt()),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),
               ),
               Text(
                 _formatDuration(progress.duration ?? Duration.zero),
                 style: TextStyle(
                   fontSize: 12,
-                  color: Theme
-                      .of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.color
-                      ?.withAlpha((0.7 * 255).toInt()),
+                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),
               ),
             ],
@@ -585,54 +496,57 @@ class _PlaybackControls extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref
-        .watch(isPlayingProvider)
-        .value ?? false;
-    final isBuffering = ref
-        .watch(isBufferingProvider)
-        .value ?? false;
+    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
+    final isBuffering = ref.watch(isBufferingProvider).value ?? false;
     final playerController = ref.watch(playerControllerProvider);
-
+    final variant = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        IconButton(icon: const Icon(Icons.skip_previous), iconSize: 40, onPressed: () => playerController.skipPrev()),
-        const SizedBox(width: 18),
+        IconButton(
+          icon: const Icon(Icons.shuffle_rounded),
+          iconSize: 28,
+          onPressed: () => playerController.toggleShuffle(),
+        ),
+        const SizedBox(width: 16),
+        IconButton(
+          icon: const Icon(Icons.skip_previous_rounded),
+          iconSize: 40,
+          onPressed: () => playerController.skipPrev(),
+        ),
+        const SizedBox(width: 16),
         Container(
           width: 80,
           height: 80,
-          decoration: BoxDecoration(color: Theme
-              .of(context)
-              .textTheme
-              .bodyLarge
-              ?.color, shape: BoxShape.circle),
+          decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge?.color, shape: BoxShape.circle),
           child: isBuffering
-              ? const Padding(
-            padding: EdgeInsets.all(20.0),
-            child: CircularProgressIndicator(
-              strokeWidth: 3,
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-            ),
-          )
+              ? Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(variant)),
+                )
               : IconButton(
-            icon: Icon(
-              isPlaying ? Icons.pause : Icons.play_arrow,
-              color: Theme
-                  .of(context)
-                  .scaffoldBackgroundColor,
-            ),
-            iconSize: 40,
-            onPressed: () {
-              if (isPlaying) {
-                playerController.pause();
-              } else {
-                playerController.play();
-              }
-            },
-          ),
+                  icon: Icon(
+                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                  ),
+                  iconSize: 48,
+                  onPressed: () {
+                    if (isPlaying) {
+                      playerController.pause();
+                    } else {
+                      playerController.play();
+                    }
+                  },
+                ),
         ),
-        const SizedBox(width: 18),
-        IconButton(icon: const Icon(Icons.skip_next), iconSize: 40, onPressed: () => playerController.skipNext()),
+        const SizedBox(width: 16),
+        IconButton(
+          icon: const Icon(Icons.skip_next_rounded),
+          iconSize: 40,
+          onPressed: () => playerController.skipNext(),
+        ),
+        const SizedBox(width: 16),
+        IconButton(icon: const Icon(Icons.repeat_one_rounded), iconSize: 28, onPressed: () {}),
       ],
     );
   }
