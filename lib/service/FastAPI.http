@@ -1,8 +1,0 @@
-### GET request to example server
-POST https://nonpractical-shela-unhieratic.ngrok-free.dev/api/lyrics
-Content-Type: application/json
-
-{
-  "track_id": "115"
-}
-###

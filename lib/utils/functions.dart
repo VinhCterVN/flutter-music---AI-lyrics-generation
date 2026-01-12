@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_ai_music/service/network_service.dart';
+import 'package:html/parser.dart';
 
 import '../data/models/vibrant_request.dart';
 
@@ -59,4 +60,9 @@ Future<Color> getDominantColor(String? imageUrl) async {
     log("Unexpected error: $e");
     return defaultColor;
   }
+}
+
+String stripHtml(String htmlText) {
+  final document = parse(htmlText);
+  return parse(document.body?.text).documentElement?.text ?? '';
 }

@@ -9,7 +9,6 @@ import 'package:flutter_ai_music/ui/component/element/recent_tracks.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -200,11 +199,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ? RecentTracksSection(
                         tracks: tracks,
                         onTrackTap: (track) {
-                          Fluttertoast.showToast(
-                            msg: "Playing ${track.name}",
-                            toastLength: Toast.LENGTH_SHORT,
-                            gravity: ToastGravity.BOTTOM,
-                          );
                           final index = tracks.indexOf(track);
                           _playTrack(context, ref, tracks, index);
                         },

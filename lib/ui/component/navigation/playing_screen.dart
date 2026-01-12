@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/artist_provider.dart';
 import 'package:flutter_ai_music/provider/uistate_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
@@ -254,8 +255,6 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
                           child: ArtistCard(
                             borderRadius: BorderRadius.circular(20),
                             imageBorderRadius: BorderRadius.circular(12),
-                            artistId: currentTrack.artistId,
-                            artistType: currentTrack.artistType,
                           ),
                         ),
                         SliverToBoxAdapter(
@@ -355,13 +354,14 @@ class _AlbumArtwork extends ConsumerWidget {
   }
 }
 
-class _TrackInfo extends StatelessWidget {
+class _TrackInfo extends ConsumerWidget {
   final Track track;
 
   const _TrackInfo({required this.track});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentArtist = ref.watch(currentArtistProvider).value;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: Row(
@@ -380,7 +380,7 @@ class _TrackInfo extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  track.artistType.name,
+                  currentArtist?.name ?? 'Unknown Artist',
                   style: TextStyle(
                     fontFamily: "SpotifyMixUI",
                     fontSize: 16,
@@ -393,7 +393,7 @@ class _TrackInfo extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.queue_music),
+                icon: const Icon(Icons.queue_music_rounded),
                 iconSize: 24,
                 onPressed: () => showModalBottomSheet(
                   context: context,
@@ -406,7 +406,7 @@ class _TrackInfo extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(
-                  track.isFavorite ? Icons.favorite : Icons.favorite_border,
+                  track.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                   color: track.isFavorite ? const Color(0xFFF64A55) : null,
                 ),
                 iconSize: 24,

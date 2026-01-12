@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:marquee/marquee.dart';
 
+import '../../../provider/artist_provider.dart';
 import '../../../provider/audio_provider.dart';
 import '../../../provider/uistate_provider.dart';
 import '../../../utils/functions.dart';
@@ -52,6 +53,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
   @override
   Widget build(BuildContext context) {
     final currentTrackAsync = ref.watch(currentTrackProvider);
+    final currentArtist = ref.watch(currentArtistProvider).value;
     final isPlayingAsync = ref.watch(isPlayingProvider);
     final isBufferingAsync = ref.watch(isBufferingProvider);
     final progressAsync = ref.watch(progressProvider);
@@ -96,6 +98,15 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                       ref.read(playerControllerProvider).pause();
                     } else if (details.primaryVelocity! < -100) {
                       widget.onTap?.call();
+                    }
+                  }
+                },
+                onHorizontalDragEnd: (details) {
+                  if (details.primaryVelocity != null) {
+                    if (details.primaryVelocity! > 100) {
+                      ref.read(playerControllerProvider).skipPrev();
+                    } else if (details.primaryVelocity! < -100) {
+                      ref.read(playerControllerProvider).skipNext();
                     }
                   }
                 },
@@ -179,7 +190,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  currentTrack.artistType.name,
+                                  currentArtist?.name ?? 'Unknown Artist',
                                   style: TextStyle(fontSize: 12, color: Colors.white.withAlpha((0.9 * 255).round())),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -205,7 +216,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                 },
                                 onLongPress: () {},
                                 child: Icon(
-                                  currentTrack.isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  currentTrack.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
                                   size: 24,
                                   color: currentTrack.isFavorite
                                       ? const Color(0xFFF64A55).withAlpha((0.8 * 255).round())
@@ -232,7 +243,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                         }
                                       },
                                       child: Icon(
-                                        isPlaying ? Icons.pause : Icons.play_arrow,
+                                        isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
                                         size: 24,
                                         color: Colors.white.withAlpha((0.8 * 255).round()),
                                       ),

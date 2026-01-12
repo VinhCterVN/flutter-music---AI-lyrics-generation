@@ -80,27 +80,7 @@ final currentTrackProvider = StreamProvider<Track?>((ref) {
     final queue = ref.read(queueProvider);
     if (index < 0 || index >= queue.tracks.length) return null;
 
-    final src = queue.tracks[index];
-
-    if (src is UriAudioSource) {
-      final tag = src.tag;
-
-      if (tag is Map) {
-        return Track(
-          id: tag['id'],
-          name: tag['title'],
-          uri: src.uri.toString(),
-          artistId: tag['artistId'],
-          artistType: tag['artistType'] ?? ArtistType.NestArtist,
-          images: List<String>.from(tag['images'] ?? []),
-          genres: List<String>.from(tag['genres'] ?? []),
-          isFavorite: false,
-          createdAt: DateTime.now(),
-        );
-      }
-    }
-
-    return null;
+    return queue.rawTracks[index];
   });
 });
 

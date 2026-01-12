@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/service/spotify_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
@@ -41,9 +43,15 @@ class _SettingPageState extends ConsumerState<SettingPage> with SingleTickerProv
         children: [
           const Text("Setting Page", style: TextStyle(fontFamily: "Klavika")),
           Text("App Name: ${_info!.appName}"),
-          Text("Package Name: ${_info!.packageName}"),
-          Text("Version: ${_info!.version}"),
           Text("Build Number: ${_info!.buildNumber}"),
+
+          ElevatedButton(
+            onPressed: () async {
+              final artist = await SpotifyService.getSpotifyArtist("6KImCVD70vtIoJWnq6nGn3");
+              Fluttertoast.showToast(msg: "Artist Name: ${artist?.name}");
+            },
+            child: const Text("Get Access Token"),
+          ),
         ],
       ),
     );

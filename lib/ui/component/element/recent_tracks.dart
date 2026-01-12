@@ -1,6 +1,7 @@
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/service/spotify_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -85,14 +86,15 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                                 toastLength: Toast.LENGTH_SHORT,
                                 gravity: ToastGravity.BOTTOM,
                               );
+                              SpotifyService.getSpotifyArtist(track.artistId);
                             },
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
                               child: Row(
                                 children: [
                                   ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
+                                    borderRadius: BorderRadius.circular(4),
                                     child: Image.network(track.images.first, width: 50, height: 50, fit: BoxFit.cover),
                                   ),
                                   const SizedBox(width: 12),

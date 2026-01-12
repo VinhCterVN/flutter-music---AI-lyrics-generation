@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -17,8 +15,7 @@ class AudioHelper {
       throw ArgumentError('Invalid track selection');
     }
     final audioSources = allTracks.toAudioSources();
-    log("Audio Helper - Selected Index; $selectedIndex");
-    ref.read(queueProvider.notifier).setQueueAndPlayAt(audioSources, selectedIndex);
+    ref.read(queueProvider.notifier).setQueueAndPlayAt(audioSources, allTracks, selectedIndex);
     ref.read(playerControllerProvider).loadQueue();
     return true;
   }

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
@@ -149,65 +147,6 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _BottomActions extends StatelessWidget {
-  const _BottomActions();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF18181B),
-        border: Border(top: BorderSide(color: Colors.grey.shade800, width: 1)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: _ActionButton(icon: Icons.shuffle, label: 'Phát ngẫu nhiên', color: Colors.green, onTap: () {}),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: _ActionButton(icon: Icons.access_time, label: 'Đóng hồ hẹn giờ', color: Colors.white, onTap: () {}),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionButton({required this.icon, required this.label, required this.color, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(color: const Color(0xFF27272A), borderRadius: BorderRadius.circular(8)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
