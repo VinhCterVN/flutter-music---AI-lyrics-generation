@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
+import 'package:flutter_ai_music/ui/pages/library.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -41,10 +42,10 @@ GoRouter createRouter(WidgetRef ref) {
             routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const SettingPage())],
+            routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const LibraryPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/playing', name: 'PlayingPage', builder: (context, state) => const Placeholder())],
+            routes: [GoRoute(path: '/playing', name: 'PlayingPage', builder: (context, state) => const SettingPage())],
           ),
         ],
       ),

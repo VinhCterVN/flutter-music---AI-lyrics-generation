@@ -123,7 +123,6 @@ final isPlayingProvider = StreamProvider<bool>((ref) {
 final isBufferingProvider = StreamProvider<bool>((ref) {
   final player = ref.watch(audioPlayerProvider);
   return player.processingStateStream.map(
-    (state) =>
-        state == ProcessingState.buffering || state == ProcessingState.loading,
+    (state) => state == ProcessingState.buffering || state == ProcessingState.loading,
   );
 });

@@ -175,6 +175,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                       child: AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 200),
                         style: TextStyle(
+                          fontFamily: "SpotifyMixUI",
                           color: isActive ? Colors.white : Colors.black.withAlpha((0.5 * 255).round()),
                           fontSize: isActive ? 32 : 24,
                           fontWeight: isActive ? FontWeight.bold : FontWeight.w500,

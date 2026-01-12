@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class SettingPage extends ConsumerStatefulWidget {
   const SettingPage({super.key});
@@ -9,28 +10,42 @@ class SettingPage extends ConsumerStatefulWidget {
 }
 
 class _SettingPageState extends ConsumerState<SettingPage> with SingleTickerProviderStateMixin {
-  late AnimationController controller;
-  late Animation<double> animation;
+  PackageInfo? _info;
 
   @override
   void initState() {
     super.initState();
-    controller = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-      ..forward()
-      ..repeat(reverse: true);
-    animation = Tween<double>(begin: 0.0, end: 1.0).animate(controller);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadPackageInfo();
+    });
   }
 
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
+  Future<void> _loadPackageInfo() async {
+    final info = await PackageInfo.fromPlatform();
+    if (!mounted) return;
+    setState(() {
+      _info = info;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_info == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Center(
-      child: AnimatedIcon(icon: AnimatedIcons.ellipsis_search, progress: animation, size: 72.0, semanticLabel: 'Show menu'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 10,
+        children: [
+          const Text("Setting Page", style: TextStyle(fontFamily: "Klavika")),
+          Text("App Name: ${_info!.appName}"),
+          Text("Package Name: ${_info!.packageName}"),
+          Text("Version: ${_info!.version}"),
+          Text("Build Number: ${_info!.buildNumber}"),
+        ],
+      ),
     );
   }
 }

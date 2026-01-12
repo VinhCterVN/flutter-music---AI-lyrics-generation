@@ -21,6 +21,11 @@ dependencies:
   dio: ^5.9.0
   marquee: ^2.3.0
   lottie: ^3.3.2
+  fluttertoast: ^9.0.0
+  flutter_svg: ^2.2.3
+  carousel_slider: ^5.1.1
+  package_info_plus: ^9.0.0
+  flutter_dotenv: ^6.0.0
 
 
 dev_dependencies:
@@ -44,8 +49,10 @@ flutter:
         - asset: assets/fonts/SpotifyMixUI/spotifymixui-regular.ttf
         - asset: assets/fonts/SpotifyMixUI/spotifymixui-bold.ttf
           weight: 700
-        - asset: assets/fonts/SpotifyMixUI/spotifymixui-title-extrabold.ttf
+        - asset: assets/fonts/SpotifyMixUI/spotifymixui-title-bold.ttf
           weight: 800
+        - asset: assets/fonts/SpotifyMixUI/spotifymixui-title-extrabold.ttf
+          weight: 900
 
     - family: Klavika
       fonts:

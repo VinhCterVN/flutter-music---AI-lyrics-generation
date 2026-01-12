@@ -374,7 +374,7 @@ class _TrackInfo extends StatelessWidget {
               children: [
                 Text(
                   track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -459,19 +459,19 @@ class _ProgressBar extends ConsumerWidget {
           child: Slider(
             value: isUserSeeking ? sliderProgress : progress.position.inMilliseconds.toDouble(),
             max: (progress.duration?.inMilliseconds ?? 1).toDouble(),
-
             onChanged: onChanged,
             onChangeEnd: onChangeEnd,
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          padding: const EdgeInsets.symmetric(horizontal: 12.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 _formatDuration(progress.position),
                 style: TextStyle(
+                  fontFamily: "SpotifyMixUI",
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),
@@ -479,6 +479,7 @@ class _ProgressBar extends ConsumerWidget {
               Text(
                 _formatDuration(progress.duration ?? Duration.zero),
                 style: TextStyle(
+                  fontFamily: "SpotifyMixUI",
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),

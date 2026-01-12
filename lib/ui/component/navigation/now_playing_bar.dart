@@ -109,7 +109,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                     ),
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4)),
+                      BoxShadow(color: Colors.black.withAlpha((0.3 * 255).round()), blurRadius: 8, offset: const Offset(0, 4)),
                     ],
                   ),
                   padding: const EdgeInsets.only(top: 6, left: 6, right: 6, bottom: 2),
@@ -180,7 +180,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                 const SizedBox(height: 4),
                                 Text(
                                   currentTrack.artistType.name,
-                                  style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.9)),
+                                  style: TextStyle(fontSize: 12, color: Colors.white.withAlpha((0.9 * 255).round())),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -208,8 +208,8 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                   currentTrack.isFavorite ? Icons.favorite : Icons.favorite_border,
                                   size: 24,
                                   color: currentTrack.isFavorite
-                                      ? const Color(0xFFF64A55).withOpacity(0.8)
-                                      : Colors.white.withOpacity(0.8),
+                                      ? const Color(0xFFF64A55).withAlpha((0.8 * 255).round())
+                                      : Colors.white.withAlpha((0.8 * 255).round()),
                                 ),
                               ),
                               const SizedBox(width: 8),
@@ -234,7 +234,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                       child: Icon(
                                         isPlaying ? Icons.pause : Icons.play_arrow,
                                         size: 24,
-                                        color: Colors.white.withOpacity(0.8),
+                                        color: Colors.white.withAlpha((0.8 * 255).round()),
                                       ),
                                     ),
                               const SizedBox(width: 4),
@@ -248,8 +248,8 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                         child: LinearProgressIndicator(
                           value: progressPercent / 100,
                           minHeight: 2,
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withOpacity(0.9)),
+                          backgroundColor: Colors.white.withAlpha((0.2 * 255).round()),
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white.withAlpha((0.9 * 255).round())),
                         ),
                       ),
                     ],

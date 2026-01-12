@@ -19,10 +19,10 @@ class AppLayout extends ConsumerStatefulWidget {
 
 class _AppLayoutState extends ConsumerState<AppLayout> {
   final routes = [
-    {"name": "Home", "icon": Icons.home_outlined, "active_icon": Icons.home},
-    {"name": "Search", "icon": Icons.search_outlined, "active_icon": Icons.search},
-    {"name": "Library", "icon": Icons.library_add_outlined, "active_icon": Icons.library_add},
-    {"name": "Settings", "icon": Icons.settings_outlined, "active_icon": Icons.settings},
+    {"name": "Home", "icon": Icons.home_outlined, "active_icon": Icons.home_rounded},
+    {"name": "Search", "icon": Icons.search_outlined, "active_icon": Icons.search_rounded},
+    {"name": "Library", "icon": Icons.library_add_outlined, "active_icon": Icons.library_add_rounded},
+    {"name": "Settings", "icon": Icons.settings_outlined, "active_icon": Icons.settings_rounded},
   ];
 
   @override

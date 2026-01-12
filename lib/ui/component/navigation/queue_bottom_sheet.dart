@@ -32,7 +32,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                 height: 56,
                 decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
                 child: ClipRRect(
-                  clipBehavior: Clip.hardEdge,
+                  clipBehavior: Clip.antiAlias,
                   borderRadius: BorderRadius.circular(4),
                   child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
                 ),
@@ -44,7 +44,12 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                   children: [
                     Text(
                       currentTrack.name,
-                      style: const TextStyle(color: Colors.green, fontSize: 16, fontWeight: FontWeight.w500),
+                      style: const TextStyle(
+                        fontFamily: "SpotifyMixUI",
+                        color: Colors.green,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -90,7 +95,6 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
             itemBuilder: (context, index) {
               final track = queue.tracks[index] as UriAudioSource;
               final tag = track.tag as Map<String, Object>;
-              log('tag: $tag');
               return InkWell(
                 onTap: () {},
                 child: Padding(
@@ -134,7 +138,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                         ),
                       ),
                       IconButton(
-                        icon: Icon(Icons.more_horiz, color: Colors.grey.shade400),
+                        icon: Icon(Icons.drag_handle_rounded, color: Colors.grey.shade400),
                         onPressed: () {},
                       ),
                     ],
