@@ -23,7 +23,6 @@ class PlayingScreen extends ConsumerStatefulWidget {
 }
 
 class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProviderStateMixin {
-  bool _showControls = false;
   bool _isUserSeeking = false;
   double _sliderProgress = 0.0;
   Color? _previousColor;
@@ -37,17 +36,6 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
   @override
   void initState() {
     super.initState();
-
-    widget.scrollController.addListener(() {
-      final offset = widget.scrollController.offset;
-
-      if (offset > 200 && !_showControls) {
-        setState(() => _showControls = true);
-      } else if (offset <= 200 && _showControls) {
-        setState(() => _showControls = false);
-      }
-    });
-
     _pulseController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this)
       ..repeat(reverse: true);
 
@@ -184,11 +172,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
                           actions: [
                             Padding(
                               padding: const EdgeInsets.only(top: 10),
-                              child: IconButton(
-                                // dart
-                                onPressed: () {},
-                                icon: const Icon(Icons.more_vert_rounded),
-                              ),
+                              child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
                             ),
                           ],
                           flexibleSpace: FlexibleSpaceBar(
@@ -335,7 +319,7 @@ class _AlbumArtwork extends ConsumerWidget {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Hero(
-                  tag: imageUrl,
+                  tag: "now-playing-track-$imageUrl",
                   child: CachedNetworkImage(
                     imageUrl: imageUrl,
                     fit: BoxFit.cover,
@@ -398,6 +382,7 @@ class _TrackInfo extends ConsumerWidget {
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   useRootNavigator: true,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
                   enableDrag: true,
                   showDragHandle: true,
                   backgroundColor: Theme.of(context).colorScheme.surface,
@@ -447,14 +432,20 @@ class _ProgressBar extends ConsumerWidget {
 
     return Column(
       children: [
-        SliderTheme(
-          data: SliderThemeData(
-            trackHeight: 3,
-            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-            overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-            activeTrackColor: Theme.of(context).textTheme.bodyLarge?.color,
-            inactiveTrackColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha((0.2 * 255).toInt()),
-            thumbColor: Theme.of(context).textTheme.bodyLarge?.color,
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: isUserSeeking ? 3 : 5, end: isUserSeeking ? 5 : 3),
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOutCubic,
+          builder: (context, trackHeight, child) => SliderTheme(
+            data: SliderThemeData(
+              trackHeight: trackHeight,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+              activeTrackColor: Theme.of(context).textTheme.bodyLarge?.color,
+              inactiveTrackColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha((0.2 * 255).toInt()),
+              thumbColor: Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+            child: child!,
           ),
           child: Slider(
             value: isUserSeeking ? sliderProgress : progress.position.inMilliseconds.toDouble(),

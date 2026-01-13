@@ -71,12 +71,15 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
                 Positioned.fill(
                   child: ImageFiltered(
                     imageFilter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
-                    child: CachedNetworkImage(
-                      imageUrl: widget.track.images.first,
-                      fit: BoxFit.cover,
-                      errorWidget: (context, url, error) => Container(
-                        decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                        child: Center(child: Icon(Icons.error_rounded)),
+                    child: Hero(
+                      tag: "track-${widget.track.id}",
+                      child: CachedNetworkImage(
+                        imageUrl: widget.track.images.first,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) => Container(
+                          decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
+                          child: Center(child: Icon(Icons.error_rounded)),
+                        ),
                       ),
                     ),
                   ),
@@ -109,7 +112,8 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
                                 Text(
                                   widget.track.name,
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontFamily: "SpotifyMixUI",
+                                    fontSize: 18,
                                     color: Colors.white.withAlpha(200),
                                     fontWeight: FontWeight.bold,
                                     shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2), blurRadius: 4)],

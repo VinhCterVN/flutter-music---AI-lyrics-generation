@@ -131,22 +131,25 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: CachedNetworkImage(
-                              imageUrl: currentTrack.images.isNotEmpty ? currentTrack.images.first : '',
-                              width: 44,
-                              height: 44,
-                              fit: BoxFit.cover,
-                              placeholder: (context, url) => Container(
+                            child: Hero(
+                              tag: "now-playing-track-${currentTrack.images.first}",
+                              child: CachedNetworkImage(
+                                imageUrl: currentTrack.images.isNotEmpty ? currentTrack.images.first : '',
                                 width: 44,
                                 height: 44,
-                                color: Colors.grey[900],
-                                child: const Icon(Icons.music_note, color: Colors.white54),
-                              ),
-                              errorWidget: (context, url, error) => Container(
-                                width: 44,
-                                height: 44,
-                                color: Colors.grey[900],
-                                child: const Icon(Icons.music_note, color: Colors.white54),
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  width: 44,
+                                  height: 44,
+                                  color: Colors.grey[900],
+                                  child: const Icon(Icons.music_note, color: Colors.white54),
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 44,
+                                  height: 44,
+                                  color: Colors.grey[900],
+                                  child: const Icon(Icons.music_note, color: Colors.white54),
+                                ),
                               ),
                             ),
                           ),

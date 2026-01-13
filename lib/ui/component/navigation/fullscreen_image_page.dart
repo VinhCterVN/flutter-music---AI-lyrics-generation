@@ -4,9 +4,9 @@ import 'package:photo_view/photo_view.dart';
 
 class FullscreenImagePage extends StatelessWidget {
   final String imageUrl;
-  final String tag;
+  final String? tag;
 
-  const FullscreenImagePage({required this.imageUrl, required this.tag, super.key});
+  const FullscreenImagePage({required this.imageUrl, this.tag, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class FullscreenImagePage extends StatelessWidget {
         minScale: PhotoViewComputedScale.contained,
         maxScale: PhotoViewComputedScale.covered * 3,
         backgroundDecoration: const BoxDecoration(color: Colors.transparent),
-        heroAttributes: PhotoViewHeroAttributes(tag: tag),
+        heroAttributes: PhotoViewHeroAttributes(tag: tag ?? imageUrl),
       ),
     );
   }

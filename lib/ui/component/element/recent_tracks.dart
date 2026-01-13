@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
@@ -95,7 +96,12 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                                 children: [
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(4),
-                                    child: Image.network(track.images.first, width: 50, height: 50, fit: BoxFit.cover),
+                                    child: CachedNetworkImage(
+                                      imageUrl: track.images.first,
+                                      width: 50,
+                                      height: 50,
+                                      fit: BoxFit.cover,
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(

@@ -36,7 +36,6 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
     final imageUrl = currentArtist != null
         ? currentArtist.images.first.url
         : 'https://picsum.photos/1000/500?random=$fallbackRandom';
-    final tag = currentArtist != null ? 'artist_${currentArtist.id}' : 'unknown_artist_$fallbackRandom';
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -53,8 +52,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                     opaque: false,
                     barrierColor: Colors.black54,
                     transitionDuration: Duration(milliseconds: 300),
-                    reverseTransitionDuration: Duration(milliseconds: 250),
-                    pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: imageUrl, tag: tag),
+                    pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: imageUrl),
                   ),
                 ),
                 child: ClipRRect(
@@ -62,20 +60,17 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                     topLeft: widget.borderRadius.topLeft,
                     topRight: widget.borderRadius.topRight,
                   ),
-                  child: Hero(
-                    tag: tag,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 400),
-                      switchInCurve: Curves.easeIn,
-                      switchOutCurve: Curves.easeOut,
-                      transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
-                      child: CachedNetworkImage(
-                        key: ValueKey(imageUrl),
-                        imageUrl: imageUrl,
-                        width: double.infinity,
-                        height: 200,
-                        fit: BoxFit.cover,
-                      ),
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    switchInCurve: Curves.easeIn,
+                    switchOutCurve: Curves.easeOut,
+                    transitionBuilder: (child, animation) => FadeTransition(opacity: animation, child: child),
+                    child: CachedNetworkImage(
+                      key: ValueKey(imageUrl),
+                      imageUrl: imageUrl,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),

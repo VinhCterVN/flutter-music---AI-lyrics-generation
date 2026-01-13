@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'now_playing_bar.dart';
@@ -13,8 +14,12 @@ class MyNavigationBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackProvider).value;
+    final bool hasTrack = currentTrack != null;
+    final double barHeight = hasTrack ? 140.0 : 79.0;
+
     return SizedBox(
-      height: 140,
+      height: barHeight,
       child: Stack(
         children: [
           Positioned.fill(
@@ -28,31 +33,32 @@ class MyNavigationBar extends ConsumerWidget {
               ),
             ),
           ),
-          Align(
-            alignment: AlignmentGeometry.topCenter,
-            child: NowPlayingBar(
-              onTap: () => showModalBottomSheet(
-                context: context,
-                useRootNavigator: true,
-                isScrollControlled: true,
-                enableDrag: true,
-                barrierColor: Colors.black54,
-                backgroundColor: Colors.transparent,
-                builder: (context) {
-                  return DraggableScrollableSheet(
-                    initialChildSize: 1.0,
-                    minChildSize: 0.25,
-                    maxChildSize: 1.0,
-                    snap: true,
-                    snapSizes: const [1.0],
-                    builder: (context, scrollController) {
-                      return PlayingScreen(scrollController: scrollController);
-                    },
-                  );
-                },
+          if (hasTrack)
+            Align(
+              alignment: AlignmentGeometry.topCenter,
+              child: NowPlayingBar(
+                onTap: () => showModalBottomSheet(
+                  context: context,
+                  useRootNavigator: true,
+                  isScrollControlled: true,
+                  enableDrag: true,
+                  barrierColor: Colors.black54,
+                  backgroundColor: Colors.transparent,
+                  builder: (context) {
+                    return DraggableScrollableSheet(
+                      initialChildSize: 1.0,
+                      minChildSize: 0.25,
+                      maxChildSize: 1.0,
+                      snap: true,
+                      snapSizes: const [1.0],
+                      builder: (context, scrollController) {
+                        return PlayingScreen(scrollController: scrollController);
+                      },
+                    );
+                  },
+                ),
               ),
             ),
-          ),
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(

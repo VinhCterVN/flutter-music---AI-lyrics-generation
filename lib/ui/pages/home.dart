@@ -20,7 +20,6 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
-  StreamSubscription<List<Track>>? _sub;
   int selectedGenreIndex = -1;
 
   @override
@@ -33,18 +32,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Future<void> fetchTracks() async {
     final trackService = ref.read(trackServiceProvider);
-    _sub = trackService.streamTrackList(ref).listen((newTracks) {
-      if (mounted) {
-        setState(() {
-          tracks = newTracks;
-        });
-      }
-    });
+    final res = await trackService.getAllTracks(ref);
+    if (!mounted) return;
+    setState(() => tracks = res);
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
     _controller.dispose();
     super.dispose();
   }

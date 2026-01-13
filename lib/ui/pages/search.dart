@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/ui/component/element/track_card_demo.dart';
+import 'package:flutter_ai_music/ui/component/navigation/fullscreen_image_page.dart';
 import 'package:flutter_ai_music/ui/component/navigation/playing_screen.dart';
-import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../data/models/track.dart';
@@ -17,7 +17,6 @@ class SearchPage extends ConsumerStatefulWidget {
 }
 
 class _SearchPageState extends ConsumerState<SearchPage> {
-  Track? currentTrack;
   List<Track> tracks = [];
   StreamSubscription<List<Track>>? _sub;
 
@@ -26,14 +25,8 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   @override
   void initState() {
-    final trackService = ref.read(trackServiceProvider);
-    _sub = trackService.streamTrackList(ref).listen((newTracks) {
-      setState(() {
-        tracks = newTracks;
-      });
-    });
-
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
   }
 
   @override
@@ -45,10 +38,11 @@ class _SearchPageState extends ConsumerState<SearchPage> {
     super.dispose();
   }
 
-  void playTrack(Track track) {
-    setState(() {
-      currentTrack = track;
-    });
+  Future<void> fetchTracks() async {
+    final trackService = ref.read(trackServiceProvider);
+    final res = await trackService.getAllTracks(ref);
+    if (!mounted) return;
+    setState(() => tracks = res);
   }
 
   void toggleLike(String trackId) {
@@ -85,51 +79,68 @@ class _SearchPageState extends ConsumerState<SearchPage> {
 
   @override
   Widget build(BuildContext context) {
-    return CustomScrollView(
-      slivers: [
-        SliverToBoxAdapter(child: SizedBox(height: 100)),
-        SliverPadding(
-          padding: const EdgeInsets.all(16),
-          sliver: SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 0.75,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) => TrackCardDemo(
-                track: mockTracks[index],
-                onPlay: () {
-                  showModalBottomSheet(
-                    context: context,
-                    useRootNavigator: true,
-                    isScrollControlled: true,
-                    enableDrag: true,
-                    barrierColor: Colors.black54,
-                    backgroundColor: Colors.transparent,
-                    builder: (context) {
-                      return DraggableScrollableSheet(
-                        initialChildSize: 1.0,
-                        minChildSize: 0.5,
-                        maxChildSize: 1.0,
-                        snap: true,
-                        snapSizes: const [1.0],
-                        builder: (context, scrollController) {
-                          return PlayingScreen(scrollController: scrollController);
-                        },
-                      );
-                    },
-                  );
-                },
-                onFavorite: () {},
+    return RefreshIndicator(
+      onRefresh: () async => fetchTracks(),
+      child: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(child: SizedBox(height: 100)),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverGrid(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.75,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
               ),
-              childCount: mockTracks.length,
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => TrackCardDemo(
+                  track: tracks[index],
+                  onTap: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      PageRouteBuilder(
+                        opaque: false,
+                        barrierColor: Colors.black54,
+                        transitionDuration: Duration(milliseconds: 300),
+                        reverseTransitionDuration: Duration(milliseconds: 300),
+                        pageBuilder: (_, __, ___) => FullscreenImagePage(
+                          imageUrl: tracks[index].images.first,
+                          tag: "track-${tracks[index].id}",
+                        ),
+                      ),
+                    );
+                  },
+                  onPlay: () {
+                    showModalBottomSheet(
+                      context: context,
+                      useRootNavigator: true,
+                      isScrollControlled: true,
+                      enableDrag: true,
+                      barrierColor: Colors.black54,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) {
+                        return DraggableScrollableSheet(
+                          initialChildSize: 1.0,
+                          minChildSize: 0.5,
+                          maxChildSize: 1.0,
+                          snap: true,
+                          snapSizes: const [1.0],
+                          builder: (context, scrollController) {
+                            return PlayingScreen(scrollController: scrollController);
+                          },
+                        );
+                      },
+                    );
+                  },
+                  onFavorite: () {},
+                ),
+                childCount: tracks.length,
+              ),
             ),
           ),
-        ),
-        SliverToBoxAdapter(child: SizedBox(height: 100)),
-      ],
+          SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
+      ),
     );
   }
 }
