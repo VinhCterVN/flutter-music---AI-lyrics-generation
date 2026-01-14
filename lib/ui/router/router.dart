@@ -42,10 +42,10 @@ GoRouter createRouter(WidgetRef ref) {
             routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const LibraryPage())],
+            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/playing', name: 'PlayingPage', builder: (context, state) => const SettingPage())],
+            routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const LibraryPage())],
           ),
         ],
       ),

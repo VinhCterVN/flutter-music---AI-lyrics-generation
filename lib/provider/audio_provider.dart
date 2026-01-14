@@ -9,8 +9,10 @@ import 'package:rxdart/rxdart.dart';
 
 import '../data/controller/player_controller.dart';
 import '../data/controller/queue_controller.dart';
+import '../data/models/artist.dart';
 import '../data/models/track.dart';
 import '../service/audio_handler_service.dart';
+import 'artist_provider.dart';
 
 final audioPlayerProvider = Provider<AudioPlayer>((ref) {
   final player = AudioPlayer();
@@ -58,10 +60,16 @@ final playerControllerProvider = Provider<PlayerController>((ref) {
   final player = ref.watch(audioPlayerProvider);
   final controller = PlayerController(player, ref);
 
+  ref.listen<AsyncValue<SpotifyArtist?>>(currentArtistProvider, (_, next) {
+    next.whenData((artist) {
+      if (artist != null) {
+        ref.read(currentTrackProvider).value?.updateArtistName(artist.name);
+      }
+    });
+  });
+
   ref.listen(queueProvider, (previous, next) {
-    if (previous == null ||
-        previous.tracks != next.tracks ||
-        previous.currentIndex != next.currentIndex) {
+    if (previous == null || previous.tracks != next.tracks || previous.currentIndex != next.currentIndex) {
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         await controller.loadQueue();
         await controller.play();
@@ -105,4 +113,14 @@ final isBufferingProvider = StreamProvider<bool>((ref) {
   return player.processingStateStream.map(
     (state) => state == ProcessingState.buffering || state == ProcessingState.loading,
   );
+});
+
+final shuffleModeProvider = StreamProvider<bool>((ref) {
+  final player = ref.watch(audioPlayerProvider);
+  return player.shuffleModeEnabledStream;
+});
+
+final repeatModeProvider = StreamProvider<LoopMode>((ref) {
+  final player = ref.watch(audioPlayerProvider);
+  return player.loopModeStream;
 });

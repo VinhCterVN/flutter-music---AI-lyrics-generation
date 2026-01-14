@@ -157,7 +157,7 @@ class AudioPlayerHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     return MediaItem(
       id: track.id.toString(),
       title: track.name,
-      artist: track.artistId,
+      artist: track.artistName ?? track.artistType.name,
       album: track.name,
       duration: null,
       // Will be updated when audio loads

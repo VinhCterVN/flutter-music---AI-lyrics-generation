@@ -1,6 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:marquee/marquee.dart';
 
 import '../../../provider/artist_provider.dart';
@@ -120,7 +124,11 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                     ),
                     borderRadius: BorderRadius.circular(6),
                     boxShadow: [
-                      BoxShadow(color: Colors.black.withAlpha((0.3 * 255).round()), blurRadius: 8, offset: const Offset(0, 4)),
+                      BoxShadow(
+                        color: Colors.black.withAlpha((0.3 * 255).round()),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
                   ),
                   padding: const EdgeInsets.only(top: 6, left: 6, right: 6, bottom: 2),
@@ -203,56 +211,48 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                           ),
                           const SizedBox(width: 8),
                           // Controls
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
-                                      ),
-                                      duration: const Duration(seconds: 1),
-                                    ),
-                                  );
-                                },
-                                onLongPress: () {},
-                                child: Icon(
-                                  currentTrack.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
-                                  size: 24,
-                                  color: currentTrack.isFavorite
-                                      ? const Color(0xFFF64A55).withAlpha((0.8 * 255).round())
-                                      : Colors.white.withAlpha((0.8 * 255).round()),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: 4,
+                              children: [
+                                GestureDetector(
+                                  onTap: () => Fluttertoast.showToast(
+                                    msg: currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
+                                  ),
+                                  onLongPress: () {},
+                                  child: HugeIcon(icon: HugeIconsStrokeRounded.heartAdd),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              isBuffering
-                                  ? const SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                SizedBox(width: 4),
+                                isBuffering
+                                    ? SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            Theme.of(context).colorScheme.primaryFixedDim,
+                                          ),
+                                        ),
+                                      )
+                                    : GestureDetector(
+                                        onTap: () {
+                                          final controller = ref.read(playerControllerProvider);
+                                          if (isPlaying) {
+                                            controller.pause();
+                                          } else {
+                                            controller.play();
+                                          }
+                                        },
+                                        child: FaIcon(
+                                          isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+                                          size: 18,
+                                        ),
                                       ),
-                                    )
-                                  : GestureDetector(
-                                      onTap: () {
-                                        final controller = ref.read(playerControllerProvider);
-                                        if (isPlaying) {
-                                          controller.pause();
-                                        } else {
-                                          controller.play();
-                                        }
-                                      },
-                                      child: Icon(
-                                        isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                                        size: 24,
-                                        color: Colors.white.withAlpha((0.8 * 255).round()),
-                                      ),
-                                    ),
-                              const SizedBox(width: 4),
-                            ],
+                                SizedBox(width: 4),
+                              ],
+                            ),
                           ),
                         ],
                       ),

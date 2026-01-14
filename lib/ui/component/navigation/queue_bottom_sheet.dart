@@ -12,7 +12,7 @@ class QueueBottomSheet extends ConsumerStatefulWidget {
   ConsumerState<QueueBottomSheet> createState() => _QueueBottomSheetState();
 }
 
-class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
+class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final queue = ref.read(queueProvider);
@@ -53,7 +53,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      currentTrack.artistType.name,
+                      currentTrack.artistName ?? currentTrack.artistType.name,
                       style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -127,7 +127,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              (tag["artistType"] as ArtistType).name,
+                              (tag["artistName"] as String?) ?? ArtistType.SpotifyArtist.name,
                               style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,

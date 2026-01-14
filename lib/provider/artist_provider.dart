@@ -8,11 +8,9 @@ import 'audio_provider.dart';
 
 final currentArtistProvider = FutureProvider<SpotifyArtist?>((ref) async {
   final currentTrack = ref.watch(currentTrackProvider).value;
-
   if (currentTrack == null) return null;
 
   final artistId = currentTrack.artistId;
-
   return await SpotifyService.getSpotifyArtist(artistId);
 });
 

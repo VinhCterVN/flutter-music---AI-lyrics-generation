@@ -7,6 +7,9 @@ import 'package:flutter_ai_music/provider/uistate_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons/styles/stroke_rounded.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../../data/models/track.dart';
@@ -386,12 +389,13 @@ class _TrackInfo extends ConsumerWidget {
                   enableDrag: true,
                   showDragHandle: true,
                   backgroundColor: Theme.of(context).colorScheme.surface,
+                  isDismissible: true,
                   builder: (context) => QueueBottomSheet(),
                 ),
               ),
               IconButton(
-                icon: Icon(
-                  track.isFavorite ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                icon: HugeIcon(
+                  icon: HugeIcons.strokeRoundedHeartAdd,
                   color: track.isFavorite ? const Color(0xFFF64A55) : null,
                 ),
                 iconSize: 24,
@@ -486,17 +490,42 @@ class _ProgressBar extends ConsumerWidget {
 class _PlaybackControls extends ConsumerWidget {
   const _PlaybackControls();
 
+  void togglePlayPause(WidgetRef ref, bool isPlaying) {
+    final playerController = ref.read(playerControllerProvider);
+    if (isPlaying) {
+      playerController.pause();
+    } else {
+      playerController.play();
+    }
+  }
+
+  void toggleShuffle(WidgetRef ref) {
+    final playerController = ref.read(playerControllerProvider);
+    playerController.toggleShuffle();
+  }
+
+  void toggleRepeat(WidgetRef ref) {
+    final playerController = ref.read(playerControllerProvider);
+    playerController.switchRepeatMode();
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isPlaying = ref.watch(isPlayingProvider).value ?? false;
     final isBuffering = ref.watch(isBufferingProvider).value ?? false;
     final playerController = ref.watch(playerControllerProvider);
-    final variant = Theme.of(context).colorScheme.onSurfaceVariant;
+    final isShuffleOn = ref.watch(shuffleModeProvider).value ?? false;
+    final loopMode = ref.watch(repeatModeProvider).value ?? LoopMode.off;
+    final variant = Theme.of(context).colorScheme.surfaceContainerHighest;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          icon: const Icon(Icons.shuffle_rounded),
+          icon: HugeIcon(
+            icon: HugeIconsStrokeRounded.shuffle,
+            strokeWidth: isShuffleOn ? 3.0 : 1.5,
+            color: isShuffleOn ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           iconSize: 28,
           onPressed: () => playerController.toggleShuffle(),
         ),
@@ -508,8 +537,8 @@ class _PlaybackControls extends ConsumerWidget {
         ),
         const SizedBox(width: 16),
         Container(
-          width: 80,
-          height: 80,
+          width: 79,
+          height: 79,
           decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge?.color, shape: BoxShape.circle),
           child: isBuffering
               ? Padding(
@@ -522,13 +551,7 @@ class _PlaybackControls extends ConsumerWidget {
                     color: Theme.of(context).scaffoldBackgroundColor,
                   ),
                   iconSize: 48,
-                  onPressed: () {
-                    if (isPlaying) {
-                      playerController.pause();
-                    } else {
-                      playerController.play();
-                    }
-                  },
+                  onPressed: () => togglePlayPause(ref, isPlaying),
                 ),
         ),
         const SizedBox(width: 16),
@@ -538,7 +561,21 @@ class _PlaybackControls extends ConsumerWidget {
           onPressed: () => playerController.skipNext(),
         ),
         const SizedBox(width: 16),
-        IconButton(icon: const Icon(Icons.repeat_one_rounded), iconSize: 28, onPressed: () {}),
+        IconButton(
+          icon: HugeIcon(
+            icon: loopMode == LoopMode.one
+                ? HugeIcons.strokeRoundedRepeatOne01
+                : loopMode == LoopMode.all
+                ? HugeIcons.strokeRoundedRepeat
+                : HugeIcons.strokeRoundedRepeatOff,
+            color: loopMode == LoopMode.off
+                ? Theme.of(context).colorScheme.onSurfaceVariant
+                : Theme.of(context).colorScheme.primary,
+            strokeWidth: loopMode == LoopMode.off ? 1.5 : 3.0,
+          ),
+          iconSize: 28,
+          onPressed: () => toggleRepeat(ref),
+        ),
       ],
     );
   }

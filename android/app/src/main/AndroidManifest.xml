@@ -9,6 +9,7 @@
             android:label="Flussic"
             android:name="${applicationName}"
             android:icon="@mipmap/ic_launcher"
+            android:hardwareAccelerated="true"
             android:enableOnBackInvokedCallback="true">
         <activity
                 android:name="com.example.flutter_ai_music.MainActivity"

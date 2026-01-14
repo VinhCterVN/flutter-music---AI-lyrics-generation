@@ -1,156 +1,157 @@
-import 'dart:developer';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:video_player/video_player.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
-class SettingPage extends ConsumerStatefulWidget {
-  const SettingPage({super.key});
+import '../component/element/slide/video_slide.dart';
+
+// Import your VideoSlide widget here
+// import 'package:flutter_ai_music/ui/component/element/slide/video_slide.dart';
+
+class BoltPage extends ConsumerStatefulWidget {
+  const BoltPage({super.key});
 
   @override
-  ConsumerState<SettingPage> createState() => _SettingPageState();
+  ConsumerState<BoltPage> createState() => _SettingPageState();
 }
 
-class _SettingPageState extends ConsumerState<SettingPage> {
-  Duration _animationDuration = const Duration(milliseconds: 300);
-  late VideoPlayerController _controller;
-  final double _sensitivity = 1.2;
-  late final double _minHeight;
-  late final double _screenHeight;
-  late final double _maxHeight;
-  double _sheetHeight = 0;
-  double _dragStartHeight = 0;
+class _SettingPageState extends ConsumerState<BoltPage> {
+  late final PageController _pageController;
+  final Map<int, File> _cachedFiles = {};
+  int _currentPage = 0;
+  bool _isPreloading = false;
 
   final List<String> uris = [
+    "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768405581/zwh1b2g4wdg9gs3ben7w.mp4",
     "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768311703/m0mzzzicicnvrkowohfl.mp4",
+    "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768405581/zwh1b2g4wdg9gs3ben7w.mp4",
     "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768311702/vuanwygboqhqvtpbns9l.mp4",
     "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768311701/jfkdlqtzyrlbkxsgyvve.mp4",
     "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768309790/rddcekwduscpzioxfa3x.mp4",
+    "https://res.cloudinary.com/dtf1ao1ds/video/upload/v1768405581/zwh1b2g4wdg9gs3ben7w.mp4",
   ];
 
   @override
   void initState() {
     super.initState();
-    _controller =
-        VideoPlayerController.networkUrl(
-            Uri.parse(uris[3]),
-            videoPlayerOptions: VideoPlayerOptions(allowBackgroundPlayback: true),
-          )
-          ..initialize().then((_) {
-            if (!mounted) return;
+    _pageController = PageController();
+    _preloadVideos(0);
+  }
 
-            final Size(:width, :height) = MediaQuery.of(context).size;
-            final topPadding = MediaQuery.of(context).padding.top;
+  Future<void> _preloadVideos(int currentIndex) async {
+    if (_isPreloading) return;
+    _isPreloading = true;
 
-            _screenHeight = height;
-            _minHeight = _screenHeight * 0.6;
+    try {
+      // Preload current, next and previous
+      final indicesToLoad = [
+        currentIndex,      // Current (priority)
+        currentIndex + 1,  // Next
+        currentIndex - 1,  // Previous
+      ];
 
-            final videoHeight = width / _controller.value.aspectRatio;
-            final availableHeight = height - topPadding - videoHeight;
+      // Load current first, then adjacent videos
+      for (final index in indicesToLoad) {
+        if (index >= 0 && index < uris.length && !_cachedFiles.containsKey(index)) {
+          await _preload(index);
 
-            _maxHeight = availableHeight.clamp(_minHeight, height - topPadding - 100);
+          // Small delay between downloads to avoid overwhelming network
+          if (mounted) {
+            await Future.delayed(const Duration(milliseconds: 100));
+          }
+        }
+      }
+    } finally {
+      _isPreloading = false;
+    }
+  }
 
-            setState(() {});
-          });
+  Future<void> _preload(int index) async {
+    if (index < 0 || index >= uris.length) return;
+    if (_cachedFiles.containsKey(index)) return;
+
+    try {
+      debugPrint('Preloading video at index $index');
+
+      final file = await DefaultCacheManager().getSingleFile(
+        uris[index],
+        key: 'video_$index', // Add unique key for better cache management
+      );
+
+      if (mounted) {
+        setState(() {
+          _cachedFiles[index] = file;
+        });
+        debugPrint('Successfully cached video at index $index');
+      }
+    } catch (e) {
+      debugPrint('Error preloading video at index $index: $e');
+    }
+  }
+
+  void _onPageChanged(int index) {
+    if (_currentPage == index) return;
+
+    debugPrint('Page changed from $_currentPage to $index');
+
+    setState(() {
+      _currentPage = index;
+    });
+
+    // Preload adjacent videos
+    _preloadVideos(index);
   }
 
   @override
   void dispose() {
-    _controller.dispose();
+    _pageController.dispose();
     super.dispose();
-  }
-
-  void _toggleSheet() => setState(() => _sheetHeight = _sheetHeight == 0 ? _maxHeight : 0);
-
-  void _handlePanStart(DragStartDetails details) {
-    if (_sheetHeight <= 0) return;
-    _dragStartHeight = _sheetHeight;
-
-    setState(() => _animationDuration = Duration.zero);
-  }
-
-  void _handlePanUpdate(DragUpdateDetails details) {
-    if (_sheetHeight <= 0 && _dragStartHeight <= 0) return;
-
-    final Offset(:dx, :dy) = details.delta;
-    if (dx.abs() < dy.abs() * 1.5) return;
-    if (dx < 0 && _sheetHeight == _screenHeight) return;
-
-    setState(() {
-      double newHeight = _sheetHeight - dx * _sensitivity;
-      _sheetHeight = newHeight.clamp(0.0, _maxHeight);
-    });
-  }
-
-  void _handlePanEnd(DragEndDetails details) {
-    if (_dragStartHeight <= 0) return;
-
-    setState(() {
-      _animationDuration = const Duration(milliseconds: 300);
-      final totalDragDistance = _dragStartHeight - _sheetHeight;
-      final velocityX = details.velocity.pixelsPerSecond.dx;
-
-      if ((velocityX > 500 && totalDragDistance > 25) || totalDragDistance > _maxHeight / 2 || _sheetHeight < 100) {
-        _sheetHeight = 0;
-      } else {
-        _sheetHeight = _maxHeight;
-      }
-    });
-
-    _dragStartHeight = 0;
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final topPadding = MediaQuery.of(context).padding.top;
+
     return Scaffold(
       body: SafeArea(
         top: true,
         bottom: false,
-        child: Column(
-          children: [
-            Expanded(
-              child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      if (_controller.value.isPlaying) {
-                        _controller.pause();
-                      } else {
-                        _controller.play();
-                      }
-                    });
-                  },
-                  onLongPress: _toggleSheet,
-                  child: _controller.value.isInitialized
-                      ? AspectRatio(aspectRatio: _controller.value.aspectRatio, child: VideoPlayer(_controller))
-                      : Container(),
+        child: PageView.builder(
+          controller: _pageController,
+          scrollDirection: Axis.vertical,
+          itemCount: uris.length,
+          pageSnapping: true,
+          onPageChanged: _onPageChanged,
+          physics: const PageScrollPhysics(),
+          allowImplicitScrolling: true,
+          itemBuilder: (context, index) {
+            final file = _cachedFiles[index];
+
+            if (file == null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Loading video ${index + 1}/${uris.length}',
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            GestureDetector(
-              onPanStart: _handlePanStart,
-              onPanUpdate: _handlePanUpdate,
-              onPanEnd: _handlePanEnd,
-              child: AnimatedContainer(
-                duration: _animationDuration,
-                curve: Curves.easeOutCubic,
-                height: _sheetHeight,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceBright,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: _sheetHeight <= 50
-                    ? SizedBox.shrink()
-                    : Column(
-                        children: [
-                          Icon(Icons.drag_handle, color: Colors.grey),
-                          Text("Đây là nội dung chiếm diện tích thực"),
-                        ],
-                      ),
-              ),
-            ),
-          ],
+              );
+            }
+
+            return VideoSlide(
+              key: ValueKey('video_$index'),
+              videoFile: file,
+              screenHeight: screenHeight,
+              isCurrentPage: index == _currentPage,
+            );
+          },
         ),
       ),
     );

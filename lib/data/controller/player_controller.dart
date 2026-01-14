@@ -47,12 +47,10 @@ class PlayerController {
   }
 
   Future<void> skipNext() async {
-    ref.read(queueProvider.notifier).next();
     await player.seekToNext();
   }
 
   Future<void> skipPrev() async {
-    ref.read(queueProvider.notifier).previous();
     await player.seekToPrevious();
   }
 }

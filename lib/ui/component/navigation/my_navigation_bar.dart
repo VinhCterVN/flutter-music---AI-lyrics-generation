@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import 'now_playing_bar.dart';
 import 'playing_screen.dart';
@@ -170,10 +171,13 @@ class _NavBarItemState extends State<NavBarItem> with SingleTickerProviderStateM
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Icon(
+              FaIcon(
                 widget.selected ? widget.activeIcon : widget.icon,
+                fill: widget.selected ? 1 : 0,
                 color: widget.selected ? colorScheme.onSurface : Colors.grey,
-                size: 28,
+                grade: 10,
+                applyTextScaling: true,
+                size: 24,
               ),
               const SizedBox(height: 4),
               Text(

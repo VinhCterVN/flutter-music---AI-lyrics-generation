@@ -1,14 +1,22 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
-import 'package:flutter_ai_music/ui/component/element/recent_tracks.dart';
+import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
+import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:lottie/lottie.dart';
+
+import '../../data/database/track_database.dart';
+import '../component/element/recent_tracks.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -21,18 +29,19 @@ class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
   int selectedGenreIndex = -1;
+  bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
     _controller = ScrollController();
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedTracks());
   }
 
   Future<void> fetchTracks() async {
     final trackService = ref.read(trackServiceProvider);
-    final res = await trackService.getAllTracks(ref);
+    final res = await trackService.getAllTracks();
     if (!mounted) return;
     setState(() => tracks = res);
   }
@@ -41,6 +50,16 @@ class _HomePageState extends ConsumerState<HomePage> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedTracks() async {
+    final savedTracks = await TrackDatabase.instance.getAllTracks();
+    log("Loaded ${savedTracks.length} saved tracks from database");
+    if (!mounted) return;
+    setState(() {
+      tracks = savedTracks;
+      _isLoading = true;
+    });
   }
 
   Future<void> _onGenreChanged(int index) async {
@@ -65,11 +84,33 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  List<EffectState> buildStates(double height) => [
+    EffectState(
+      height: height * 0.75,
+      alignment: const Alignment(-0.85, -0.65),
+      radius: 0.55,
+      colors: [Colors.cyan.withAlpha(15), Colors.transparent],
+    ),
+    EffectState(
+      height: height * 0.75,
+      alignment: const Alignment(0.85, -0.6),
+      radius: 0.75,
+      colors: [Theme.of(context).colorScheme.onSecondaryFixed.withAlpha(100), Colors.transparent],
+    ),
+    EffectState(
+      height: height * 0.75,
+      alignment: const Alignment(0, -0.22),
+      radius: 0.55,
+      colors: [Theme.of(context).colorScheme.onTertiaryFixedVariant.withAlpha(25), Colors.transparent],
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // final authService = ref.read(authenticationServiceProvider);
+    final currentTrack = ref.watch(currentTrackProvider).value;
     final height = MediaQuery.of(context).size.height;
     final surfaceDim = Theme.of(context).colorScheme.surfaceDim;
+    final states = buildStates(height);
 
     return Stack(
       children: [
@@ -85,7 +126,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   top: 0,
                   left: 0,
                   right: 0,
-                  height: height * 0.6,
+                  height: height * 0.75,
                   child: Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -100,44 +141,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ),
-
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: height * 0.5,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(-0.95, -0.75),
-                          radius: 0.25,
-                          colors: [Colors.cyan.withAlpha(25), Colors.transparent],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: height * 0.75,
-                  child: Opacity(
-                    opacity: opacity,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(0.85, -0.6),
-                          radius: 0.75,
-                          colors: [Theme.of(context).colorScheme.onSecondaryFixed.withAlpha(100), Colors.transparent],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                ...states.map((effectState) => BackgroundEffect(state: effectState, opacity: opacity)),
               ],
             );
           },
@@ -165,11 +169,20 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       Row(
                         children: [
-                          IconButton(onPressed: () {}, icon: const Icon(Icons.search_rounded)),
+                          IconButton(
+                            onPressed: () async => await fetchTracks(),
+                            icon: const Icon(Icons.search_rounded),
+                          ),
                           PopupMenuButton<SortType>(
                             icon: const Icon(Icons.sort),
                             onSelected: (value) {
-                              setState(() {});
+                              setState(() {
+                                tracks = switch (value) {
+                                  SortType.newest => tracks..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+                                  SortType.popular => tracks,
+                                  SortType.duration => tracks..shuffle(),
+                                };
+                              });
                             },
                             itemBuilder: (context) => const [
                               PopupMenuItem(value: SortType.newest, child: Text('Newest')),
@@ -187,7 +200,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                 pinned: true,
                 delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
               ),
-
               SliverToBoxAdapter(
                 child: tracks.isNotEmpty
                     ? RecentTracksSection(
@@ -200,45 +212,26 @@ class _HomePageState extends ConsumerState<HomePage> {
                     : SizedBox.shrink(),
               ),
 
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => ListTile(
-                    visualDensity: VisualDensity(vertical: -3),
-                    minVerticalPadding: 0,
-                    leading: CircleAvatar(
-                      child: Container(
-                        clipBehavior: Clip.antiAlias,
-                        width: 150,
-                        height: 150,
-                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4)),
-                        child: CachedNetworkImage(
-                          imageUrl: tracks[index].images.first,
-                          fit: BoxFit.contain,
-                          errorWidget: (context, url, error) => Icon(Icons.image_outlined),
-                          placeholder: (context, url) =>
-                              Container(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                        ),
-                      ),
-                    ),
-                    title: Text(
-                      tracks[index].name,
-                      maxLines: 1,
-                      style: TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(tracks[index].artistType.name, style: TextStyle(fontFamily: "SpotifyMixUI")),
-                    onTap: () => _playTrack(context, ref, tracks, index),
-                    onLongPress: () => showModalBottomSheet(
-                      context: context,
-                      useRootNavigator: true,
-                      builder: (context) => BottomSheet(
-                        onClosing: () => Navigator.pop(context),
-                        builder: (c) => Padding(padding: EdgeInsets.all(8), child: Text(tracks[index].name)),
-                      ),
-                    ),
+              if (tracks.isEmpty)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Lottie.asset("assets/animations/impress.json", repeat: false),
                   ),
-                  childCount: (tracks.length / 2).toInt(),
+                )
+              else
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => TrackTile(
+                      track: tracks[index],
+                      onTap: () => _playTrack(context, ref, tracks, index),
+                      onLongPress: () {},
+                      currentTrackId: currentTrack?.id
+                    ),
+                    childCount: tracks.length,
+                  ),
                 ),
-              ),
+              SliverToBoxAdapter(child: const SizedBox(height: 200)),
             ],
           ),
         ),

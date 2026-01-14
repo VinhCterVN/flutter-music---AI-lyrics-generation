@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:just_audio/just_audio.dart';
 
 class Track {
@@ -5,6 +7,7 @@ class Track {
   final String name;
   final String uri;
   final List<String> genres;
+  String? artistName;
   final String artistId;
   final ArtistType artistType;
   final List<String> images;
@@ -18,6 +21,7 @@ class Track {
     required this.uri,
     required this.images,
     required this.createdAt,
+    this.artistName,
     this.genres = const [],
     this.isFavorite = false,
     this.artistType = ArtistType.NestArtist,
@@ -35,6 +39,25 @@ class Track {
       createdAt: DateTime.parse(json['createdAt']),
       isFavorite: json['isFavorite'] ?? false,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'uri': uri,
+      'artistId': artistId,
+      'artistName': artistName,
+      'artistType': artistType.name,
+      'genres': jsonEncode(genres),
+      'images': jsonEncode(images),
+      'isFavorite': isFavorite ? 1 : 0,
+      'createdAt': createdAt.toIso8601String(),
+    };
+  }
+
+  void updateArtistName(String name) {
+    artistName = name;
   }
 }
 
