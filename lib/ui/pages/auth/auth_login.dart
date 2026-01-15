@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 import '../../../provider/auth_provider.dart';
 
@@ -27,44 +28,27 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   }
 
   void _toggleAuthMode() {
-    setState(() {
-      _isLogin = !_isLogin;
-    });
+    setState(() => _isLogin = !_isLogin);
   }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate()) {
       final authController = ref.read(authenticationServiceProvider);
-      final message = (_isLogin)?
-        authController.signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        )
-       :
-        authController.signUp(
-          name: _nameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-        );
+      final message = (_isLogin)
+          ? authController.signIn(email: _emailController.text.trim(), password: _passwordController.text)
+          : authController.signUp(
+              name: _nameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            );
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(await message ?? "Loading..."),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Theme
-              .of(context)
-              .colorScheme
-              .primary,
-        ),
-      );
+      Fluttertoast.showToast(msg: await message ?? "An error occurred", toastLength: Toast.LENGTH_LONG);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       body: Container(
@@ -88,23 +72,16 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   Text(
                     'MusicAI',
                     style: TextStyle(
-                        fontFamily: "Klavika",
-                        fontWeight: FontWeight.w700,
-                        fontSize: 48,
-                        color: Theme
-                            .of(context)
-                            .colorScheme
-                            .onPrimaryContainer
+                      fontFamily: "Klavika",
+                      fontWeight: FontWeight.w700,
+                      fontSize: 48,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     _isLogin ? 'Chào mừng trở lại' : 'Tạo tài khoản mới',
-                    style: Theme
-                        .of(context)
-                        .textTheme
-                        .bodyLarge
-                        ?.copyWith(color: colorScheme.onSurfaceVariant),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 40),
 
@@ -132,9 +109,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                   fillColor: colorScheme.surfaceContainerHighest,
                                 ),
                                 validator: (value) {
-                                  if (value == null || value
-                                      .trim()
-                                      .isEmpty) {
+                                  if (value == null || value.trim().isEmpty) {
                                     return 'Vui lòng nhập tên';
                                   }
                                   return null;
@@ -155,9 +130,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 fillColor: colorScheme.surfaceContainerHighest,
                               ),
                               validator: (value) {
-                                if (value == null || value
-                                    .trim()
-                                    .isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Vui lòng nhập email';
                                 }
                                 if (!value.contains('@')) {
@@ -287,9 +260,7 @@ class _SocialButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return OutlinedButton.icon(
       onPressed: onPressed,

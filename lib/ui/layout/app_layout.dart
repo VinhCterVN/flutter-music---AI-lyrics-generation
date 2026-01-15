@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/component/navigation/app_drawer.dart';
 import 'package:flutter_ai_music/ui/component/navigation/my_navigation_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -36,6 +37,7 @@ class _AppLayoutState extends ConsumerState<AppLayout> {
     final currentIndex = widget.navigationShell.currentIndex;
     ref.watch(ambientColorControllerProvider);
     return Scaffold(
+      drawer: const AppDrawer(),
       endDrawerEnableOpenDragGesture: true,
       drawerEnableOpenDragGesture: true,
       extendBodyBehindAppBar: false,

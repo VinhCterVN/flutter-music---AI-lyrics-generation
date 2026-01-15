@@ -22,7 +22,14 @@ class TrackService {
   Future<List<Track>> getAllTracks() async {
     log('Fetching all tracks from Supabase');
     final supabase = ref.read(supabaseClientProvider);
-    final response = await supabase.from('full_tracks_view').select().order('createdAt', ascending: false);
+    final response = await supabase
+        .from("tracks")
+        .select("""
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+              """)
+        .order('created_at', ascending: false);
     return (response as List).map((e) => Track.fromJson(e)).toList();
   }
 
@@ -31,11 +38,19 @@ class TrackService {
     final supabase = ref.read(supabaseClientProvider);
 
     if (query.isEmpty) {
-      final response = await supabase.from('full_tracks_view').select().order('createdAt', ascending: false);
+      final response = await supabase
+          .from("tracks")
+          .select("""
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+              """)
+          .order('created_at', ascending: false);
       return (response as List).map((e) => Track.fromJson(e)).toList();
     }
 
     final response = await supabase.rpc('search_tracks_fuzzy', params: {'search_query': query});
-    return (response as List).map((e) => Track.fromJson(e)).toList();
+    final result =  (response as List).map((e) => Track.fromJson(e)).toList();
+    return result;
   }
 }

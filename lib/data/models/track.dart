@@ -11,7 +11,7 @@ class Track {
   final String artistId;
   final ArtistType artistType;
   final List<String> images;
-  final bool isFavorite;
+  bool isFavorite;
   final DateTime createdAt;
 
   Track({
@@ -32,12 +32,12 @@ class Track {
       id: json['id'],
       name: json['name'],
       uri: json['uri'],
-      artistId: json['artistId'],
-      artistType: ArtistType.values.byName(json['artistType']),
+      artistId: json['artist_id'],
+      artistType: ArtistType.values.byName(json['artist_type']),
       genres: List<String>.from(json['genres'] ?? []),
-      images: List<String>.from(json['images'] ?? []),
-      createdAt: DateTime.parse(json['createdAt']),
-      isFavorite: json['isFavorite'] ?? false,
+      images: (json['images'] as List?)?.map((img) => img['url'] as String).toList() ?? [],
+      isFavorite: (json['favourites'] as List?)?.isNotEmpty ?? false,
+      createdAt: DateTime.parse(json['created_at']),
     );
   }
 

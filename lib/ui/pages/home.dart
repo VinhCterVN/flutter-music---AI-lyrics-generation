@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
@@ -12,6 +11,7 @@ import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 
@@ -72,15 +72,11 @@ class _HomePageState extends ConsumerState<HomePage> {
     });
   }
 
-  Future<void> _playTrack(BuildContext context, WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
+  Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
     try {
       AudioHelper.playTrackFromList(ref, allTracks: allTracks, selectedIndex: selectedIndex);
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error playing track: $e'), duration: const Duration(seconds: 1)));
-      }
+      Fluttertoast.showToast(msg: 'Error playing track: $e');
     }
   }
 
@@ -157,24 +153,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          SvgPicture.asset("assets/icons/cloud.svg", width: 42),
-                          const SizedBox(width: 10),
-                          const Text(
-                            'Flussic',
-                            style: TextStyle(fontFamily: "Klavika", fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                        ],
+                      GestureDetector(
+                        onTap: () => Scaffold.of(context).openDrawer(),
+                        child: Row(
+                          children: [
+                            SvgPicture.asset("assets/icons/cloud.svg", width: 42),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Flussic',
+                              style: TextStyle(fontFamily: "Klavika", fontSize: 24, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
                       ),
                       Row(
                         children: [
                           IconButton(
                             onPressed: () async => await fetchTracks(),
-                            icon: const Icon(Icons.search_rounded),
+                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
                           ),
                           PopupMenuButton<SortType>(
-                            icon: const Icon(Icons.sort),
+                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
                             onSelected: (value) {
                               setState(() {
                                 tracks = switch (value) {
@@ -206,7 +205,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         tracks: tracks,
                         onTrackTap: (track) {
                           final index = tracks.indexOf(track);
-                          _playTrack(context, ref, tracks, index);
+                          _playTrack(ref, tracks, index);
                         },
                       )
                     : SizedBox.shrink(),
@@ -224,9 +223,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) => TrackTile(
                       track: tracks[index],
-                      onTap: () => _playTrack(context, ref, tracks, index),
+                      onTap: () => _playTrack(ref, tracks, index),
                       onLongPress: () {},
-                      currentTrackId: currentTrack?.id
+                      currentTrackId: currentTrack?.id,
                     ),
                     childCount: tracks.length,
                   ),

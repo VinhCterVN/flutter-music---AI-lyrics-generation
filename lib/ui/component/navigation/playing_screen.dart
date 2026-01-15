@@ -7,6 +7,7 @@ import 'package:flutter_ai_music/provider/uistate_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:just_audio/just_audio.dart';
@@ -394,10 +395,12 @@ class _TrackInfo extends ConsumerWidget {
                 ),
               ),
               IconButton(
-                icon: HugeIcon(
-                  icon: HugeIcons.strokeRoundedHeartAdd,
-                  color: track.isFavorite ? const Color(0xFFF64A55) : null,
-                ),
+                icon: track.isFavorite
+                    ? FaIcon(FontAwesomeIcons.solidHeart, size: 20)
+                    : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
+                color: track.isFavorite
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).textTheme.bodyLarge?.color,
                 iconSize: 24,
                 onPressed: () {},
               ),

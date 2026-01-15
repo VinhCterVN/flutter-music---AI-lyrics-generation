@@ -6,9 +6,6 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 
 import '../component/element/slide/video_slide.dart';
 
-// Import your VideoSlide widget here
-// import 'package:flutter_ai_music/ui/component/element/slide/video_slide.dart';
-
 class BoltPage extends ConsumerStatefulWidget {
   const BoltPage({super.key});
 
@@ -112,7 +109,7 @@ class _SettingPageState extends ConsumerState<BoltPage> {
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
-    final topPadding = MediaQuery.of(context).padding.top;
+    // final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: SafeArea(

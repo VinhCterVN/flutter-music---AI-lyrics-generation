@@ -1,10 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/playlist_provider.dart';
+import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:marquee/marquee.dart';
 
 import '../../../provider/artist_provider.dart';
@@ -63,6 +64,9 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
     final progressAsync = ref.watch(progressProvider);
     final ambientColor = ref.watch(ambientColorProvider);
     final surfaceColor = Theme.of(context).colorScheme.surface;
+    final player = ref.read(audioPlayerProvider);
+    final currentIndex = player.currentIndex;
+    final isFavourite = currentIndex != null ? ref.watch(queueProvider).rawTracks[currentIndex].isFavorite : false;
 
     return currentTrackAsync.when(
       data: (currentTrack) {
@@ -218,11 +222,26 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                               spacing: 4,
                               children: [
                                 GestureDetector(
-                                  onTap: () => Fluttertoast.showToast(
-                                    msg: currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
+                                  onTap: () {
+                                    if (currentIndex == null) return;
+                                    ref.read(playlistServiceProvider).toggleTrackToFavourite(currentTrack.id);
+                                    ref.read(queueProvider.notifier).toggleFavoriteAtIndex(currentIndex);
+                                    Fluttertoast.showToast(
+                                      msg: currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
+                                    );
+                                  },
+                                  onLongPress: () => showDialog(
+                                    context: context,
+                                    useRootNavigator: true,
+                                    builder: (context) => AddTrackToPlaylist(trackId: currentTrack.id),
                                   ),
-                                  onLongPress: () {},
-                                  child: HugeIcon(icon: HugeIconsStrokeRounded.heartAdd),
+                                  child: isFavourite
+                                      ? FaIcon(
+                                          FontAwesomeIcons.solidHeart,
+                                          size: 20,
+                                          color: Theme.of(context).colorScheme.primary,
+                                        )
+                                      : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
                                 ),
                                 SizedBox(width: 4),
                                 isBuffering
@@ -247,7 +266,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                         },
                                         child: FaIcon(
                                           isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
-                                          size: 18,
+                                          size: 20,
                                         ),
                                       ),
                                 SizedBox(width: 4),

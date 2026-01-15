@@ -39,4 +39,27 @@ class QueueController extends StateNotifier<QueueState> {
       state = state.copyWith(currentIndex: state.currentIndex - 1);
     }
   }
+
+  void updateTrackAtIndex(int index, Track updatedTrack) {
+    final newRawTracks = List<Track>.from(state.rawTracks);
+    newRawTracks[index] = updatedTrack;
+    state = state.copyWith(rawTracks: newRawTracks);
+  }
+
+  void toggleFavoriteAtIndex(int index) {
+    final track = state.rawTracks[index];
+    final updatedTrack = Track(
+      id: track.id,
+      name: track.name,
+      artistId: track.artistId,
+      uri: track.uri,
+      images: track.images,
+      createdAt: track.createdAt,
+      artistName: track.artistName,
+      genres: track.genres,
+      isFavorite: !track.isFavorite,
+      artistType: track.artistType,
+    );
+    updateTrackAtIndex(index, updatedTrack);
+  }
 }

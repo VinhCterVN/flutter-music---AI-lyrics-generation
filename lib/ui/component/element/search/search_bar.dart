@@ -4,9 +4,12 @@ import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/utils/debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:lottie/lottie.dart';
+
+import '../../../../data/models/track.dart';
+import '../../../../utils/audio_helper.dart';
 
 class MySearchBar extends ConsumerStatefulWidget {
   const MySearchBar({super.key});
@@ -35,6 +38,14 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
     _debouncer.call(() => ref.read(trackSearchQueryProvider.notifier).state = query);
   }
 
+  Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
+    try {
+      AudioHelper.playTrackFromList(ref, allTracks: allTracks, selectedIndex: selectedIndex);
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error playing track: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -60,13 +71,14 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
             );
           },
           viewBackgroundColor: Theme.of(context).colorScheme.surfaceDim,
+          viewHintText: "What are you looking for?",
           viewTrailing: [
             IconButton(
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedTextClear),
               onPressed: () {
                 _searchController.clear();
                 ref.read(trackSearchQueryProvider.notifier).state = "";
               },
-              icon: const HugeIcon(icon: HugeIcons.strokeRoundedTextClear),
             ),
           ],
           suggestionsBuilder: (context, controller) {
@@ -75,7 +87,6 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
               Consumer(
                 builder: (context, ref, child) {
                   final searchResult = ref.watch(trackSearchProvider);
-                  final searchQuery = ref.watch(trackSearchQueryProvider);
                   return SizedBox(
                     height: MediaQuery.of(context).size.height - kToolbarHeight - MediaQuery.of(context).padding.top,
                     child: searchResult.when(
@@ -84,18 +95,18 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                           return Center(child: Text("No results found.", style: GoogleFonts.poppins()));
                         }
 
-                        if (searchQuery.isEmpty) {
-                          return Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              spacing: 4,
-                              children: [
-                                Lottie.asset("assets/animations/impress.json", repeat: false),
-                                Text("Type something to search tracks", style: GoogleFonts.poppins(fontSize: 16)),
-                              ],
-                            ),
-                          );
-                        }
+                        // if (searchQuery.isEmpty) {
+                        //   return Center(
+                        //     child: Column(
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       spacing: 4,
+                        //       children: [
+                        //         Lottie.asset("assets/animations/impress.json", repeat: false),
+                        //         Text("Type something to search tracks", style: GoogleFonts.poppins(fontSize: 16)),
+                        //       ],
+                        //     ),
+                        //   );
+                        // }
 
                         return CustomScrollView(
                           scrollDirection: Axis.vertical,
@@ -110,7 +121,7 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                                     borderRadius: BorderRadius.circular(8),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
+                                        color: Colors.black.withAlpha(25),
                                         blurRadius: 4,
                                         offset: const Offset(0, 2),
                                       ),
@@ -128,7 +139,7 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                                               borderRadius: BorderRadius.circular(8),
                                               boxShadow: [
                                                 BoxShadow(
-                                                  color: Colors.black.withOpacity(0.2),
+                                                  color: Colors.black.withAlpha(50),
                                                   blurRadius: 4,
                                                   offset: const Offset(0, 2),
                                                 ),
@@ -165,7 +176,7 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                                             color: Theme.of(context).colorScheme.tertiaryContainer,
                                           ),
                                           child: IconButton(
-                                            onPressed: () {},
+                                            onPressed: () => _playTrack(ref, tracks, 0),
                                             icon: HugeIcon(icon: HugeIcons.strokeRoundedPlay),
                                           ),
                                         ),
@@ -191,8 +202,8 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                               delegate: SliverChildBuilderDelegate(
                                 (context, index) => TrackTile(
                                   track: tracks[index + 1],
-                                  onTap: () {},
-                                  onLongPress: () {},
+                                  onTap: () => _playTrack(ref, tracks, index + 1),
+                                  onLongPress: () => Fluttertoast.showToast(msg: tracks[index + 1].name),
                                   currentTrackId: -1,
                                 ),
                                 childCount: tracks.length - 1,
