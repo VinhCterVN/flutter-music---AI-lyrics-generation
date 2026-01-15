@@ -29,7 +29,6 @@ class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
   int selectedGenreIndex = -1;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -56,10 +55,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final savedTracks = await TrackDatabase.instance.getAllTracks();
     log("Loaded ${savedTracks.length} saved tracks from database");
     if (!mounted) return;
-    setState(() {
-      tracks = savedTracks;
-      _isLoading = true;
-    });
+    setState(() => tracks = savedTracks);
   }
 
   Future<void> _onGenreChanged(int index) async {
@@ -279,7 +275,7 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.only(right: 8.0),
               child: AnimatedSize(
-                duration: const Duration(milliseconds: 200),
+                duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOut,
                 alignment: Alignment.centerLeft,
                 child: ChoiceChip(

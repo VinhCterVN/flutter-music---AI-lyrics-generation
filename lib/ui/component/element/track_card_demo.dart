@@ -25,7 +25,7 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _scaleController = AnimationController(duration: const Duration(milliseconds: 150), vsync: this);
+    _scaleController = AnimationController(duration: const Duration(milliseconds: 300), vsync: this);
     _scaleAnimation = Tween<double>(
       begin: 1.0,
       end: 0.95,

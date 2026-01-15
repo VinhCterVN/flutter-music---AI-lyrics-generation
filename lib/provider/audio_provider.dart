@@ -60,7 +60,7 @@ final playerControllerProvider = Provider<PlayerController>((ref) {
   final player = ref.watch(audioPlayerProvider);
   final controller = PlayerController(player, ref);
 
-  ref.listen<AsyncValue<SpotifyArtist?>>(currentArtistProvider, (_, next) {
+  ref.listen<AsyncValue<Artist?>>(currentArtistProvider, (_, next) {
     next.whenData((artist) {
       if (artist != null) {
         ref.read(currentTrackProvider).value?.updateArtistName(artist.name);

@@ -41,6 +41,7 @@ dependencies:
   media_kit_video: ^2.0.1 # For video rendering.
   media_kit_libs_video: ^1.0.7 # Native video dependencies.
   uuid: ^4.5.2
+  file_picker: ^10.3.8
 
 dev_dependencies:
   flutter_test:

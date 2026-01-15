@@ -99,6 +99,12 @@ class _VideoSlideState extends ConsumerState<VideoSlide> with AutomaticKeepAlive
     }
   }
 
+  @override
+  void deactivate() {
+    super.deactivate();
+    _handlePageVisibilityChange();
+  }
+
   Future<void> _handlePageVisibilityChange() async {
     if (_player == null || _isDisposed) return;
 

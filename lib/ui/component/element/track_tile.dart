@@ -52,10 +52,13 @@ class _TrackTileState extends State<TrackTile> {
       title: Text(
         widget.track!.name,
         maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.bold),
       ),
       subtitle: Text(
         widget.track!.artistName ?? widget.track!.artistType.name,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(fontFamily: "SpotifyMixUI"),
       ),
       trailing: widget.currentTrackId == widget.track!.id ? HugeIcon(icon: HugeIcons.strokeRoundedWave) : null,

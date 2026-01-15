@@ -1,12 +1,15 @@
 import 'package:flutter_ai_music/data/models/wikipedia_summary.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
+import 'package:flutter_ai_music/service/artist_service.dart';
 import 'package:flutter_ai_music/service/spotify_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/artist.dart';
 import 'audio_provider.dart';
 
-final currentArtistProvider = FutureProvider<SpotifyArtist?>((ref) async {
+final artistServiceProvider = Provider<ArtistService>((ref) => ArtistService(ref));
+
+final currentArtistProvider = FutureProvider<Artist?>((ref) async {
   final currentTrack = ref.watch(currentTrackProvider).value;
   if (currentTrack == null) return null;
 

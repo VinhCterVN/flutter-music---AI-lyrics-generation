@@ -141,7 +141,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
 
       _scrollController.animateTo(
         targetOffset.clamp(_scrollController.position.minScrollExtent, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 400),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
     });
@@ -173,7 +173,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                       key: _lineKeys[index],
                       padding: const EdgeInsets.symmetric(vertical: 8.0),
                       child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
+                        duration: const Duration(milliseconds: 300),
                         style: TextStyle(
                           fontFamily: "SpotifyMixUI",
                           color: isActive ? Colors.white : Colors.black.withAlpha((0.5 * 255).round()),
@@ -259,22 +259,6 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                   style: TextStyle(color: Colors.white.withAlpha((0.6 * 255).round()), fontSize: 14),
                 ),
               ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Column(
-      children: [
-        _buildHeader(),
-        Expanded(
-          child: Center(
-            child: Text(
-              'No lyrics available',
-              style: TextStyle(color: Colors.white.withAlpha((0.8 * 255).round()), fontSize: 16),
             ),
           ),
         ),

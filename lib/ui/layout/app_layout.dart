@@ -44,10 +44,12 @@ class _AppLayoutState extends ConsumerState<AppLayout> {
       backgroundColor: Theme.of(context).colorScheme.surfaceDim,
       body: widget.navigationShell,
       extendBody: true,
-      bottomNavigationBar: MyNavigationBar(
-        items: routes,
-        currentIndex: currentIndex,
-        onTap: widget.navigationShell.goBranch,
+      bottomNavigationBar: SafeArea(
+        child: MyNavigationBar(
+          items: routes,
+          currentIndex: currentIndex,
+          onTap: widget.navigationShell.goBranch,
+        ),
       ),
     );
   }

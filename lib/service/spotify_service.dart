@@ -20,10 +20,10 @@ class SpotifyService {
 
   SpotifyService._internal();
 
-  static Future<SpotifyArtist?> getSpotifyArtist(String artistId) async => getSpotifyResource<SpotifyArtist>(
+  static Future<Artist?> getSpotifyArtist(String artistId) async => getSpotifyResource<Artist>(
     resourceType: SpotifyResourceType.artist,
     id: artistId,
-    transform: (json) => SpotifyArtist.fromJson(json),
+    transform: (json) => Artist.fromJson(json),
   );
 
   static Future<T?> getSpotifyResource<T>({

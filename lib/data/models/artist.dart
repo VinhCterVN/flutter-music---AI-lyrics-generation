@@ -1,18 +1,22 @@
-class SpotifyArtist {
+import 'package:flutter_ai_music/data/models/track.dart';
+
+class Artist {
   final String id;
   final String name;
   final List<ArtistImage> images;
   final int popularity;
+  final ArtistType artistType;
 
-  SpotifyArtist({
+  Artist({
     required this.id,
     required this.name,
     required this.images,
     required this.popularity,
+    required this.artistType,
   });
 
-  factory SpotifyArtist.fromJson(Map<String, dynamic> json) {
-    return SpotifyArtist(
+  factory Artist.fromJson(Map<String, dynamic> json) {
+    return Artist(
       id: json['id'],
       name: json['name'],
       images: (json['images'] as List<dynamic>)
@@ -23,6 +27,7 @@ class SpotifyArtist {
               ))
           .toList(),
       popularity: json['popularity'],
+      artistType: ArtistType.SpotifyArtist
     );
   }
 }

@@ -441,7 +441,7 @@ class _ProgressBar extends ConsumerWidget {
       children: [
         TweenAnimationBuilder<double>(
           tween: Tween<double>(begin: isUserSeeking ? 3 : 5, end: isUserSeeking ? 5 : 3),
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
           builder: (context, trackHeight, child) => SliderTheme(
             data: SliderThemeData(
