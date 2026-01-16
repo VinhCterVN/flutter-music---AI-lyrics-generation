@@ -26,17 +26,31 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
   void initState() {
     super.initState();
     _searchController = SearchController();
+    _searchController.addListener(_onSearchListener);
+  }
+
+  void _onSearchListener() {
+    final query = _searchController.text;
+    // Optional: Avoid re-triggering if the text hasn't actually changed
+    // (Though the debouncer handles most of this, it's good practice)
+    _debouncer.call(() {
+      if (mounted) {
+        ref.read(trackSearchQueryProvider.notifier).state = query;
+      }
+    });
   }
 
   @override
   void dispose() {
+    _searchController.removeListener(_onSearchListener);
+    _debouncer.stop();
     _searchController.dispose();
     super.dispose();
   }
 
-  void _onSearchChanged(String query) {
-    _debouncer.call(() => ref.read(trackSearchQueryProvider.notifier).state = query);
-  }
+  // void _onSearchChanged(String query) {
+  //   _debouncer.call(() => ref.read(trackSearchQueryProvider.notifier).state = query);
+  // }
 
   Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
     try {
@@ -82,7 +96,6 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
             ),
           ],
           suggestionsBuilder: (context, controller) {
-            _onSearchChanged(controller.text);
             return [
               Consumer(
                 builder: (context, ref, child) {

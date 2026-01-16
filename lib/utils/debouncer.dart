@@ -10,4 +10,6 @@ class Debouncer {
     _timer?.cancel();
     _timer = Timer(delay, callback);
   }
+
+  void stop() => _timer?.cancel();
 } 
