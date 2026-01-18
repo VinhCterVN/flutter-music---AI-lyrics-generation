@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_ai_music/data/models/wikipedia_summary.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
 import 'package:flutter_ai_music/service/artist_service.dart';
@@ -19,7 +21,6 @@ final currentArtistProvider = FutureProvider<Artist?>((ref) async {
 
 final artistSummaryProvider = FutureProvider<WikipediaSummary?>((ref) async {
   final artist = await ref.watch(currentArtistProvider.future);
-
   if (artist == null) return null;
 
   return await ApiService.instance.getSummary(artist.name);

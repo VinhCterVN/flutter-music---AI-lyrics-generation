@@ -11,7 +11,9 @@ import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class SearchDetailPage extends ConsumerStatefulWidget {
-  const SearchDetailPage({super.key});
+  final String? query;
+
+  const SearchDetailPage({super.key, this.query});
 
   @override
   ConsumerState<SearchDetailPage> createState() => _SearchDetailPageState();
@@ -21,6 +23,7 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
   final Debouncer _debouncer = Debouncer(delay: const Duration(milliseconds: 1000));
   late final ScrollController _scrollController;
   late final TextEditingController _textController;
+  late final FocusNode _focusNode;
   List<Search> _histories = [], _trending = [], _filtered = [];
   bool _showDivider = false;
   bool _isSearching = false;
@@ -31,8 +34,15 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
     _scrollController = ScrollController();
     _textController = TextEditingController();
     _scrollController.addListener(_onScroll);
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadData());
+    _focusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+      if (widget.query != null && widget.query!.isNotEmpty) {
+        _textController.text = widget.query!;
+        _onSearchChanged(widget.query!);
+      }
+      _focusNode.requestFocus();
+    });
   }
 
   Future<void> _loadData() async {
@@ -90,6 +100,7 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
     super.dispose();
     _scrollController.dispose();
     _textController.dispose();
+    _focusNode.dispose();
   }
 
   @override
@@ -104,6 +115,7 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
           height: 38,
           child: TextField(
             controller: _textController,
+            focusNode: _focusNode,
             style: GoogleFonts.roboto(),
             onChanged: _onSearchChanged,
             onSubmitted: _onSearch,
@@ -133,7 +145,7 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
               backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
             ),
             onPressed: () => _requestMicrophonePermission(),
-            icon: const Icon(Icons.mic_none_rounded),
+            icon: const HugeIcon(icon: HugeIconsStrokeRounded.aiMic),
           ),
         ],
         bottom: PreferredSize(

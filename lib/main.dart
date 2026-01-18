@@ -12,8 +12,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
-  await dotenv.load(fileName: ".env");
 
+  await dotenv.load(fileName: ".env");
   await Supabase.initialize(url: dotenv.get('SUPABASE_URL'), anonKey: dotenv.get('SUPABASE_ANON_KEY'));
 
   runApp(const ProviderScope(child: MyApp()));
@@ -24,7 +24,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Initialize audio handler early
     ref.watch(audioHandlerProvider);
     ref.listen(queueProvider, (prev, nex) async {
       if (prev == nex) return;

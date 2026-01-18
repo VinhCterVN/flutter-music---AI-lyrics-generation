@@ -44,13 +44,10 @@ class SpotifyService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      if (response.statusCode != 200) {
-        log('Spotify request failed with status code: ${response.statusCode}');
-        return null;
-      }
+      if (response.statusCode != 200) return null;
+
       return transform(response.data);
-    } on DioException catch (e, s) {
-      log('Spotify request failed: $e', stackTrace: s);
+    } on DioException catch (_) {
       return null;
     }
   }

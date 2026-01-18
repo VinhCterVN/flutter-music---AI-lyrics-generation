@@ -55,17 +55,21 @@ GoRouter createRouter(WidgetRef ref) {
       // GoRoute(name: 'WelcomePage', path: '/welcome', builder: (_, _) => WelcomePage()),
       GoRoute(
         path: '/search_detail',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          opaque: false,
-          barrierDismissible: true,
-          transitionsBuilder: (context, ani1, ani2, child) {
-            return SlideTransition(
-              position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
-              child: child,
-            );
-          },
-          child: const SearchDetailPage(),
-        ),
+        pageBuilder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            opaque: false,
+            barrierDismissible: true,
+            transitionsBuilder: (context, ani1, ani2, child) {
+              return SlideTransition(
+                position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
+                child: child,
+              );
+            },
+            child: SearchDetailPage(query: extra?['query']),
+          );
+        },
       ),
       GoRoute(
         path: '/',

@@ -48,7 +48,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedTracks());
   }
 
   Future<void> fetchTracks({bool reset = false}) async {
@@ -79,6 +79,10 @@ class _HomePageState extends ConsumerState<HomePage> {
     final savedTracks = await TrackDatabase.instance.getAllTracks();
     log("Loaded ${savedTracks.length} saved tracks from database");
     if (!mounted) return;
+    if (savedTracks.isEmpty) {
+      await fetchTracks();
+      return;
+    }
     setState(() {
       tracks = savedTracks;
       _isFetching = false;
@@ -166,7 +170,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
         RefreshIndicator(
-          onRefresh: () async => await fetchTracks(),
+          onRefresh: () async => await fetchTracks(reset: true),
           child: Scrollbar(
             controller: _controller,
             interactive: true,
@@ -261,7 +265,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                      child: Center(
+                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                      ),
                     ),
                   ),
                 SliverToBoxAdapter(child: const SizedBox(height: 200)),

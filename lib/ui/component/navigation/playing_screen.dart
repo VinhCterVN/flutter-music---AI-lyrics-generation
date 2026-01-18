@@ -26,7 +26,7 @@ class PlayingScreen extends ConsumerStatefulWidget {
   ConsumerState<PlayingScreen> createState() => _PlayingScreenState();
 }
 
-class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProviderStateMixin {
+class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool _isUserSeeking = false;
   double _sliderProgress = 0.0;
   Color? _previousColor;
@@ -60,6 +60,9 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
   }
 
   @override
+  bool get wantKeepAlive => true;
+
+  @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final currentColor = ref.read(ambientColorProvider);
@@ -82,6 +85,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     final currentTrackAsync = ref.watch(currentTrackProvider);
 
     final padding = MediaQuery.of(context).padding;
