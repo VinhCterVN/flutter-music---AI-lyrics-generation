@@ -119,7 +119,7 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
-                                          track.artistType.name,
+                                          track.artistName ?? track.artistType.name,
                                           style: TextStyle(fontFamily: "SpotifyMixUI"),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,

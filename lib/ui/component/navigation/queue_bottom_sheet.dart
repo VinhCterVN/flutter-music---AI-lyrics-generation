@@ -80,7 +80,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
             children: [
               Icon(Icons.shuffle, color: Colors.grey.shade400, size: 16),
               const SizedBox(width: 8),
-              Text('Phát ngẫu nhiên từ:', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
+              Text('Randomizing from: ', style: TextStyle(color: Colors.grey.shade400, fontSize: 14)),
             ],
           ),
         ),

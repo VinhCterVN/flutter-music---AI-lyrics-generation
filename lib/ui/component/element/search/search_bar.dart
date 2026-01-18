@@ -26,31 +26,22 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
   void initState() {
     super.initState();
     _searchController = SearchController();
-    _searchController.addListener(_onSearchListener);
   }
 
-  void _onSearchListener() {
-    final query = _searchController.text;
-    // Optional: Avoid re-triggering if the text hasn't actually changed
-    // (Though the debouncer handles most of this, it's good practice)
+  void _onSearchChanged() {
     _debouncer.call(() {
-      if (mounted) {
-        ref.read(trackSearchQueryProvider.notifier).state = query;
-      }
+      if (!mounted) return;
+      final query = _searchController.text;
+      ref.read(trackSearchQueryProvider.notifier).state = query;
     });
   }
 
   @override
   void dispose() {
-    _searchController.removeListener(_onSearchListener);
     _debouncer.stop();
     _searchController.dispose();
     super.dispose();
   }
-
-  // void _onSearchChanged(String query) {
-  //   _debouncer.call(() => ref.read(trackSearchQueryProvider.notifier).state = query);
-  // }
 
   Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
     try {
@@ -62,6 +53,7 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
 
   @override
   Widget build(BuildContext context) {
+    final queryState = ref.watch(trackSearchQueryProvider);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(color: Colors.transparent),
@@ -74,28 +66,31 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
         child: SearchAnchor(
           searchController: _searchController,
           viewConstraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height),
-          builder: (context, controller) {
-            return SearchBar(
-              controller: controller,
-              onTap: () => controller.openView(),
-              hintText: "Search tracks...",
-              textStyle: WidgetStatePropertyAll(GoogleFonts.poppins()),
-              padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
-              leading: const HugeIcon(icon: HugeIcons.strokeRoundedAiSearch),
-            );
-          },
+          builder: (context, controller) => SearchBar(
+            controller: controller,
+            onTap: () => controller.openView(),
+            hintText: "Search tracks...",
+            shape: const WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
+            textStyle: WidgetStatePropertyAll(GoogleFonts.poppins()),
+            padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
+            leading: const HugeIcon(icon: HugeIcons.strokeRoundedAiSearch),
+            onTapOutside: (_) => FocusManager.instance.primaryFocus?.unfocus(),
+          ),
           viewBackgroundColor: Theme.of(context).colorScheme.surfaceDim,
           viewHintText: "What are you looking for?",
           viewTrailing: [
-            IconButton(
-              icon: const HugeIcon(icon: HugeIcons.strokeRoundedTextClear),
-              onPressed: () {
-                _searchController.clear();
-                ref.read(trackSearchQueryProvider.notifier).state = "";
-              },
-            ),
+            if (queryState.isNotEmpty)
+              IconButton(
+                icon: const HugeIcon(icon: HugeIcons.strokeRoundedEraser01),
+                onPressed: () {
+                  _searchController.clear();
+                  ref.read(trackSearchQueryProvider.notifier).state = "";
+                },
+              ),
           ],
+          viewOnClose: () => FocusManager.instance.primaryFocus?.unfocus(),
           suggestionsBuilder: (context, controller) {
+            _onSearchChanged();
             return [
               Consumer(
                 builder: (context, ref, child) {

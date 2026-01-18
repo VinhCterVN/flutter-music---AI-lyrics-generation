@@ -2,10 +2,14 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/playlist_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../data/models/track.dart';
 
-class TrackCardDemo extends StatefulWidget {
+class TrackCardDemo extends ConsumerStatefulWidget {
   final Track track;
   final VoidCallback? onTap;
   final VoidCallback? onPlay;
@@ -14,11 +18,11 @@ class TrackCardDemo extends StatefulWidget {
   const TrackCardDemo({super.key, required this.track, this.onTap, this.onPlay, this.onFavorite});
 
   @override
-  State<TrackCardDemo> createState() => _TrackCardDemoState();
+  ConsumerState<TrackCardDemo> createState() => _TrackCardDemoState();
 }
 
-class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProviderStateMixin {
-  bool isFavorite = false;
+class _TrackCardDemoState extends ConsumerState<TrackCardDemo> with SingleTickerProviderStateMixin {
+  late bool isFavorite = widget.track.isFavorite;
   late AnimationController _scaleController;
   late Animation<double> _scaleAnimation;
 
@@ -38,16 +42,26 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
     super.dispose();
   }
 
-  void handlePressIn() {
-    _scaleController.forward();
-  }
+  void handlePressIn() => _scaleController.forward();
 
-  void handlePressOut() {
-    _scaleController.reverse();
+  void handlePressOut() => _scaleController.reverse();
+
+  Future<void> _toggleFavourite() async {
+    final res = await ref.read(playlistServiceProvider).toggleTrackToFavourite(widget.track.id);
+    if (res == "added") {
+      setState(() => isFavorite = true);
+    } else if (res == "removed") {
+      setState(() => isFavorite = false);
+    }
+    Fluttertoast.showToast(
+      msg: res == "added" ? "Added to favourites" : "Removed from favourites",
+      toastLength: Toast.LENGTH_SHORT,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final artistName = widget.track.artistName ?? widget.track.artistType.name;
     return ScaleTransition(
       scale: _scaleAnimation,
       child: GestureDetector(
@@ -70,7 +84,7 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
               children: [
                 Positioned.fill(
                   child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 1, sigmaY: 1),
+                    imageFilter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
                     child: Hero(
                       tag: "track-${widget.track.id}",
                       child: CachedNetworkImage(
@@ -99,79 +113,97 @@ class _TrackCardDemoState extends State<TrackCardDemo> with SingleTickerProvider
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     children: [
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  widget.track.name,
-                                  style: TextStyle(
-                                    fontFamily: "SpotifyMixUI",
-                                    fontSize: 18,
-                                    color: Colors.white.withAlpha(200),
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2), blurRadius: 4)],
+                          Flexible(
+                            child: GestureDetector(
+                              onTap: () => Fluttertoast.showToast(msg: artistName),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(25),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      artistName,
+                                      style: TextStyle(
+                                        fontFamily: "SpotifyMixUI",
+                                        color: Theme.of(context).colorScheme.onSurface.withAlpha((0.9 * 255).toInt()),
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        shadows: const [
+                                          Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3),
+                                        ],
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      softWrap: true,
+                                    ),
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.fade,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  widget.track.artistId,
-                                  style: TextStyle(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant.withAlpha((0.9 * 255).toInt()),
-                                    fontSize: 14,
-                                    shadows: const [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.fade,
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() {
-                                isFavorite = !isFavorite;
-                              });
-                              widget.onFavorite?.call();
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withAlpha((0.2 * 255).toInt()),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                isFavorite ? Icons.favorite : Icons.favorite_border,
-                                color: Colors.white,
-                                size: 20,
+                          const SizedBox(width: 8),
+                          AnimatedSize(
+                            duration: const Duration(milliseconds: 300),
+                            child: GestureDetector(
+                              onTap: _toggleFavourite,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha((0.2 * 255).toInt()),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: FaIcon(
+                                  isFavorite ? FontAwesomeIcons.solidCircleCheck : FontAwesomeIcons.heartPulse,
+                                  color: isFavorite ? Colors.green : Theme.of(context).colorScheme.onSurface,
+                                  size: isFavorite ? 18 : 14,
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
                       const Spacer(),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                        child: IconButton(
-                          padding: EdgeInsetsGeometry.zero,
-                          constraints: const BoxConstraints(),
-                          onPressed: widget.onPlay,
-                          icon: Icon(
-                            Icons.play_circle_rounded,
-                            size: 48,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(200),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.track.name,
+                              style: TextStyle(
+                                fontFamily: "SpotifyMixUI",
+                                fontSize: 18,
+                                color: Colors.white.withAlpha(200),
+                                fontWeight: FontWeight.bold,
+                                shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2), blurRadius: 4)],
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
+                          IconButton(
+                            padding: EdgeInsetsGeometry.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: widget.onPlay,
+                            icon: Icon(
+                              Icons.play_circle_rounded,
+                              size: 48,
+                              color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(200),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

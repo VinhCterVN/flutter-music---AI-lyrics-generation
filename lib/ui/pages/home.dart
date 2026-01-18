@@ -9,9 +9,11 @@ import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
+import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 
@@ -28,21 +30,42 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
+  bool _isFetching = false;
+  int _page = 0;
+  final int _pageSize = 20;
+  late bool _hasNextPage;
   int selectedGenreIndex = -1;
 
   @override
   void initState() {
     super.initState();
     _controller = ScrollController();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedTracks());
+    _controller.addListener(() {
+      if (_controller.position.pixels >= _controller.position.maxScrollExtent - 100) {
+        if (!_isFetching && _hasNextPage) {
+          _page++;
+          fetchTracks();
+        }
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
   }
 
-  Future<void> fetchTracks() async {
+  Future<void> fetchTracks({bool reset = false}) async {
+    if (reset) {
+      _page = 0;
+      tracks.clear();
+    }
+    setState(() => _isFetching = true);
     final trackService = ref.read(trackServiceProvider);
-    final res = await trackService.getAllTracks();
+    final res = await trackService.getTrackPage(page: _page, pageSize: _pageSize);
+    TrackDatabase.instance.insertTracks(res.data);
     if (!mounted) return;
-    setState(() => tracks = res);
+    setState(() {
+      tracks = [...tracks, ...res.data];
+      _hasNextPage = res.hasNextPage;
+      _isFetching = false;
+    });
   }
 
   @override
@@ -52,10 +75,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _loadSavedTracks() async {
+    setState(() => _isFetching = true);
     final savedTracks = await TrackDatabase.instance.getAllTracks();
     log("Loaded ${savedTracks.length} saved tracks from database");
     if (!mounted) return;
-    setState(() => tracks = savedTracks);
+    setState(() {
+      tracks = savedTracks;
+      _isFetching = false;
+    });
   }
 
   Future<void> _onGenreChanged(int index) async {
@@ -140,94 +167,106 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         RefreshIndicator(
           onRefresh: () async => await fetchTracks(),
-          child: CustomScrollView(
+          child: Scrollbar(
             controller: _controller,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      GestureDetector(
-                        onTap: () => Scaffold.of(context).openDrawer(),
-                        child: Row(
+            interactive: true,
+            radius: const Radius.elliptical(5, 5),
+            child: CustomScrollView(
+              controller: _controller,
+              slivers: [
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        GestureDetector(
+                          onTap: () => Scaffold.of(context).openDrawer(),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset("assets/icons/cloud.svg", width: 42),
+                              const SizedBox(width: 10),
+                              const Text(
+                                'Flussic',
+                                style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 26, fontWeight: FontWeight.w900),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
                           children: [
-                            SvgPicture.asset("assets/icons/cloud.svg", width: 42),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Flussic',
-                              style: TextStyle(fontFamily: "Klavika", fontSize: 24, fontWeight: FontWeight.bold),
+                            IconButton(
+                              onPressed: () => context.push('/search_detail'),
+                              icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
+                            ),
+                            PopupMenuButton<SortType>(
+                              icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
+                              onSelected: (value) {
+                                setState(() {
+                                  tracks = switch (value) {
+                                    SortType.newest => tracks..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
+                                    SortType.popular => tracks,
+                                    SortType.duration => tracks..shuffle(),
+                                  };
+                                });
+                              },
+                              itemBuilder: (context) => const [
+                                PopupMenuItem(value: SortType.newest, child: Text('Newest')),
+                                PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
+                                PopupMenuItem(value: SortType.duration, child: Text('Duration')),
+                              ],
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () async => await fetchTracks(),
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
-                          ),
-                          PopupMenuButton<SortType>(
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
-                            onSelected: (value) {
-                              setState(() {
-                                tracks = switch (value) {
-                                  SortType.newest => tracks..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
-                                  SortType.popular => tracks,
-                                  SortType.duration => tracks..shuffle(),
-                                };
-                              });
-                            },
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(value: SortType.newest, child: Text('Newest')),
-                              PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
-                              PopupMenuItem(value: SortType.duration, child: Text('Duration')),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
-              ),
-              SliverToBoxAdapter(
-                child: tracks.isNotEmpty
-                    ? RecentTracksSection(
-                        tracks: tracks,
-                        onTrackTap: (track) {
-                          final index = tracks.indexOf(track);
-                          _playTrack(ref, tracks, index);
-                        },
-                      )
-                    : SizedBox.shrink(),
-              ),
-
-              if (tracks.isEmpty)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Lottie.asset("assets/animations/impress.json", repeat: false),
-                  ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => TrackTile(
-                      track: tracks[index],
-                      onTap: () => _playTrack(ref, tracks, index),
-                      onLongPress: () {},
-                      currentTrackId: currentTrack?.id,
+                      ],
                     ),
-                    childCount: tracks.length,
                   ),
                 ),
-              SliverToBoxAdapter(child: const SizedBox(height: 200)),
-            ],
+                SliverPersistentHeader(
+                  pinned: true,
+                  delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
+                ),
+                SliverToBoxAdapter(
+                  child: tracks.isNotEmpty
+                      ? RecentTracksSection(
+                          tracks: tracks,
+                          onTrackTap: (track) {
+                            final index = tracks.indexOf(track);
+                            _playTrack(ref, tracks, index);
+                          },
+                        )
+                      : SizedBox.shrink(),
+                ),
+
+                if (tracks.isEmpty && !_isFetching)
+                  SliverToBoxAdapter(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: Lottie.asset("assets/animations/impress.json", repeat: false),
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) => TrackTile(
+                        track: tracks[index],
+                        onTap: () => _playTrack(ref, tracks, index),
+                        onLongPress: () {},
+                        currentTrackId: currentTrack?.id,
+                      ),
+                      childCount: tracks.length,
+                    ),
+                  ),
+                if (_isFetching)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      child: Center(child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant)),
+                    ),
+                  ),
+                SliverToBoxAdapter(child: const SizedBox(height: 200)),
+              ],
+            ),
           ),
         ),
       ],
@@ -240,19 +279,6 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
   final ValueChanged<int> onChanged;
 
   GenreStickyDelegate({this.selectedIndex = 0, required this.onChanged});
-
-  final List<String> genres = [
-    "Pop",
-    "Rock",
-    "Jazz",
-    "Classical",
-    "Hip-Hop",
-    "Electronic",
-    "Country",
-    "Reggae",
-    "Blues",
-    "Folk",
-  ];
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {

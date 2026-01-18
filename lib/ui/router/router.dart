@@ -3,8 +3,9 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
-import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/library.dart';
+import 'package:flutter_ai_music/ui/pages/search.dart';
+import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -52,6 +53,20 @@ GoRouter createRouter(WidgetRef ref) {
       GoRoute(name: 'LoginPage', path: '/login', builder: (context, state) => const AuthScreen()),
       // GoRoute(name: 'RegisterPage', path: '/register', builder: (context, state) => const RegisterScreen()),
       // GoRoute(name: 'WelcomePage', path: '/welcome', builder: (_, _) => WelcomePage()),
+      GoRoute(
+        path: '/search_detail',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          opaque: false,
+          barrierDismissible: true,
+          transitionsBuilder: (context, ani1, ani2, child) {
+            return SlideTransition(
+              position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
+              child: child,
+            );
+          },
+          child: const SearchDetailPage(),
+        ),
+      ),
       GoRoute(
         path: '/',
         builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator())),

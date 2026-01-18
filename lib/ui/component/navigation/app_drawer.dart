@@ -117,11 +117,12 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
             onDetailsPressed: () {
               Fluttertoast.showToast(msg: 'User ID: ${user?.id ?? 'N/A'}');
             },
+
             decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
           ),
           ListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
+            leading: const HugeIcon(icon: HugeIconsStrokeRounded.logout02),
+            title: const Text('Logout', style: TextStyle(fontFamily: "SpotifyMixUI")),
             onTap: () => ref.read(authenticationServiceProvider).signOut(),
           ),
         ],

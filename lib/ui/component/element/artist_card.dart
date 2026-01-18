@@ -10,6 +10,7 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons/styles/stroke_rounded.dart';
 
 import '../navigation/fullscreen_image_page.dart';
 
@@ -68,6 +69,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
         : 'https://picsum.photos/1000/500?random=$fallbackRandom';
 
     return AnimatedSize(
+      alignment: Alignment.topCenter,
       duration: const Duration(milliseconds: 300),
       curve: Curves.easeInOut,
       child: Container(
@@ -87,7 +89,6 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                     PageRouteBuilder(
                       opaque: false,
                       barrierColor: Colors.black54,
-                      transitionDuration: const Duration(milliseconds: 300),
                       pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: imageUrl),
                     ),
                   ),
@@ -195,7 +196,9 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                             spacing: 4,
                             children: [
                               HugeIcon(
-                                icon: _followed ? HugeIcons.strokeRoundedTick01 : HugeIcons.strokeRoundedLinkForward,
+                                icon: _followed
+                                    ? HugeIconsStrokeRounded.tickDouble01
+                                    : HugeIcons.strokeRoundedLinkForward,
                               ),
                               Text(
                                 _followed ? 'Following' : 'Follow',

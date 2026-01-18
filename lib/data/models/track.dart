@@ -41,6 +41,32 @@ class Track {
     );
   }
 
+  Track copyWith({
+    int? id,
+    String? name,
+    String? uri,
+    String? artistId,
+    String? artistName,
+    ArtistType? artistType,
+    List<String>? genres,
+    List<String>? images,
+    bool? isFavorite,
+    DateTime? createdAt,
+  }) {
+    return Track(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      uri: uri ?? this.uri,
+      artistId: artistId ?? this.artistId,
+      artistName: artistName ?? this.artistName,
+      artistType: artistType ?? this.artistType,
+      genres: genres ?? this.genres,
+      images: images ?? this.images,
+      isFavorite: isFavorite ?? this.isFavorite,
+      createdAt: createdAt ?? this.createdAt,
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -71,6 +97,22 @@ class TrackProgress {
   TrackProgress(this.position, this.buffered, this.duration);
 }
 
+class TrackPage {
+  final List<Track> data;
+  final int total;
+  final bool hasNextPage;
+
+  TrackPage({required this.data, required this.total, this.hasNextPage = false});
+
+  factory TrackPage.fromJson(Map<String, dynamic> json) {
+    return TrackPage(
+      data: (json['data'] as List).map((e) => Track.fromJson(e)).toList(),
+      total: json['total'],
+      hasNextPage: json['hasNextPage'] ?? false,
+    );
+  }
+}
+
 extension TrackToAudioSource on Track {
   AudioSource toAudioSource() {
     return AudioSource.uri(
@@ -80,6 +122,7 @@ extension TrackToAudioSource on Track {
         'title': name,
         'artistId': artistId,
         'artistType': artistType,
+        'artistName': artistName ?? '',
         'images': images,
         'genres': genres,
       },

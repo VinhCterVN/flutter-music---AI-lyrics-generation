@@ -82,3 +82,16 @@ final List<Track> mockTracks = [
     createdAt: DateTime.now(),
   ),
 ];
+
+final List<String> genres = [
+  "Pop",
+  "Rock",
+  "Jazz",
+  "Classical",
+  "Hip-Hop",
+  "Electronic",
+  "Country",
+  "Reggae",
+  "Blues",
+  "Folk",
+];

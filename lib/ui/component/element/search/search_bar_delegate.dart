@@ -3,9 +3,7 @@ import 'package:flutter_ai_music/ui/component/element/search/search_bar.dart';
 
 class SearchBarDelegate extends SliverPersistentHeaderDelegate {
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return const MySearchBar();
-  }
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => const MySearchBar();
 
   @override
   double get maxExtent => 72; // Height when fully expanded

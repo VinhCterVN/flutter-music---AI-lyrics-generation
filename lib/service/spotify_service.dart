@@ -4,10 +4,14 @@ import 'package:dio/dio.dart';
 import 'package:flutter_ai_music/data/models/artist.dart';
 import 'package:flutter_ai_music/service/secure_storage_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:synchronized/synchronized.dart';
 
 import '../data/enums/spotify_request.dart';
 
 class SpotifyService {
+  static final _lock = Lock();
+  static String? _cachedAccessToken;
+  static DateTime? _cachedEnsuredAt;
   static final String _clientId = dotenv.get("SPOTIFY_CLIENT_ID");
   static final String _clientSecret = dotenv.get("SPOTIFY_CLIENT_SECRET");
   static final Dio _client = Dio(
@@ -31,26 +35,15 @@ class SpotifyService {
     required String id,
     required T Function(Map<String, dynamic> json) transform,
   }) async {
-    final accessToken = await SecureStorageService.instance.read('spotify_access_token');
-    final tokenEnsuredAtStr = await SecureStorageService.instance.read('spotify_token_ensured_at');
-    final now = DateTime.now();
+    final token = await _ensureValidToken();
+    if (token == null || id.isEmpty) return null;
 
-    bool isExpired = false;
-    if (tokenEnsuredAtStr != null) {
-      final ensuredAt = DateTime.parse(tokenEnsuredAtStr);
-      isExpired = now.difference(ensuredAt).inSeconds >= 3600;
-    }
-
-    if (accessToken == null || tokenEnsuredAtStr == null || isExpired) {
-      await _getAccessToken();
-    }
-
-    final token = await SecureStorageService.instance.read('spotify_access_token');
     try {
       final response = await _client.get(
         '${resourceType.path}/$id',
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
+
       if (response.statusCode != 200) {
         log('Spotify request failed with status code: ${response.statusCode}');
         return null;
@@ -62,19 +55,59 @@ class SpotifyService {
     }
   }
 
+  static Future<String?> _ensureValidToken() async {
+    final now = DateTime.now();
+
+    if (_cachedAccessToken != null && _cachedEnsuredAt != null) {
+      final isExpired = now.difference(_cachedEnsuredAt!).inSeconds >= 3600;
+      if (!isExpired) return _cachedAccessToken;
+    }
+
+    final storedToken = await SecureStorageService.instance.read('spotify_access_token');
+    final ensuredAtStr = await SecureStorageService.instance.read('spotify_token_ensured_at');
+
+    if (storedToken != null && ensuredAtStr != null) {
+      final ensuredAt = DateTime.parse(ensuredAtStr);
+      final isExpired = now.difference(ensuredAt).inSeconds >= 3600;
+
+      if (!isExpired) {
+        _cachedAccessToken = storedToken;
+        _cachedEnsuredAt = ensuredAt;
+        return storedToken;
+      }
+    }
+
+    await _getAccessToken();
+    return _cachedAccessToken;
+  }
+
   static Future<void> _getAccessToken() async {
-    final client = Dio();
-    final response = await client.post(
-      'https://accounts.spotify.com/api/token',
-      data: {'grant_type': 'client_credentials', 'client_id': _clientId, 'client_secret': _clientSecret},
-      options: Options(contentType: Headers.formUrlEncodedContentType),
-    );
-    final tokenResponse = SpotifyAccessTokenResponse.fromJson(response.data);
-    SecureStorageService.instance.write('spotify_access_token', tokenResponse.accessToken);
-    SecureStorageService.instance.write('spotify_token_type', tokenResponse.tokenType);
-    SecureStorageService.instance.write('spotify_token_expires_in', tokenResponse.expiresIn.toString());
-    SecureStorageService.instance.write('spotify_token_ensured_at', DateTime.now().toIso8601String());
-    log("Obtained new Spotify access token");
+    await _lock.synchronized(() async {
+      final accessToken = await SecureStorageService.instance.read('spotify_access_token');
+      final tokenEnsuredAtStr = await SecureStorageService.instance.read('spotify_token_ensured_at');
+
+      if (accessToken != null && tokenEnsuredAtStr != null) {
+        final ensuredAt = DateTime.parse(tokenEnsuredAtStr);
+        final isExpired = DateTime.now().difference(ensuredAt).inSeconds >= 3600;
+        if (!isExpired) return;
+      }
+
+      final client = Dio();
+      final response = await client.post(
+        'https://accounts.spotify.com/api/token',
+        data: {'grant_type': 'client_credentials', 'client_id': _clientId, 'client_secret': _clientSecret},
+        options: Options(contentType: Headers.formUrlEncodedContentType),
+      );
+
+      final tokenResponse = SpotifyAccessTokenResponse.fromJson(response.data);
+
+      await SecureStorageService.instance.write('spotify_access_token', tokenResponse.accessToken);
+      await SecureStorageService.instance.write('spotify_token_type', tokenResponse.tokenType);
+      await SecureStorageService.instance.write('spotify_token_expires_in', tokenResponse.expiresIn.toString());
+      await SecureStorageService.instance.write('spotify_token_ensured_at', DateTime.now().toIso8601String());
+
+      log("Obtained new Spotify access token");
+    });
   }
 }
 

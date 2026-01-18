@@ -12,7 +12,7 @@ class PlaylistService {
 
   PlaylistService(this.ref) : _supabase = ref.read(supabaseClientProvider);
 
-  Future<void> toggleTrackToFavourite(int trackId) async {
+  Future<String> toggleTrackToFavourite(int trackId) async {
     log('Toggling track $trackId to favourites');
     final userId = ref.read(currentUserProvider)?.id ?? "---";
 
@@ -21,11 +21,12 @@ class PlaylistService {
     if (existing != null) {
       await _supabase.from('favourites').delete().eq('user_id', userId).eq('track_id', trackId);
       log('Track $trackId removed from favourites');
-      return;
+      return 'removed';
     }
 
     await _supabase.from('favourites').insert({'track_id': trackId});
     log('Track $trackId added to favourites');
+    return 'added';
   }
 
   Future<List<Playlist>> getPlaylists() async {

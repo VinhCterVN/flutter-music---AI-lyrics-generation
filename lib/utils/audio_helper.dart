@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/track.dart';
@@ -20,12 +19,7 @@ class AudioHelper {
     return true;
   }
 
-  static Future<void> playSingleTrack(
-    BuildContext context,
-    WidgetRef ref, {
-    required Track track,
-    bool navigateToPlayer = true,
-  }) async {
+  static Future<void> playSingleTrack(WidgetRef ref, {required Track track, bool navigateToPlayer = true}) async {
     await playTrackFromList(ref, allTracks: [track], selectedIndex: 0, navigateToPlayer: navigateToPlayer);
   }
 
@@ -45,7 +39,7 @@ extension AudioHelperExtension on WidgetRef {
     await AudioHelper.playTrackFromList(this, allTracks: tracks, selectedIndex: index);
   }
 
-  Future<void> playSingleTrack(BuildContext context, {required Track track}) async {
-    await AudioHelper.playSingleTrack(context, this, track: track);
+  Future<void> playSingleTrack({required Track track}) async {
+    await AudioHelper.playSingleTrack(this, track: track);
   }
 }
