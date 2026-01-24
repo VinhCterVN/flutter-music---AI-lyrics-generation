@@ -52,7 +52,7 @@ Future<Color> getDominantColor(String? imageUrl) async {
   try {
     final palette = await ImagePaletteService.instance.getPalette(VibrantRequest(imageUrl));
 
-    return paletteToColor(palette.darkMuted);
+    return paletteToColor(palette.darkVibrant);
   } on DioException catch (e) {
     log("Network error: ${e.message}");
     return defaultColor;

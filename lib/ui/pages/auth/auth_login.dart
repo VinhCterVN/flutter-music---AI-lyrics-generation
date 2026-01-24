@@ -88,68 +88,71 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     final primaryColor = Theme.of(context).colorScheme.primaryContainer;
     final primaryLighter = Color.lerp(primaryColor, Colors.white, 0.2)!;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          _AnimatedGradientBackground(controller: _backgroundAnimController),
+    return SafeArea(
+      top: false,
+      child: Scaffold(
+        body: Stack(
+          children: [
+            _AnimatedGradientBackground(controller: _backgroundAnimController),
 
-          ..._buildFloatingNotes(),
+            ..._buildFloatingNotes(),
 
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 48),
-                      _buildLogo(primaryColor, primaryLighter),
-                      const SizedBox(height: 12),
-                      ShaderMask(
-                        shaderCallback: (bounds) =>
-                            LinearGradient(colors: [primaryColor, primaryLighter, primaryColor]).createShader(bounds),
-                        child: const Text(
-                          'MusicAI',
-                          style: TextStyle(
-                            fontFamily: "SpotifyMixUI",
-                            fontWeight: FontWeight.w700,
-                            fontSize: 42,
-                            color: Colors.white,
-                            letterSpacing: -1,
+            Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: FadeTransition(
+                  opacity: _fadeAnimation,
+                  child: SlideTransition(
+                    position: _slideAnimation,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 48),
+                        _buildLogo(primaryColor, primaryLighter),
+                        const SizedBox(height: 12),
+                        ShaderMask(
+                          shaderCallback: (bounds) =>
+                              LinearGradient(colors: [primaryColor, primaryLighter, primaryColor]).createShader(bounds),
+                          child: const Text(
+                            'MusicAI',
+                            style: TextStyle(
+                              fontFamily: "SpotifyMixUI",
+                              fontWeight: FontWeight.w700,
+                              fontSize: 42,
+                              color: Colors.white,
+                              letterSpacing: -1,
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: Text(
-                          _isLogin ? 'Welcome back 🎵' : 'Exploring musics with AI ✨',
-                          key: ValueKey(_isLogin),
-                          style: TextStyle(
-                            fontFamily: "SpotifyMixUI",
-                            fontSize: 16,
-                            color: Colors.white.withValues(alpha: 0.8),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          child: Text(
+                            _isLogin ? 'Welcome back 🎵' : 'Exploring musics with AI ✨',
+                            key: ValueKey(_isLogin),
+                            style: TextStyle(
+                              fontFamily: "SpotifyMixUI",
+                              fontSize: 16,
+                              color: Colors.white.withValues(alpha: 0.8),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 40),
-                      _buildFormCard(Theme.of(context).colorScheme.primary,  primaryLighter),
-                      const SizedBox(height: 24),
-                      _buildToggleSection(primaryColor),
-                      const SizedBox(height: 32),
-                      _buildSocialLogin(),
-                      const SizedBox(height: 24),
-                    ],
+                        const SizedBox(height: 40),
+                        _buildFormCard(Theme.of(context).colorScheme.primary, primaryLighter),
+                        const SizedBox(height: 24),
+                        _buildToggleSection(primaryColor),
+                        const SizedBox(height: 32),
+                        _buildSocialLogin(),
+                        const SizedBox(height: 24),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

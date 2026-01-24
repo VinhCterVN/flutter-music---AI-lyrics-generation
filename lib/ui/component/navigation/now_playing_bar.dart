@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
-import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist.dart';
+import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist_demo.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -230,11 +230,8 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                       msg: currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
                                     );
                                   },
-                                  onLongPress: () => showDialog(
-                                    context: context,
-                                    useRootNavigator: true,
-                                    builder: (context) => AddTrackToPlaylist(trackId: currentTrack.id),
-                                  ),
+                                  onLongPress: () =>
+                                      showAddToPlaylistDialog(context, currentTrackId: 101, trackName: "Shape Of You"),
                                   child: isFavourite
                                       ? FaIcon(
                                           FontAwesomeIcons.solidHeart,

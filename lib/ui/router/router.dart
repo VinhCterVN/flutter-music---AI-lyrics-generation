@@ -67,7 +67,12 @@ GoRouter createRouter(WidgetRef ref) {
                 child: child,
               );
             },
-            child: SearchDetailPage(query: extra?['query']),
+            child: Dismissible(
+              key: const Key('search_detail_dismissible'),
+              movementDuration: const Duration(milliseconds: 300),
+              direction: DismissDirection.startToEnd,
+              child: SearchDetailPage(query: extra?['query']),
+            ),
           );
         },
       ),

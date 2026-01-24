@@ -15,9 +15,10 @@ class MyNavigationBar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bottomPadding = MediaQuery.of(context).viewPadding.bottom;
     final currentTrack = ref.watch(currentTrackProvider).value;
     final bool hasTrack = currentTrack != null;
-    final double barHeight = hasTrack ? 140.0 : 79.0;
+    final double barHeight = (hasTrack ? 140.0 : 79.0) + bottomPadding;
 
     return SizedBox(
       height: barHeight,
@@ -60,22 +61,25 @@ class MyNavigationBar extends ConsumerWidget {
                 ),
               ),
             ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              color: Colors.transparent,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: List.generate(
-                  items.length,
-                  (index) => NavBarItem(
-                    name: items[index]['name'] as String,
-                    icon: items[index]['icon'] as IconData,
-                    activeIcon: items[index]['active_icon'] as IconData,
-                    selected: currentIndex == index,
-                    onTap: () => onTap(index),
+          Padding(
+            padding: EdgeInsets.only(bottom: bottomPadding),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Container(
+                color: Colors.transparent,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: List.generate(
+                    items.length,
+                    (index) => NavBarItem(
+                      name: items[index]['name'] as String,
+                      icon: items[index]['icon'] as IconData,
+                      activeIcon: items[index]['active_icon'] as IconData,
+                      selected: currentIndex == index,
+                      onTap: () => onTap(index),
+                    ),
                   ),
                 ),
               ),

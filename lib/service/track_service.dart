@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:flutter_ai_music/data/database/track_database.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/service/spotify_service.dart';
@@ -49,8 +50,24 @@ class TrackService {
     }).toList();
 
     final trackList = await Future.wait(tracksWithArtist);
-
+    TrackDatabase.instance.insertTracks(trackList);
     return TrackPage(data: trackList, total: trackList.length, hasNextPage: hasNextPage);
+  }
+
+  Future<List<Track>> getTracksByIds(List<String> ids) async {
+    log('Fetching tracks by IDs from Supabase: $ids');
+
+    if (ids.isEmpty) return [];
+
+    final response = await _supabase
+        .from("tracks")
+        .select("""
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+              """)
+        .inFilter('id', ids);
+    return (response as List).map((e) => Track.fromJson(e)).toList();
   }
 
   Future<List<Track>> searchTracks(String query) async {

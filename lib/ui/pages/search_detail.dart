@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_ai_music/data/models/search.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
-import 'package:flutter_ai_music/utils/debouncer.dart';
+import 'package:flutter_ai_music/ui/component/element/search/search_result_detail.dart';
+import 'package:flutter_ai_music/ui/component/element/search/search_suggestion.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
@@ -20,192 +22,204 @@ class SearchDetailPage extends ConsumerStatefulWidget {
 }
 
 class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
-  final Debouncer _debouncer = Debouncer(delay: const Duration(milliseconds: 1000));
   late final ScrollController _scrollController;
   late final TextEditingController _textController;
   late final FocusNode _focusNode;
-  List<Search> _histories = [], _trending = [], _filtered = [];
+
+  List<Search> _histories = [];
+  List<Search> _trending = [];
+  List<Search> _filteredHistories = [];
+  SearchResult? _searchResult;
+
   bool _showDivider = false;
-  bool _isSearching = false;
+  bool _isLoading = false;
+  bool _showResults = false;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = ScrollController();
-    _textController = TextEditingController();
-    _scrollController.addListener(_onScroll);
-    _focusNode = FocusNode();
+    _scrollController = ScrollController()..addListener(_onScroll);
+    _textController = SearchController();
+    _focusNode = FocusNode()..addListener(_onFocusChange);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
-      if (widget.query != null && widget.query!.isNotEmpty) {
+      if (widget.query?.isNotEmpty == true) {
         _textController.text = widget.query!;
-        _onSearchChanged(widget.query!);
-      }
-      _focusNode.requestFocus();
-    });
-  }
-
-  Future<void> _loadData() async {
-    final histories = await ref.read(searchServiceProvider).getSearchHistory();
-    final trending = await ref.read(searchServiceProvider).getTrendingSearch();
-    if (!mounted) return;
-    setState(() {
-      _trending = trending;
-      _histories = histories;
-      _filtered = histories;
-    });
-    debugPrint('Loaded ${histories.length} histories and ${trending.length} trending searches.');
-  }
-
-  void _onScroll() {
-    if (_scrollController.offset > 0 && !_showDivider) {
-      setState(() => _showDivider = true);
-    } else if (_scrollController.offset <= 0 && _showDivider) {
-      setState(() => _showDivider = false);
-    }
-  }
-
-  Future<void> _onSearch(String query) async {
-    if (query.isEmpty) return;
-    ref.read(searchServiceProvider).insertSearch(query);
-  }
-
-  void _onSearchChanged(String query) {
-    setState(() {
-      if (query.isEmpty) {
-        _filtered = _histories;
+        _performSearch(widget.query!);
       } else {
-        _filtered = _histories.where((element) => element.keyword.startsWith(query.toLowerCase())).toList();
+        _focusNode.requestFocus();
       }
     });
-  }
-
-  Future<void> _requestMicrophonePermission() async {
-    final status = await Permission.microphone.request();
-
-    if (status.isGranted) {
-      Fluttertoast.showToast(msg: 'Microphone permission granted.');
-    } else if (status.isDenied) {
-      Fluttertoast.showToast(msg: 'Microphone permission is required for this feature.');
-    } else if (status.isPermanentlyDenied) {
-      Fluttertoast.showToast(msg: 'Please enable microphone permission from settings.');
-      await openAppSettings();
-    } else if (status.isRestricted) {
-      Fluttertoast.showToast(msg: 'Microphone permission is restricted and cannot be requested.');
-    }
   }
 
   @override
   void dispose() {
-    super.dispose();
+    _focusNode.dispose();
     _scrollController.dispose();
     _textController.dispose();
-    _focusNode.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final searchService = ref.read(searchServiceProvider);
+    final [histories, trending] = await Future.wait([
+      searchService.getSearchHistory(),
+      searchService.getTrendingSearch(),
+    ]);
+
+    if (!mounted) return;
+    setState(() {
+      _histories = histories;
+      _filteredHistories = _histories;
+      _trending = trending;
+    });
+  }
+
+  void _onFocusChange() {
+    if (_focusNode.hasFocus) {
+      setState(() => _showResults = false);
+    }
+  }
+
+  void _onScroll() {
+    if (_focusNode.hasFocus) SystemChannels.textInput.invokeMethod('TextInput.hide');
+
+    final shouldShow = _scrollController.offset > 0;
+    if (shouldShow != _showDivider) {
+      setState(() => _showDivider = shouldShow);
+    }
+  }
+
+  void _onQueryChanged(String query) => setState(() {
+    if (query.isEmpty) {
+      _filteredHistories = _histories;
+    } else {
+      _filteredHistories = _histories.where((e) => e.keyword.toLowerCase().startsWith(query.toLowerCase())).toList();
+    }
+  });
+
+  Future<void> _performSearch(String query) async {
+    if (query.isEmpty) return;
+
+    _focusNode.unfocus();
+    setState(() {
+      _isLoading = true;
+      _showResults = false;
+      _searchResult = null;
+    });
+
+    final result = await ref.read(searchServiceProvider).search(query);
+
+    if (!mounted) return;
+    setState(() {
+      _isLoading = false;
+      _searchResult = result;
+      _showResults = true;
+    });
+  }
+
+  void _handleBack() {
+    if (_focusNode.hasFocus) {
+      _focusNode.unfocus();
+    } else {
+      context.pop();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    final bool showSuggestions = _focusNode.hasFocus || _searchResult == null || !_showResults;
+
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        scrolledUnderElevation: 0,
-        backgroundColor: Theme.of(context).colorScheme.surfaceDim,
-        leading: IconButton(onPressed: context.pop, icon: const Icon(Icons.arrow_back_rounded, weight: 0.5)),
-        title: SizedBox(
-          height: 38,
-          child: TextField(
-            controller: _textController,
-            focusNode: _focusNode,
-            style: GoogleFonts.roboto(),
-            onChanged: _onSearchChanged,
-            onSubmitted: _onSearch,
-            decoration: InputDecoration(
-              hintText: 'Find your tracks, artists…',
-              hintStyle: GoogleFonts.roboto(color: Theme.of(context).colorScheme.onSurface.withAlpha(153)),
-              filled: true,
-              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
+      backgroundColor: theme.colorScheme.surfaceDim,
+      appBar: _buildAppBar(theme),
+      body: Stack(
+        children: [
+          if (_searchResult != null)
+            Visibility(
+              visible: !showSuggestions && !_isLoading,
+              maintainState: true,
+              child: SearchResultDetail(result: _searchResult),
             ),
-          ),
-        ),
-        actions: [
-          const SizedBox(width: 4),
-          IconButton(
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
+
+          if (showSuggestions && !_isLoading)
+            SearchSuggestion(
+              scrollController: _scrollController,
+              trending: _trending,
+              histories: _filteredHistories,
+              isQueryEmpty: _textController.text.isEmpty,
+              onBackgroundTap: _focusNode.requestFocus,
+              onSearchTap: (query) {
+                _textController.text = query;
+                _performSearch(query);
+              },
+              onFillTap: (query) {
+                _textController.text = query;
+                _textController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: _textController.text.length),
+                );
+                _onQueryChanged(query);
+              },
             ),
-            onPressed: () {},
-            icon: const HugeIcon(icon: HugeIconsStrokeRounded.chart03),
-          ),
-          IconButton(
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(Theme.of(context).colorScheme.surfaceContainerHighest),
+
+          if (_isLoading)
+            Container(
+              color: theme.colorScheme.surfaceDim,
+              child: const Center(child: CircularProgressIndicator()),
             ),
-            onPressed: () => _requestMicrophonePermission(),
-            icon: const HugeIcon(icon: HugeIconsStrokeRounded.aiMic),
-          ),
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(1),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 300),
-            height: _showDivider ? 1 : 0,
-            color: Theme.of(context).colorScheme.outlineVariant,
+      ),
+    );
+  }
+
+  AppBar _buildAppBar(ThemeData theme) {
+    return AppBar(
+      titleSpacing: 0,
+      scrolledUnderElevation: 0,
+      backgroundColor: theme.colorScheme.surfaceDim,
+      leading: IconButton(onPressed: _handleBack, icon: const Icon(Icons.arrow_back_rounded, weight: 0.5)),
+      title: SizedBox(
+        height: 38,
+        child: TextField(
+          controller: _textController,
+          focusNode: _focusNode,
+          style: GoogleFonts.roboto(),
+          onChanged: _onQueryChanged,
+          onSubmitted: _performSearch,
+          textInputAction: TextInputAction.search,
+          decoration: InputDecoration(
+            hintText: 'Find your tracks, artists…',
+            hintStyle: GoogleFonts.roboto(color: theme.colorScheme.onSurface.withAlpha(153)),
+            filled: true,
+            fillColor: theme.colorScheme.surfaceContainerHighest,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(999), borderSide: BorderSide.none),
           ),
         ),
       ),
-      backgroundColor: Theme.of(context).colorScheme.surfaceDim,
-      body: RefreshIndicator(
-        onRefresh: () async => _loadData(),
-        child: CustomScrollView(
-          controller: _scrollController,
-          scrollDirection: Axis.vertical,
-          slivers: [
-            const SliverToBoxAdapter(child: SizedBox(height: 18)),
-            if (_textController.text.isEmpty && _trending.isNotEmpty) ...[
-              const SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(16, 4, 16, 0),
-                  child: Text("Trending searches: ", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                ),
-              ),
-              SliverList.builder(
-                itemCount: _trending.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    dense: true,
-                    leading: const Icon(Icons.trending_up_rounded),
-                    title: Text(
-                      _trending[index].keyword,
-                      style: const TextStyle(fontSize: 15, letterSpacing: 0),
-                      maxLines: 1,
-                    ),
-                    trailing: const Icon(Icons.search_rounded),
-                    onTap: () => Fluttertoast.showToast(msg: 'Search for "Trending Search Item ${index + 1}"'),
-                  );
-                },
-              ),
-            ],
-            SliverList.builder(
-              itemCount: _filtered.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.history_rounded),
-                  title: Text(
-                    _filtered[index].keyword,
-                    style: const TextStyle(fontSize: 15, letterSpacing: 0),
-                    maxLines: 1,
-                  ),
-                  trailing: const Icon(Icons.subdirectory_arrow_left_rounded),
-                  onTap: () => Fluttertoast.showToast(msg: 'Search for "${_filtered[index].keyword}"'),
-                );
-              },
-            ),
-          ],
+      actions: [
+        IconButton(
+          onPressed: () {},
+          icon: const HugeIcon(icon: HugeIconsStrokeRounded.chart03),
+        ),
+        IconButton(
+          onPressed: () async {
+            if (await Permission.microphone.request().isGranted) {
+              Fluttertoast.showToast(msg: "Mic permission granted");
+            }
+          },
+          icon: const HugeIcon(icon: HugeIconsStrokeRounded.aiMic),
+        ),
+      ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          height: _showDivider ? 1 : 0,
+          color: theme.colorScheme.outlineVariant,
         ),
       ),
     );

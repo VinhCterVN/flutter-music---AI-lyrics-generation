@@ -1,6 +1,6 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/search/track_top_search.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/utils/debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -70,7 +70,9 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
             controller: controller,
             onTap: () => controller.openView(),
             hintText: "Search tracks...",
-            shape: const WidgetStatePropertyAll(RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12)))),
+            shape: const WidgetStatePropertyAll(
+              RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+            ),
             textStyle: WidgetStatePropertyAll(GoogleFonts.poppins()),
             padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16, vertical: 8)),
             leading: const HugeIcon(icon: HugeIcons.strokeRoundedAiSearch),
@@ -121,78 +123,7 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                           physics: const BouncingScrollPhysics(),
                           slivers: [
                             SliverToBoxAdapter(
-                              child: Padding(
-                                padding: const EdgeInsets.all(12.0),
-                                child: Container(
-                                  padding: EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(25),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                    color: Theme.of(context).colorScheme.primaryContainer.withAlpha(100),
-                                  ),
-                                  clipBehavior: Clip.hardEdge,
-                                  child: Stack(
-                                    children: [
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Container(
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(8),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withAlpha(50),
-                                                  blurRadius: 4,
-                                                  offset: const Offset(0, 2),
-                                                ),
-                                              ],
-                                            ),
-                                            width: 100,
-                                            height: 100,
-                                            clipBehavior: Clip.hardEdge,
-                                            child: CachedNetworkImage(imageUrl: tracks.first.images.first),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            tracks.first.name,
-                                            style: const TextStyle(
-                                              fontFamily: "SpotifyMixUI",
-                                              fontSize: 32,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            textAlign: TextAlign.center,
-                                          ),
-                                        ],
-                                      ),
-
-                                      Positioned(
-                                        top: 0,
-                                        right: 0,
-                                        child: Container(
-                                          width: 64,
-                                          height: 64,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Theme.of(context).colorScheme.tertiaryContainer,
-                                          ),
-                                          child: IconButton(
-                                            onPressed: () => _playTrack(ref, tracks, 0),
-                                            icon: HugeIcon(icon: HugeIcons.strokeRoundedPlay),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
+                              child: TrackTopSearch(track: tracks.first, onTap: () => _playTrack(ref, tracks, 0)),
                             ),
 
                             if (tracks.length > 1)

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter_ai_music/data/models/search.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -19,21 +21,18 @@ class SearchService {
     final from = page * pageSize;
     final to = from + pageSize - 1;
 
-    final res = await _supabase
-        .from('search_logs')
-        .select()
-        .order('keyword')
-        .order('created_at', ascending: false)
-        .range(from, to);
+    final res = await _supabase.rpc('get_recent_search_logs');
 
-    final map = <String, Map<String, dynamic>>{};
-    for (final row in res) {
-      map.putIfAbsent(row['keyword'], () => row);
-    }
-
-    return map.values.map((e) => Search.fromJson(e)).toList();
+    log('Fetched search history: $res');
+    return (res as List).map((e) => Search.fromJson(e)).toList();
   }
 
-  Future<void> insertSearch(String query) async =>
+  Future<SearchResult> search(String query) async {
+    await _insertSearch(query);
+    final res = await _supabase.rpc("search_media_ids", params: {"query_text": query});
+    return SearchResult.fromJson(res);
+  }
+
+  Future<void> _insertSearch(String query) async =>
       await _supabase.from("search_logs").insert({"keyword": query.toLowerCase()});
 }

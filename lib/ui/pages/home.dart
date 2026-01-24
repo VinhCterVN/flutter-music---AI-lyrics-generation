@@ -59,7 +59,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     setState(() => _isFetching = true);
     final trackService = ref.read(trackServiceProvider);
     final res = await trackService.getTrackPage(page: _page, pageSize: _pageSize);
-    TrackDatabase.instance.insertTracks(res.data);
     if (!mounted) return;
     setState(() {
       tracks = [...tracks, ...res.data];
@@ -289,15 +288,14 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final Color backgroundColor = overlapsContent
-        ? Theme.of(context).colorScheme.surfaceDim.withAlpha(180)
+        ? Theme.of(context).colorScheme.surfaceDim.withAlpha(100)
         : Colors.transparent;
 
-    final double blurAmount = overlapsContent ? 10.0 : 0.0;
+    final double blurAmount = overlapsContent ? 5.0 : 0.0;
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
         child: Container(
-          color: backgroundColor,
           height: 88,
           alignment: Alignment.center,
           child: ListView.builder(

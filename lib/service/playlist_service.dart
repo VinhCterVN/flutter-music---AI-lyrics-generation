@@ -35,11 +35,25 @@ class PlaylistService {
     final response = await _supabase
         .from("playlists")
         .select("""
-          id, user_id, name, created_at, updated_at,
+          id, user_id, name, photo_url, created_at, updated_at,
           playlists_tracks (track_id)
-          """)
-        .eq('user_id', ref.read(currentUserProvider)?.id ?? "---");
+          """);
     log('Playlists response: $response');
     return (response as List).map((e) => Playlist.fromJson(e)).toList();
+  }
+
+  Future<List<int>> getTrackIdsInPlaylist(String playlistId) async {
+    final response = await _supabase.from('playlists_tracks').select('track_id').eq('playlist_id', playlistId);
+    return (response as List).map((e) => e['track_id'] as int).toList();
+  }
+
+  Future<void> addTrackToPlaylist(String playlistId, int trackId) async {
+    log('Adding track $trackId to playlist $playlistId');
+    await _supabase.from('playlists_tracks').insert({'playlist_id': playlistId, 'track_id': trackId});
+  }
+
+  Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
+    log('Removing track $trackId from playlist $playlistId');
+    await _supabase.from('playlists_tracks').delete().eq('playlist_id', playlistId).eq('track_id', trackId);
   }
 }

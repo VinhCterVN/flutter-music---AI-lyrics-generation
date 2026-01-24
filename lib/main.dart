@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ai_music/data/database/track_database.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/router/router.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
@@ -25,10 +24,6 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(audioHandlerProvider);
-    ref.listen(queueProvider, (prev, nex) async {
-      if (prev == nex) return;
-      await TrackDatabase.instance.insertTracks(nex.rawTracks);
-    });
     final textTheme = createTextTheme(context, "Roboto", "Montserrat");
     final theme = MaterialTheme(textTheme);
     return MaterialApp.router(
