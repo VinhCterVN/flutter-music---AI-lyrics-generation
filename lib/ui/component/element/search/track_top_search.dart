@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/utils/functions.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:marquee/marquee.dart';
 
 class TrackTopSearch extends StatefulWidget {
   final Track track;
@@ -65,18 +66,41 @@ class _TrackTopSearchState extends State<TrackTopSearch> {
                         spreadRadius: hasColor ? 48 : 0,
                         offset: hasColor ? const Offset(0, 0) : const Offset(0, 2),
                       ),
+                      BoxShadow(
+                        color: Colors.black.withAlpha(50),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      )
                     ],
                   ),
                   child: CachedNetworkImage(imageUrl: widget.track.images.first),
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  widget.track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 32, fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                ),
+                widget.track.name.length > 20
+                    ? SizedBox(
+                        height: 40,
+                        child: Marquee(
+                          text: widget.track.name,
+                          style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 32, fontWeight: FontWeight.bold),
+                          scrollAxis: Axis.horizontal,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          blankSpace: 30.0,
+                          velocity: 30.0,
+                          pauseAfterRound: const Duration(seconds: 1),
+                          startPadding: 0.0,
+                          accelerationDuration: const Duration(seconds: 1),
+                          accelerationCurve: Curves.linear,
+                          decelerationDuration: const Duration(milliseconds: 500),
+                          decelerationCurve: Curves.easeOut,
+                        ),
+                      )
+                    : Text(
+                        widget.track.name,
+                        style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 32, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
+                      ),
                 Text(
                   widget.track.artistName ?? widget.track.artistType.name,
                   style: TextStyle(

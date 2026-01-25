@@ -11,12 +11,11 @@ class Playlist {
   Playlist({required this.id, required this.name, this.imageUrl, this.trackCount = 0, this.isContainsTrack = false});
 }
 
-// --- Trigger Function ---
 void showAddToPlaylistDialog(BuildContext context, {required int currentTrackId, required String trackName}) {
   showDialog(
     context: context,
     builder: (context) => Dialog(
-      backgroundColor: Colors.transparent, // Để clipRrect xử lý bo góc
+      backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(16),
       child: AddToPlaylistScreen(trackId: currentTrackId, trackName: trackName),
     ),

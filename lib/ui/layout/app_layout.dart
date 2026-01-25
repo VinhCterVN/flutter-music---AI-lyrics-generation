@@ -17,13 +17,6 @@ class AppLayout extends ConsumerStatefulWidget {
 }
 
 class _AppLayoutState extends ConsumerState<AppLayout> {
-  final routes = [
-    {"name": "Home", "icon": FontAwesomeIcons.house, "active_icon": FontAwesomeIcons.solidHouse},
-    {"name": "Search", "icon": FontAwesomeIcons.magnifyingGlass, "active_icon": FontAwesomeIcons.magnifyingGlassPlus},
-    {"name": "Bolt", "icon": FontAwesomeIcons.bolt, "active_icon": FontAwesomeIcons.boltLightning},
-    {"name": "Library", "icon": FontAwesomeIcons.listOl, "active_icon": FontAwesomeIcons.solidRectangleList},
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -45,7 +38,6 @@ class _AppLayoutState extends ConsumerState<AppLayout> {
       body: widget.navigationShell,
       extendBody: true,
       bottomNavigationBar: MyNavigationBar(
-        items: routes,
         currentIndex: currentIndex,
         onTap: widget.navigationShell.goBranch,
       ),

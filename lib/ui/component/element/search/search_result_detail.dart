@@ -6,6 +6,7 @@ import 'package:flutter_ai_music/data/models/search.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/search/track_top_search.dart';
+import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -44,6 +45,13 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
       _uiState = UIState.ready;
     });
   }
+  Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
+    try {
+      AudioHelper.playTrackFromList(ref, allTracks: allTracks, selectedIndex: selectedIndex);
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error playing track: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +67,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
           if (_tracks.isNotEmpty) ...[
             SliverToBoxAdapter(
               child: const Padding(
-                padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
                 child: Text(
                   "Top result",
                   style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w800),
@@ -69,7 +77,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
             SliverToBoxAdapter(
               child: TrackTopSearch(
                 track: _tracks.first,
-                onTap: () => Fluttertoast.showToast(msg: "Track ${_tracks.first.name} tapped"),
+                onTap: () => _playTrack(ref, _tracks, 0),
                 padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
               ),
             ),
@@ -89,13 +97,14 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
                   height: 220,
                   padding: const EdgeInsets.symmetric(vertical: 12.0),
                   child: ListView.separated(
-                    itemCount: _tracks.length,
+                    itemCount: _tracks.length - 1,
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     separatorBuilder: (context, index) => const SizedBox(width: 12),
-                    itemBuilder: (context, index) {
-                      return SizedBox(
-                        width: 140,
+                    itemBuilder: (context, index) => SizedBox(
+                      width: 140,
+                      child: GestureDetector(
+                        onTap: () => _playTrack(ref, _tracks, index + 1),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.start,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,20 +113,24 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
                               borderRadius: BorderRadius.circular(8),
                               child: AspectRatio(
                                 aspectRatio: 1,
-                                child: CachedNetworkImage(imageUrl: _tracks[index].images.first, fit: BoxFit.cover),
+                                child: CachedNetworkImage(imageUrl: _tracks[index + 1].images.first, fit: BoxFit.cover),
                               ),
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              _tracks[index].name,
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                              _tracks[index + 1].name,
+                              style: const TextStyle(
+                                fontFamily: "SpotifyMixUI",
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
               ),

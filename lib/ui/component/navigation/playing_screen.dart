@@ -3,8 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/artist_provider.dart';
-import 'package:flutter_ai_music/provider/uistate_provider.dart';
-import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
+import 'package:flutter_ai_music/ui/component/element/botton/large_lyrics_button.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -26,16 +25,13 @@ class PlayingScreen extends ConsumerStatefulWidget {
   ConsumerState<PlayingScreen> createState() => _PlayingScreenState();
 }
 
-class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
+class _PlayingScreenState extends ConsumerState<PlayingScreen>
+    with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool _isUserSeeking = false;
   double _sliderProgress = 0.0;
-  Color? _previousColor;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-
-  late AnimationController _colorController;
-  late Animation<Color?> _colorAnimation;
 
   @override
   void initState() {
@@ -47,39 +43,14 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
       begin: 1.0,
       end: 0.98,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.fastOutSlowIn));
-
-    _colorController = AnimationController(duration: const Duration(milliseconds: 800), vsync: this);
-
-    final initialColor = ref.read(ambientColorProvider);
-    _previousColor = initialColor;
-    _colorAnimation = ColorTween(
-      begin: initialColor,
-      end: initialColor,
-    ).animate(CurvedAnimation(parent: _colorController, curve: Curves.easeInOut));
-    _colorController.value = 1.0;
   }
 
   @override
   bool get wantKeepAlive => true;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final currentColor = ref.read(ambientColorProvider);
-    if (_previousColor != currentColor && mounted) {
-      _previousColor = currentColor;
-      _colorAnimation = ColorTween(
-        begin: currentColor,
-        end: currentColor,
-      ).animate(CurvedAnimation(parent: _colorController, curve: Curves.easeInOut));
-      _colorController.value = 1.0;
-    }
-  }
-
-  @override
   void dispose() {
     _pulseController.dispose();
-    _colorController.dispose();
     super.dispose();
   }
 
@@ -90,21 +61,6 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
 
     final padding = MediaQuery.of(context).padding;
     final screenHeight = MediaQuery.of(context).size.height - padding.top - padding.bottom - 100;
-    ref.listen<Color>(ambientColorProvider, (previous, next) {
-      if (previous != next && mounted) {
-        final currentAnimatedValue = _colorAnimation.value ?? previous;
-        if (currentAnimatedValue != next) {
-          _previousColor = currentAnimatedValue;
-          _colorAnimation = ColorTween(
-            begin: currentAnimatedValue,
-            end: next,
-          ).animate(CurvedAnimation(parent: _colorController, curve: Curves.easeInOut));
-          _colorController
-            ..reset()
-            ..forward();
-        }
-      }
-    });
 
     return currentTrackAsync.when(
       data: (currentTrack) {
@@ -123,165 +79,117 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
         }
 
         return Scaffold(
-          body: AnimatedBuilder(
-            animation: _colorAnimation,
-            builder: (context, child) {
-              final animatedColor = _colorAnimation.value;
-              if (animatedColor == null) return const SizedBox.shrink();
-
-              return Stack(
-                children: [
-                  Positioned.fill(
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 500),
-                      child: SizedBox.expand(
-                        key: ValueKey(currentTrack.images.first),
-                        child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
+          body: Stack(
+            children: [
+              Positioned.fill(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: SizedBox.expand(
+                    key: ValueKey(currentTrack.images.first),
+                    child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: ListenableBuilder(
+                  listenable: widget.scrollController,
+                  builder: (context, child) {
+                    final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
+                    final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
+                    return BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+                      child: Container(color: Colors.black.withAlpha(55)),
+                    );
+                  },
+                ),
+              ),
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [Colors.transparent, Colors.black.withAlpha(200)],
+                    ),
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: CustomScrollView(
+                  controller: widget.scrollController,
+                  slivers: <Widget>[
+                    SliverAppBar(
+                      toolbarHeight: kToolbarHeight + 10,
+                      leading: Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: IconButton(
+                          onPressed: () => Navigator.pop(context),
+                          icon: const Icon(Icons.keyboard_arrow_down),
+                        ),
                       ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: ListenableBuilder(
-                      listenable: widget.scrollController,
-                      builder: (context, child) {
-                        final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
-                        final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
-                        return BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
-                          child: Container(color: Colors.black.withAlpha(55)),
-                        );
-                      },
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [Colors.transparent, Colors.black.withAlpha(200)],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: CustomScrollView(
-                      controller: widget.scrollController,
-                      slivers: <Widget>[
-                        SliverAppBar(
-                          toolbarHeight: kToolbarHeight + 10,
-                          leading: Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: IconButton(
-                              onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                            ),
-                          ),
-                          actions: [
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
-                            ),
-                          ],
-                          flexibleSpace: FlexibleSpaceBar(
-                            title: const Text(
-                              'Playing View',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontFamily: "SpotifyMixUI",
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            centerTitle: true,
-                          ),
-                          backgroundColor: Colors.transparent,
-                        ),
-
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: screenHeight,
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(12.0),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        _AlbumArtwork(
-                                          imageUrl: currentTrack.images.first,
-                                          ambientColor: animatedColor,
-                                          pulseAnimation: _pulseAnimation,
-                                        ),
-                                        const SizedBox(height: 50),
-                                        _TrackInfo(track: currentTrack),
-                                        const SizedBox(height: 16),
-                                        _ProgressBar(
-                                          isUserSeeking: _isUserSeeking,
-                                          sliderProgress: _sliderProgress,
-                                          onChanged: (value) {
-                                            setState(() {
-                                              _sliderProgress = value;
-                                              _isUserSeeking = true;
-                                            });
-                                          },
-                                          onChangeEnd: (value) async {
-                                            setState(() => _isUserSeeking = false);
-                                            await ref
-                                                .read(audioPlayerProvider)
-                                                .seek(Duration(milliseconds: value.toInt()));
-                                          },
-                                        ),
-                                        const SizedBox(height: 8),
-                                        const _PlaybackControls(),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: ArtistCard(
-                            borderRadius: BorderRadius.circular(20),
-                            imageBorderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        SliverToBoxAdapter(
-                          child: Container(
-                            margin: const EdgeInsets.fromLTRB(16, 0, 16, 80),
-                            child: ElevatedButton(
-                              onPressed: () async {
-                                if (!context.mounted) return;
-                                await Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        LyricsDisplayWidget(track: currentTrack, backgroundColor: animatedColor),
-                                  ),
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _colorAnimation.value,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                              ),
-                              child: const Text(
-                                'Bấm xem trước lời bài hát',
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
+                      actions: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
                         ),
                       ],
+                      flexibleSpace: FlexibleSpaceBar(
+                        title: const Text(
+                          'Playing View',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontFamily: "SpotifyMixUI",
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        centerTitle: true,
+                      ),
+                      backgroundColor: Colors.transparent,
                     ),
-                  ),
-                ],
-              );
-            },
+
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: screenHeight,
+                        padding: const EdgeInsets.all(12.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _AlbumArtwork(imageUrl: currentTrack.images.first, pulseAnimation: _pulseAnimation),
+                            const SizedBox(height: 50),
+                            _TrackInfo(track: currentTrack),
+                            const SizedBox(height: 16),
+                            _ProgressBar(
+                              isUserSeeking: _isUserSeeking,
+                              sliderProgress: _sliderProgress,
+                              onChanged: (value) => setState(() {
+                                _sliderProgress = value;
+                                _isUserSeeking = true;
+                              }),
+                              onChangeEnd: (value) async {
+                                setState(() => _isUserSeeking = false);
+                                await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            const _PlaybackControls(),
+                          ],
+                        ),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: ArtistCard(
+                        borderRadius: BorderRadius.circular(20),
+                        imageBorderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 80), child: LargeLyricsButton()),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -303,10 +211,9 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen> with TickerProvid
 
 class _AlbumArtwork extends ConsumerWidget {
   final String imageUrl;
-  final Color ambientColor;
   final Animation<double> pulseAnimation;
 
-  const _AlbumArtwork({required this.imageUrl, required this.ambientColor, required this.pulseAnimation});
+  const _AlbumArtwork({required this.imageUrl, required this.pulseAnimation});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -322,7 +229,14 @@ class _AlbumArtwork extends ConsumerWidget {
               height: MediaQuery.of(context).size.width * 0.9,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
-                boxShadow: [BoxShadow(color: ambientColor.withAlpha(85), blurRadius: 30, spreadRadius: 5)],
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black12.withAlpha(100),
+                    offset: const Offset(0, 4),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),

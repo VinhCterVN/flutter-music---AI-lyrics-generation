@@ -67,7 +67,14 @@ class TrackService {
             favourites!left (id)
               """)
         .inFilter('id', ids);
-    return (response as List).map((e) => Track.fromJson(e)).toList();
+    final trackWithArtist = (response as List).map((e) async {
+      final isSpotifyArtist = e['artist_type'] == 'SpotifyArtist';
+      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '') : null;
+
+      return Track.fromJson(e).copyWith(artistName: artist?.name);
+    }).toList();
+    // return (response as List).map((e) => Track.fromJson(e)).toList();
+    return await Future.wait(trackWithArtist);
   }
 
   Future<List<Track>> searchTracks(String query) async {

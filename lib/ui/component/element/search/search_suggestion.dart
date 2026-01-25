@@ -63,16 +63,17 @@ class SearchSuggestion extends StatelessWidget {
                   visualDensity: const VisualDensity(vertical: -1.5),
                   leading: const Padding(padding: EdgeInsets.all(6.0), child: Icon(Icons.history_rounded)),
                   title: Text(item.keyword, maxLines: 1),
-
                   trailing: IconButton(
                     icon: const Icon(Icons.subdirectory_arrow_left_rounded),
                     onPressed: () => onFillTap(item.keyword),
                   ),
-
                   onTap: () => onSearchTap(item.keyword),
                   onLongPress: () => showDialog(
                     context: context,
-                    builder: (c) => DeleteSearchLogDialog(search: item),
+                    builder: (c) => Dialog(
+                      elevation: 4,
+                      child: DeleteSearchLogDialog(search: item),
+                    ),
                   ),
                 );
               },
@@ -87,7 +88,7 @@ class SearchSuggestion extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        child: Text(title, style: const TextStyle(fontFamily: "SpotifyMixUI",fontWeight: FontWeight.w800, fontSize: 18)),
       ),
     );
   }

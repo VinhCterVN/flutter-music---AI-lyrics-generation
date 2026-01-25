@@ -7,11 +7,16 @@ import 'now_playing_bar.dart';
 import 'playing_screen.dart';
 
 class MyNavigationBar extends ConsumerWidget {
-  final List<Map<String, dynamic>> items;
   final int currentIndex;
   final Function(int) onTap;
+  static const List<dynamic> routes = [
+    {"name": "Home", "icon": FontAwesomeIcons.house, "active_icon": FontAwesomeIcons.solidHouse},
+    {"name": "Search", "icon": FontAwesomeIcons.magnifyingGlass, "active_icon": FontAwesomeIcons.magnifyingGlassPlus},
+    {"name": "Bolt", "icon": FontAwesomeIcons.bolt, "active_icon": FontAwesomeIcons.boltLightning},
+    {"name": "Library", "icon": FontAwesomeIcons.listOl, "active_icon": FontAwesomeIcons.solidRectangleList},
+  ];
 
-  const MyNavigationBar({super.key, required this.items, required this.currentIndex, required this.onTap});
+  const MyNavigationBar({super.key, required this.currentIndex, required this.onTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -72,11 +77,11 @@ class MyNavigationBar extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: List.generate(
-                    items.length,
+                    routes.length,
                     (index) => NavBarItem(
-                      name: items[index]['name'] as String,
-                      icon: items[index]['icon'] as IconData,
-                      activeIcon: items[index]['active_icon'] as IconData,
+                      name: routes[index]['name'] as String,
+                      icon: routes[index]['icon'] as IconData,
+                      activeIcon: routes[index]['active_icon'] as IconData,
                       selected: currentIndex == index,
                       onTap: () => onTap(index),
                     ),

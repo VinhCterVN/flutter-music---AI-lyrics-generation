@@ -14,9 +14,8 @@ import '../../../service/lyrics_service.dart';
 
 class LyricsDisplayWidget extends ConsumerStatefulWidget {
   final Track track;
-  final Color backgroundColor;
 
-  const LyricsDisplayWidget({super.key, required this.track, this.backgroundColor = const Color(0xFFD4837D)});
+  const LyricsDisplayWidget({super.key, required this.track});
 
   @override
   ConsumerState<LyricsDisplayWidget> createState() => _LyricsDisplayWidgetState();

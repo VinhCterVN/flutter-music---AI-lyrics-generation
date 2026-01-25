@@ -51,8 +51,6 @@ GoRouter createRouter(WidgetRef ref) {
         ],
       ),
       GoRoute(name: 'LoginPage', path: '/login', builder: (context, state) => const AuthScreen()),
-      // GoRoute(name: 'RegisterPage', path: '/register', builder: (context, state) => const RegisterScreen()),
-      // GoRoute(name: 'WelcomePage', path: '/welcome', builder: (_, _) => WelcomePage()),
       GoRoute(
         path: '/search_detail',
         pageBuilder: (context, state) {
@@ -61,12 +59,10 @@ GoRouter createRouter(WidgetRef ref) {
             key: state.pageKey,
             opaque: false,
             barrierDismissible: true,
-            transitionsBuilder: (context, ani1, ani2, child) {
-              return SlideTransition(
-                position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
-                child: child,
-              );
-            },
+            transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
+              position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
+              child: child,
+            ),
             child: Dismissible(
               key: const Key('search_detail_dismissible'),
               movementDuration: const Duration(milliseconds: 300),
