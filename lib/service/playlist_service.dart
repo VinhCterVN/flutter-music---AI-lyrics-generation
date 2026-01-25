@@ -30,17 +30,22 @@ class PlaylistService {
     return 'added';
   }
 
-  Future<Playlist> createPlaylist(String name, {String? photoUrl}) async {
+  Future<Playlist> createPlaylist(String name, {String? photoUrl, List<int> initialTrackIds = const []}) async {
     log('Creating playlist with name: $name');
 
-    final response = await _supabase
-        .from('playlists')
-        .insert({'name': name, 'photo_url': photoUrl})
-        .select()
-        .single();
-
-    log('Playlist created: $response');
-    return Playlist.fromJson(response);
+    final response = await _supabase.from('playlists').insert({'name': name, 'photo_url': photoUrl}).select().single();
+    if (initialTrackIds.isNotEmpty) {
+      final playlistId = response['id'] as String;
+      final tracksToInsert = initialTrackIds.map((trackId) => {'playlist_id': playlistId, 'track_id': trackId}).toList();
+      await _supabase.from('playlists_tracks').insert(tracksToInsert);
+      log('Added initial tracks to playlist $playlistId: $initialTrackIds');
+    }
+    final fullResponse = await _supabase.from('playlists').select("""
+          id, user_id, name, photo_url, created_at, updated_at,
+          playlists_tracks (track_id)
+          """).eq('id', response['id']).single();
+    log('Playlist created: $fullResponse');
+    return Playlist.fromJson(fullResponse);
   }
 
   Future<List<Playlist>> getPlaylists() async {
@@ -66,5 +71,10 @@ class PlaylistService {
   Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
     log('Removing track $trackId from playlist $playlistId');
     await _supabase.from('playlists_tracks').delete().eq('playlist_id', playlistId).eq('track_id', trackId);
+  }
+
+  Future<void> deletePlaylist(String playlistId) async {
+    log('Deleting playlist $playlistId');
+    await _supabase.from('playlists').delete().eq('id', playlistId);
   }
 }

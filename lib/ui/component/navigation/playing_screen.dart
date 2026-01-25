@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/artist_provider.dart';
-import 'package:flutter_ai_music/ui/component/element/botton/large_lyrics_button.dart';
+import 'package:flutter_ai_music/ui/component/element/button/large_lyrics_button.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

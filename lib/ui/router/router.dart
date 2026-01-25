@@ -7,6 +7,7 @@ import 'package:flutter_ai_music/ui/pages/library.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
+import 'package:flutter_ai_music/ui/pages/test_route.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -46,7 +47,7 @@ GoRouter createRouter(WidgetRef ref) {
             routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/setting', name: 'SettingPage', builder: (context, state) => const LibraryPage())],
+            routes: [GoRoute(path: '/library', name: 'LibraryPage', builder: (context, state) => const RadioExample())],
           ),
         ],
       ),
