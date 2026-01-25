@@ -14,8 +14,8 @@ class AudioHelper {
       throw ArgumentError('Invalid track selection');
     }
     final audioSources = allTracks.toAudioSources();
+    ref.read(playerControllerProvider);
     ref.read(queueProvider.notifier).setQueueAndPlayAt(audioSources, allTracks, selectedIndex);
-    ref.read(playerControllerProvider).loadQueue();
     return true;
   }
 

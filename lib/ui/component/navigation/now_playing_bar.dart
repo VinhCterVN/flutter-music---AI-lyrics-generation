@@ -1,7 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
-import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist_demo.dart';
+import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -143,25 +143,22 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(4),
-                            child: Hero(
-                              tag: "now-playing-track-${currentTrack.images.first}",
-                              child: CachedNetworkImage(
-                                imageUrl: currentTrack.images.isNotEmpty ? currentTrack.images.first : '',
+                            child: CachedNetworkImage(
+                              imageUrl: currentTrack.images.isNotEmpty ? currentTrack.images.first : '',
+                              width: 44,
+                              height: 44,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
                                 width: 44,
                                 height: 44,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  width: 44,
-                                  height: 44,
-                                  color: Colors.grey[900],
-                                  child: const Icon(Icons.music_note, color: Colors.white54),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 44,
-                                  height: 44,
-                                  color: Colors.grey[900],
-                                  child: const Icon(Icons.music_note, color: Colors.white54),
-                                ),
+                                color: Colors.grey[900],
+                                child: const Icon(Icons.music_note, color: Colors.white54),
+                              ),
+                              errorWidget: (context, url, error) => Container(
+                                width: 44,
+                                height: 44,
+                                color: Colors.grey[900],
+                                child: const Icon(Icons.music_note, color: Colors.white54),
                               ),
                             ),
                           ),

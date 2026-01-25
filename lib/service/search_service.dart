@@ -18,8 +18,8 @@ class SearchService {
   }
 
   Future<List<Search>> getSearchHistory({int page = 0, int pageSize = 20}) async {
-    final from = page * pageSize;
-    final to = from + pageSize - 1;
+    // final from = page * pageSize;
+    // final to = from + pageSize - 1;
 
     final res = await _supabase.rpc('get_recent_search_logs');
 
@@ -35,4 +35,15 @@ class SearchService {
 
   Future<void> _insertSearch(String query) async =>
       await _supabase.from("search_logs").insert({"keyword": query.toLowerCase()});
+
+  Future<void> deleteSearchLog(String keyword) async {
+    final user = ref.read(currentUserProvider);
+    if (user == null) return;
+
+    await _supabase
+        .from("search_logs")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("keyword", keyword.toLowerCase());
+  }
 }

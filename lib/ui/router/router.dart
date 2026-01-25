@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
-import 'package:flutter_ai_music/ui/pages/library.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
@@ -66,6 +65,7 @@ GoRouter createRouter(WidgetRef ref) {
             ),
             child: Dismissible(
               key: const Key('search_detail_dismissible'),
+              onDismissed: (_) => context.pop(),
               movementDuration: const Duration(milliseconds: 300),
               direction: DismissDirection.startToEnd,
               child: SearchDetailPage(query: extra?['query']),

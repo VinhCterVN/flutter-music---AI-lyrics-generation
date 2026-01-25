@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_ai_music/data/database/track_database.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
@@ -27,8 +25,6 @@ class TrackService {
   ///
   /// Returns a list of [Track] objects.
   Future<TrackPage> getTrackPage({int page = 0, int pageSize = 10}) async {
-    log('Fetching tracks from Supabase: page $page, pageSize $pageSize');
-
     final response = await _supabase
         .from("tracks")
         .select("""
@@ -55,8 +51,6 @@ class TrackService {
   }
 
   Future<List<Track>> getTracksByIds(List<String> ids) async {
-    log('Fetching tracks by IDs from Supabase: $ids');
-
     if (ids.isEmpty) return [];
 
     final response = await _supabase
@@ -73,13 +67,10 @@ class TrackService {
 
       return Track.fromJson(e).copyWith(artistName: artist?.name);
     }).toList();
-    // return (response as List).map((e) => Track.fromJson(e)).toList();
     return await Future.wait(trackWithArtist);
   }
 
   Future<List<Track>> searchTracks(String query) async {
-    log('Searching tracks from Supabase with query: $query');
-
     if (query.isEmpty) {
       final response = await _supabase
           .from("tracks")

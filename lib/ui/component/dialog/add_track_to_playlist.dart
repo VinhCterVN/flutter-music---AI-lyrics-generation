@@ -1,327 +1,450 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/create_playlist_section.dart';
+import 'package:flutter_ai_music/ui/component/element/playlist_item.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons/styles/stroke_rounded.dart';
 
-class AddTrackToPlaylist extends ConsumerStatefulWidget {
+enum PlaylistSortType { aToZ, zToA, newest, oldest, mostTracks }
+
+class AddToPlaylistScreen extends ConsumerStatefulWidget {
   final int trackId;
+  final String trackName;
 
-  const AddTrackToPlaylist({super.key, required this.trackId});
+  const AddToPlaylistScreen({super.key, required this.trackId, required this.trackName});
 
   @override
-  ConsumerState<AddTrackToPlaylist> createState() => _AddTrackToPlaylistState();
+  ConsumerState<AddToPlaylistScreen> createState() => _AddToPlaylistScreenState();
 }
 
-class _AddTrackToPlaylistState extends ConsumerState<AddTrackToPlaylist> {
-  bool _isLoading = true;
+class _AddToPlaylistScreenState extends ConsumerState<AddToPlaylistScreen> {
+  final ScrollController _controller = ScrollController();
+  final GlobalKey _buttonKey = GlobalKey();
+
   List<Playlist> _playlists = [];
-  Set<String> _addedPlaylistIds = {};
-  bool _isFavourite = false;
-  bool _isProcessing = false;
+  PlaylistSortType _currentSortType = PlaylistSortType.aToZ;
+
+  final Set<String> _initialPlaylistIds = {};
+  final Set<String> _selectedPlaylistIds = {};
+
+  bool _isLoading = true;
+  bool _isCreating = false;
+  bool _buttonVisible = true;
+  final TextEditingController _newPlaylistController = TextEditingController();
+
+  static const Color _spotifyGreen = Color(0xFF1DB954);
+  static const String _fontFamily = 'SpotifyMixUI';
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      fetchPlaylists();
-    });
+    _fetchPlaylistData();
   }
 
-  Future<void> fetchPlaylists() async {
-    final playlistProvider = ref.read(playlistServiceProvider);
-    final res = await playlistProvider.getPlaylists();
+  @override
+  void dispose() {
+    _newPlaylistController.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
 
-    // Check which playlists already contain this track
-    final addedIds = <String>{};
-    for (final playlist in res) {
-      if (playlist.containsTrack(widget.trackId)) {
-        addedIds.add(playlist.id);
+  Future<void> _fetchPlaylistData() async {
+    final service = ref.read(playlistServiceProvider);
+    final playlists = await service.getPlaylists();
+    _sortPlaylistsByType(playlists, _currentSortType);
+
+    if (!mounted) return;
+
+    final initialIds = <String>{};
+    for (var p in playlists) {
+      if (p.trackIds.contains(widget.trackId)) {
+        initialIds.add(p.id);
       }
     }
 
     setState(() {
-      _playlists = res;
-      _addedPlaylistIds = addedIds;
+      _playlists = playlists;
+      _initialPlaylistIds.addAll(initialIds);
+      _selectedPlaylistIds.addAll(initialIds);
       _isLoading = false;
     });
   }
 
-  Future<void> _togglePlaylist(Playlist playlist) async {
-    if (_isProcessing) return;
-    setState(() => _isProcessing = true);
-
-    final playlistService = ref.read(playlistServiceProvider);
-    final isAdded = _addedPlaylistIds.contains(playlist.id);
-
-    try {
-      if (isAdded) {
-        await playlistService.removeTrackFromPlaylist(playlist.id, widget.trackId);
-        setState(() {
-          _addedPlaylistIds.remove(playlist.id);
-        });
+  void _toggleTrackInPlaylist(String playlistId) {
+    setState(() {
+      if (_selectedPlaylistIds.contains(playlistId)) {
+        _selectedPlaylistIds.remove(playlistId);
       } else {
-        await playlistService.addTrackToPlaylist(playlist.id, widget.trackId);
-        setState(() {
-          _addedPlaylistIds.add(playlist.id);
-        });
+        _selectedPlaylistIds.add(playlistId);
       }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Có lỗi xảy ra: $e')));
-      }
-    } finally {
-      setState(() => _isProcessing = false);
+    });
+  }
+
+  Future<void> _createNewPlaylist() async {
+    if (_newPlaylistController.text.isEmpty || !mounted) return;
+
+    final playlist = await ref
+        .read(playlistServiceProvider)
+        .createPlaylist(_newPlaylistController.text, initialTrackIds: [widget.trackId]);
+    if (!mounted) return;
+    setState(() {
+      _playlists.insert(0, playlist);
+      _initialPlaylistIds.add(playlist.id);
+      _selectedPlaylistIds.add(playlist.id);
+      _isCreating = false;
+      _newPlaylistController.clear();
+    });
+    context.pop();
+    Fluttertoast.showToast(msg: 'Playlist "${playlist.name}" created and track added');
+  }
+
+  void _sortPlaylistsByType(List<Playlist> playlists, PlaylistSortType sortType) {
+    switch (sortType) {
+      case PlaylistSortType.aToZ:
+        playlists.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      case PlaylistSortType.zToA:
+        playlists.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+      case PlaylistSortType.newest:
+        playlists.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      case PlaylistSortType.oldest:
+        playlists.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      case PlaylistSortType.mostTracks:
+        playlists.sort((a, b) => b.trackIds.length.compareTo(a.trackIds.length));
     }
   }
 
-  Future<void> _toggleFavourite() async {
-    if (_isProcessing) return;
+  String _getSortLabel(PlaylistSortType sortType) => switch (sortType) {
+    PlaylistSortType.aToZ => 'A-Z',
+    PlaylistSortType.zToA => 'Z-A',
+    PlaylistSortType.newest => 'Newest',
+    PlaylistSortType.oldest => 'Oldest',
+    PlaylistSortType.mostTracks => 'Most Tracks',
+  };
 
-    setState(() => _isProcessing = true);
+  Future<void> _deletePlaylist(Playlist playlist) async {
+    try {
+      await ref.read(playlistServiceProvider).deletePlaylist(playlist.id);
+      if (!mounted) return;
+      setState(() {
+        _playlists.removeWhere((p) => p.id == playlist.id);
+        _selectedPlaylistIds.remove(playlist.id);
+        _initialPlaylistIds.remove(playlist.id);
+      });
+      Fluttertoast.showToast(msg: 'Playlist "${playlist.name}" deleted');
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error deleting playlist: $e');
+    }
+  }
+
+  Future<void> _onDonePressed() async {
+    final service = ref.read(playlistServiceProvider);
+    final toAdd = _selectedPlaylistIds.difference(_initialPlaylistIds);
+    final toRemove = _initialPlaylistIds.difference(_selectedPlaylistIds);
+
+    if (toAdd.isEmpty && toRemove.isEmpty) {
+      Navigator.pop(context);
+      return;
+    }
 
     try {
-      final res = await ref.read(playlistServiceProvider).toggleTrackToFavourite(widget.trackId);
-      setState(() {
-        _isFavourite = res == 'added';
-      });
+      await Future.wait([
+        ...toAdd.map((playlistId) => service.addTrackToPlaylist(playlistId, widget.trackId)),
+        ...toRemove.map((playlistId) => service.removeTrackFromPlaylist(playlistId, widget.trackId)),
+      ]);
+
+      if (mounted) {
+        Fluttertoast.showToast(msg: "Updated playlists");
+        Navigator.pop(context);
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Có lỗi xảy ra: $e')));
+        Fluttertoast.showToast(msg: "Error updating playlists: $e");
       }
-    } finally {
-      setState(() => _isProcessing = false);
     }
-  }
-
-  void _createNewPlaylist() {
-    // TODO: Implement create new playlist dialog
-    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final double safeMaxHeight = screenHeight - keyboardHeight - 100;
+    final double effectiveMaxHeight = math.min(safeMaxHeight, 600);
 
-    return Dialog(
-      backgroundColor: colorScheme.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400, maxHeight: 500),
+    final textStyleBold = const TextStyle(fontFamily: _fontFamily, fontWeight: FontWeight.bold, color: Colors.white);
+    final textStyleNormal = const TextStyle(fontFamily: _fontFamily, color: Colors.white);
+
+    return Padding(
+      padding: _isCreating ? EdgeInsets.only(top: MediaQuery.of(context).padding.top) : EdgeInsets.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceDim,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        constraints: BoxConstraints(maxHeight: effectiveMaxHeight > 0 ? effectiveMaxHeight : 0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 12, 12),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Đã lưu vào',
-                    style: TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  TextButton(
-                    onPressed: _createNewPlaylist,
-                    child: Text(
-                      'Danh sách phát mới',
-                      style: TextStyle(
-                        fontFamily: 'SpotifyMixUI',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.primary,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        style: textStyleBold.copyWith(fontSize: 18),
+                        children: [
+                          const TextSpan(text: "Adding "),
+                          TextSpan(
+                            text: widget.trackName,
+                            style: const TextStyle(color: Color(0xFF1891FC)),
+                          ),
+                          const TextSpan(text: " to playlist"),
+                        ],
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 150),
+                    child: (!_buttonVisible && !_isCreating && _buttonKey.currentContext != null)
+                        ? TextButton(
+                            onPressed: () {
+                              if (_buttonKey.currentContext == null || !mounted) return;
+                              Scrollable.ensureVisible(
+                                _buttonKey.currentContext!,
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                              );
+                              setState(() => _isCreating = true);
+                            },
+                            child: Text(
+                              "Create Playlist",
+                              style: const TextStyle(
+                                fontFamily: "SpotifyMixUI",
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          )
+                        : SizedBox.shrink(),
                   ),
                 ],
               ),
             ),
+            Flexible(
+              fit: FlexFit.loose,
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                alignment: Alignment.topCenter,
+                child: _isLoading
+                    ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+                    : ListView(
+                        controller: _controller,
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        children: [
+                          CreatePlaylistSection(
+                            isCreating: _isCreating,
+                            buttonKey: _buttonKey,
+                            newPlaylistController: _newPlaylistController,
+                            onButtonVisibilityChanged: (visible) {
+                              if (!mounted) return;
+                              setState(() => _buttonVisible = visible);
+                            },
+                            onStartCreating: () => setState(() => _isCreating = true),
+                            onCancelCreating: () => setState(() => _isCreating = false),
+                            onCreatePlaylist: _createNewPlaylist,
+                          ),
 
-            const Divider(height: 1),
+                          if (_playlists.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.list, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  Text("Most relevant playlists", style: textStyleBold.copyWith(fontSize: 14)),
+                                  const Spacer(),
+                                  PopupMenuButton<PlaylistSortType>(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    position: PopupMenuPosition.under,
+                                    onSelected: (sortType) {
+                                      setState(() {
+                                        _currentSortType = sortType;
+                                        _sortPlaylistsByType(_playlists, sortType);
+                                      });
+                                    },
+                                    itemBuilder: (context) => PlaylistSortType.values
+                                        .map(
+                                          (type) => PopupMenuItem(
+                                            value: type,
+                                            child: Row(
+                                              children: [
+                                                if (_currentSortType == type)
+                                                  const Icon(Icons.check, size: 16)
+                                                else
+                                                  const SizedBox(width: 16),
+                                                const SizedBox(width: 8),
+                                                Text(_getSortLabel(type)),
+                                              ],
+                                            ),
+                                          ),
+                                        )
+                                        .toList(),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(16),
+                                        color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(55),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Text(
+                                            _getSortLabel(_currentSortType),
+                                            style: textStyleNormal.copyWith(fontSize: 12),
+                                          ),
+                                          const SizedBox(width: 4),
+                                          const HugeIcon(icon: HugeIconsStrokeRounded.sortByDown01, size: 16),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
 
-            // Content
-            if (_isLoading)
-              const Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator())
-            else
-              Flexible(
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Favourite option
-                      _PlaylistTile(
-                        name: 'Bài hát đã thích',
-                        trackCount: null,
-                        isAdded: _isFavourite,
-                        isFavourite: true,
-                        onTap: _toggleFavourite,
-                        isProcessing: _isProcessing,
+                          // Animated playlist list with shuffle effect
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 400),
+                            switchInCurve: Curves.easeOutCubic,
+                            switchOutCurve: Curves.easeInCubic,
+                            transitionBuilder: (child, animation) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
+                            layoutBuilder: (currentChild, previousChildren) {
+                              return Stack(children: [...previousChildren, if (currentChild != null) currentChild]);
+                            },
+                            child: Column(
+                              key: ValueKey(_currentSortType),
+                              children: _playlists.asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final playlist = entry.value;
+                                return TweenAnimationBuilder<double>(
+                                  key: ValueKey('${playlist.id}_$_currentSortType'),
+                                  tween: Tween(begin: 0.0, end: 1.0),
+                                  duration: Duration(milliseconds: 300 + (index * 50).clamp(0, 300)),
+                                  curve: Curves.easeOutBack,
+                                  builder: (context, value, child) {
+                                    return Transform.translate(
+                                      offset: Offset((1 - value) * (index.isEven ? -30 : 30), 0),
+                                      child: Opacity(
+                                        opacity: value.clamp(0.0, 1.0),
+                                        child: Transform.scale(scale: 0.95 + (0.05 * value), child: child),
+                                      ),
+                                    );
+                                  },
+                                  child: PlaylistItem(
+                                    playlist: playlist,
+                                    titleStyle: textStyleBold,
+                                    subtitleStyle: textStyleNormal,
+                                    isSelected: _selectedPlaylistIds.contains(playlist.id),
+                                    onTap: () => _toggleTrackInPlaylist(playlist.id),
+                                    onConfirmDelete: () => _showDeleteConfirmDialog(playlist),
+                                    onLongPress: () => Fluttertoast.showToast(msg: "Playlist: ${playlist.name}"),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+                        ],
                       ),
-
-                      const Divider(height: 1),
-
-                      // Playlist list
-                      ..._playlists.map(
-                        (playlist) => _PlaylistTile(
-                          name: playlist.name,
-                          trackCount: playlist.trackIds.length,
-                          photoUrl: playlist.photoUrl,
-                          isAdded: _addedPlaylistIds.contains(playlist.id),
-                          onTap: () => _togglePlaylist(playlist),
-                          isProcessing: _isProcessing,
-                        ),
-                      ),
-
-                      // Create new playlist option
-                      _CreatePlaylistTile(onTap: _createNewPlaylist),
-                    ],
-                  ),
-                ),
               ),
+            ),
+
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: ElevatedButton(
+                onPressed: _onDonePressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _spotifyGreen,
+                  foregroundColor: Colors.black,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                ),
+                child: Text("Done", style: textStyleBold.copyWith(color: Colors.black, fontSize: 16)),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
 
-class _PlaylistTile extends StatelessWidget {
-  final String name;
-  final int? trackCount;
-  final String? photoUrl;
-  final bool isAdded;
-  final bool isFavourite;
-  final VoidCallback onTap;
-  final bool isProcessing;
-
-  const _PlaylistTile({
-    required this.name,
-    required this.trackCount,
-    this.photoUrl,
-    required this.isAdded,
-    this.isFavourite = false,
-    required this.onTap,
-    required this.isProcessing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(4),
-          color: isFavourite
-              ? const Color(0xFF1DB954) // Spotify green
-              : colorScheme.surfaceContainerHighest,
-          image: photoUrl != null ? DecorationImage(image: NetworkImage(photoUrl!), fit: BoxFit.cover) : null,
+  Future<bool> _showDeleteConfirmDialog(Playlist playlist) async =>
+      await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Delete Playlist',
+            style: const TextStyle(fontFamily: _fontFamily, fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+          content: RichText(
+            text: TextSpan(
+              style: TextStyle(fontFamily: _fontFamily, color: Colors.white),
+              children: [
+                const TextSpan(text: 'Are you sure you want to delete the playlist '),
+                TextSpan(
+                  text: '"${playlist.name}"',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: '? This action cannot be undone.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: Text(
+                'Cancel',
+                style: const TextStyle(fontFamily: _fontFamily, fontWeight: FontWeight.bold),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context, true);
+                await _deletePlaylist(playlist);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.errorContainer,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: Text(
+                'Delete',
+                style: TextStyle(fontFamily: _fontFamily, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
-        child: isFavourite
-            ? const Icon(Icons.favorite, color: Colors.white, size: 24)
-            : photoUrl == null
-            ? Icon(Icons.music_note, color: colorScheme.onSurfaceVariant)
-            : null,
-      ),
-      title: Text(
-        name,
-        style: TextStyle(
-          fontFamily: 'SpotifyMixUI',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      subtitle: trackCount != null
-          ? Text(
-              '$trackCount bài hát',
-              style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 13, color: colorScheme.onSurfaceVariant),
-            )
-          : null,
-      trailing: _StatusButton(isAdded: isAdded, onTap: onTap, isProcessing: isProcessing),
-      onTap: onTap,
-    );
-  }
-}
-
-class _StatusButton extends StatelessWidget {
-  final bool isAdded;
-  final VoidCallback onTap;
-  final bool isProcessing;
-
-  const _StatusButton({required this.isAdded, required this.onTap, required this.isProcessing});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    if (isProcessing) {
-      return SizedBox(
-        width: 24,
-        height: 24,
-        child: CircularProgressIndicator(strokeWidth: 2, valueColor: AlwaysStoppedAnimation(colorScheme.primary)),
-      );
-    }
-
-    if (isAdded) {
-      return Container(
-        width: 28,
-        height: 28,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: colorScheme.primary),
-        child: const Icon(Icons.check, size: 18, color: Colors.white),
-      );
-    }
-
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: colorScheme.onSurfaceVariant.withOpacity(0.5), width: 2),
-      ),
-      child: Icon(Icons.add, size: 18, color: colorScheme.onSurfaceVariant),
-    );
-  }
-}
-
-class _CreatePlaylistTile extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const _CreatePlaylistTile({required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-      leading: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(4), color: colorScheme.surfaceContainerHighest),
-        child: Icon(Icons.add, color: colorScheme.onSurfaceVariant, size: 28),
-      ),
-      title: Text(
-        'Danh sách phát mới',
-        style: TextStyle(
-          fontFamily: 'SpotifyMixUI',
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: colorScheme.onSurface,
-        ),
-      ),
-      onTap: onTap,
-    );
-  }
+      ) ??
+      false;
 }

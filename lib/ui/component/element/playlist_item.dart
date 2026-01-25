@@ -51,6 +51,7 @@ class _PlaylistItemState extends ConsumerState<PlaylistItem> {
       return;
     }
     final track = await ref.read(trackServiceProvider).getTracksByIds([widget.playlist.trackIds.first.toString()]);
+    if (!mounted) return;
     setState(() => _photoUrl = track.first.images.first);
   }
 

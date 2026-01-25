@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/search.dart';
+import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/dialog/delete_search_log.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class SearchSuggestion extends StatelessWidget {
+class SearchSuggestion extends ConsumerWidget {
   final ScrollController scrollController;
   final List<Search> trending;
   final List<Search> histories;
@@ -23,7 +25,7 @@ class SearchSuggestion extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return GestureDetector(
       onTap: onBackgroundTap,
       behavior: HitTestBehavior.translucent,
@@ -72,7 +74,16 @@ class SearchSuggestion extends StatelessWidget {
                     context: context,
                     builder: (c) => Dialog(
                       elevation: 4,
-                      child: DeleteSearchLogDialog(search: item),
+                      child: DeleteSearchLogDialog(
+                        search: item,
+                        onDeleted: (context) async {
+                          await ref.read(searchServiceProvider).deleteSearchLog(item.keyword);
+                          // filter adn delete
+                          histories.removeWhere((element) => element.keyword == item.keyword);
+                          if (!context.mounted) return;
+                          Navigator.of(context).pop();
+                        },
+                      ),
                     ),
                   ),
                 );
@@ -88,7 +99,10 @@ class SearchSuggestion extends StatelessWidget {
     return SliverToBoxAdapter(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text(title, style: const TextStyle(fontFamily: "SpotifyMixUI",fontWeight: FontWeight.w800, fontSize: 18)),
+        child: Text(
+          title,
+          style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 18),
+        ),
       ),
     );
   }
