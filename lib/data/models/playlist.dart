@@ -23,8 +23,7 @@ class Playlist {
 
   factory Playlist.fromJson(Map<String, dynamic> json) {
     final playlistsTracks = json['playlists_tracks'] as List?;
-    final trackIds =
-        playlistsTracks?.map((e) => e['track_id'] as int).toList() ?? [];
+    final trackIds = playlistsTracks?.map((e) => e['track_id'] as int).toList() ?? [];
 
     return Playlist(
       id: json['id'] as String,

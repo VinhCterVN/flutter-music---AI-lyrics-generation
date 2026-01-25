@@ -14,7 +14,8 @@ class PlaylistService {
 
   Future<String> toggleTrackToFavourite(int trackId) async {
     log('Toggling track $trackId to favourites');
-    final userId = ref.read(currentUserProvider)?.id ?? "---";
+    final userId = ref.read(currentUserProvider)?.id;
+    if (userId == null) throw Exception('User not logged in');
 
     final existing = await _supabase.from('favourites').select().eq('track_id', trackId).single().maybeSingle();
 
@@ -29,12 +30,22 @@ class PlaylistService {
     return 'added';
   }
 
+  Future<Playlist> createPlaylist(String name, {String? photoUrl}) async {
+    log('Creating playlist with name: $name');
+
+    final response = await _supabase
+        .from('playlists')
+        .insert({'name': name, 'photo_url': photoUrl})
+        .select()
+        .single();
+
+    log('Playlist created: $response');
+    return Playlist.fromJson(response);
+  }
+
   Future<List<Playlist>> getPlaylists() async {
     log('Fetching playlists from Supabase');
-    // final favourite = await _supabase.from("favourites").select();
-    final response = await _supabase
-        .from("playlists")
-        .select("""
+    final response = await _supabase.from("playlists").select("""
           id, user_id, name, photo_url, created_at, updated_at,
           playlists_tracks (track_id)
           """);

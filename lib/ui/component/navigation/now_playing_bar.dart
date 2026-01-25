@@ -230,8 +230,35 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                       msg: currentTrack.isFavorite ? 'Removed from favorites' : 'Added to favorites',
                                     );
                                   },
-                                  onLongPress: () =>
-                                      showAddToPlaylistDialog(context, currentTrackId: 101, trackName: "Shape Of You"),
+                                  onLongPress: () {
+                                    showGeneralDialog(
+                                      context: context,
+                                      barrierDismissible: true,
+                                      barrierLabel: "Dialog",
+                                      barrierColor: Colors.black54,
+                                      transitionDuration: const Duration(milliseconds: 50),
+                                      pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+                                        backgroundColor: Colors.transparent,
+                                        insetPadding: const EdgeInsets.all(16),
+                                        child: AddToPlaylistScreen(trackId: currentTrack.id, trackName: currentTrack.name),
+                                      ),
+                                    );
+                                    // showGeneralDialog(
+                                    //   context: context,
+                                    //   barrierDismissible: true,
+                                    //   barrierLabel: "Dialog",
+                                    //   barrierColor: Colors.black54,
+                                    //   transitionDuration: const Duration(milliseconds: 50),
+                                    //   pageBuilder: (context, animation, secondaryAnimation) => Center(
+                                    //     child: Dialog(
+                                    //       child: Padding(
+                                    //         padding: const EdgeInsets.all(20),
+                                    //         child: Text("Custom animated dialog"),
+                                    //       ),
+                                    //     ),
+                                    //   ),
+                                    // );
+                                  },
                                   child: isFavourite
                                       ? FaIcon(
                                           FontAwesomeIcons.solidHeart,

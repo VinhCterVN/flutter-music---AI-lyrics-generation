@@ -1,44 +1,29 @@
+import 'dart:math' as math;
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/models/playlist.dart';
+import 'package:flutter_ai_music/provider/playlist_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:visibility_detector/visibility_detector.dart';
 
-// --- Models ---
-class Playlist {
-  final int id;
-  final String name;
-  final String? imageUrl;
-  final int trackCount;
-  bool isContainsTrack; // Mock state: track có trong playlist này không
-
-  Playlist({required this.id, required this.name, this.imageUrl, this.trackCount = 0, this.isContainsTrack = false});
-}
-
-void showAddToPlaylistDialog(BuildContext context, {required int currentTrackId, required String trackName}) {
-  showDialog(
-    context: context,
-    builder: (context) => Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.all(16),
-      child: AddToPlaylistScreen(trackId: currentTrackId, trackName: trackName),
-    ),
-  );
-}
-
-// --- Main Widget ---
-class AddToPlaylistScreen extends StatefulWidget {
+class AddToPlaylistScreen extends ConsumerStatefulWidget {
   final int trackId;
   final String trackName;
 
   const AddToPlaylistScreen({super.key, required this.trackId, required this.trackName});
 
   @override
-  State<AddToPlaylistScreen> createState() => _AddToPlaylistScreenState();
+  ConsumerState<AddToPlaylistScreen> createState() => _AddToPlaylistScreenState();
 }
 
-class _AddToPlaylistScreenState extends State<AddToPlaylistScreen> {
-  // Mock Data
+class _AddToPlaylistScreenState extends ConsumerState<AddToPlaylistScreen> {
+  final ScrollController _controller = ScrollController();
+  final GlobalKey _buttonKey = GlobalKey();
   List<Playlist> _playlists = [];
+  bool _buttonVisible = true;
   bool _isLoading = true;
-
-  // Create Playlist State
   bool _isCreating = false;
   final TextEditingController _newPlaylistController = TextEditingController();
 
@@ -48,248 +33,241 @@ class _AddToPlaylistScreenState extends State<AddToPlaylistScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchMockData();
+    _fetchPlaylistData();
   }
 
   @override
   void dispose() {
     _newPlaylistController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
-  void _fetchMockData() async {
-    await Future.delayed(const Duration(seconds: 1));
+  Future<void> _fetchPlaylistData() async {
+    final service = ref.read(playlistServiceProvider);
+    final playlists = await service.getPlaylists();
+    playlists.sort((a, b) => a.name.compareTo(b.name));
     if (!mounted) return;
-
     setState(() {
-      _playlists = [
-        Playlist(
-          id: 1,
-          name: "Mussic Of Vincent",
-          trackCount: 15,
-          isContainsTrack: true,
-          imageUrl: "https://picsum.photos/200/300?random=1",
-        ),
-        Playlist(
-          id: 2,
-          name: "Chill Vibes",
-          trackCount: 42,
-          isContainsTrack: false,
-          imageUrl: "https://picsum.photos/200/300?random=2",
-        ),
-        Playlist(
-          id: 3,
-          name: "Gym Hard",
-          trackCount: 20,
-          isContainsTrack: false,
-          imageUrl: "https://picsum.photos/200/300?random=3",
-        ),
-        Playlist(
-          id: 4,
-          name: "Sleepy Time",
-          trackCount: 10,
-          isContainsTrack: false,
-          imageUrl: "https://picsum.photos/200/300?random=4",
-        ),
-        Playlist(
-          id: 5,
-          name: "Coding Focus",
-          trackCount: 120,
-          isContainsTrack: true,
-          imageUrl: "https://picsum.photos/200/300?random=5",
-        ),
-      ];
+      _playlists = playlists;
       _isLoading = false;
     });
   }
 
-  void _toggleTrackInPlaylist(int playlistId) {
+  void _toggleTrackInPlaylist(String playlistId) {
     setState(() {
       final index = _playlists.indexWhere((p) => p.id == playlistId);
       if (index != -1) {
-        _playlists[index].isContainsTrack = !_playlists[index].isContainsTrack;
+        // _playlists[index].isContainsTrack = !_playlists[index].isContainsTrack;
       }
     });
   }
 
-  void _createNewPlaylist() {
-    if (_newPlaylistController.text.isNotEmpty) {
-      setState(() {
-        _playlists.insert(
-          0,
-          Playlist(
-            id: DateTime.now().millisecondsSinceEpoch, // fake id
-            name: _newPlaylistController.text,
-            trackCount: 1,
-            isContainsTrack: true,
-          ),
-        );
-        _isCreating = false;
-        _newPlaylistController.clear();
-      });
-    }
+  Future<void> _createNewPlaylist() async {
+    if (_newPlaylistController.text.isEmpty || !mounted) return;
+
+    final playlist = await ref.read(playlistServiceProvider).createPlaylist(_newPlaylistController.text);
+    setState(() {
+      _playlists.insert(0, playlist);
+      _isCreating = false;
+      _newPlaylistController.clear();
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // Theme styles
+    final screenHeight = MediaQuery.of(context).size.height;
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    final double safeMaxHeight = screenHeight - keyboardHeight - 100;
+    final double effectiveMaxHeight = math.min(safeMaxHeight, 600);
+
     final textStyleBold = TextStyle(fontFamily: _fontFamily, fontWeight: FontWeight.bold, color: Colors.white);
     final textStyleNormal = TextStyle(fontFamily: _fontFamily, color: Colors.white);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF121212), // Background tối
-        borderRadius: BorderRadius.circular(12),
-      ),
-      constraints: const BoxConstraints(maxHeight: 600), // Giới hạn chiều cao
-      child: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: RichText(
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    text: TextSpan(
-                      style: textStyleBold.copyWith(fontSize: 20),
-                      children: [
-                        const TextSpan(text: "Adding "),
-                        TextSpan(
-                          text: widget.trackName,
-                          style: const TextStyle(color: Color(0xFF1891FC)),
-                        ),
-                        const TextSpan(text: " to Playlist"),
-                      ],
+    return Padding(
+      padding: _isCreating ? EdgeInsets.only(top: MediaQuery.of(context).padding.top) : EdgeInsets.zero,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surfaceDim,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        constraints: BoxConstraints(maxHeight: effectiveMaxHeight > 0 ? effectiveMaxHeight : 0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      text: TextSpan(
+                        style: textStyleBold.copyWith(fontSize: 18),
+                        children: [
+                          const TextSpan(text: "Adding "),
+                          TextSpan(
+                            text: widget.trackName,
+                            style: const TextStyle(color: Color(0xFF1891FC)),
+                          ),
+                          const TextSpan(text: " to playlist"),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-
-          // --- Content (Scrollable) ---
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      // Create New Playlist Section
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        child: AnimatedSwitcher(
+                  const SizedBox(width: 8),
+                  if (!_buttonVisible && !_isCreating)
+                    TextButton(
+                      onPressed: () {
+                        if (_buttonKey.currentContext == null) return;
+                        Scrollable.ensureVisible(
+                          _buttonKey.currentContext!,
                           duration: const Duration(milliseconds: 300),
-                          child: !_isCreating
-                              ? SizedBox(
-                                  width: double.infinity,
-                                  height: 48,
-                                  child: ElevatedButton(
-                                    onPressed: () => setState(() => _isCreating = true),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.white,
-                                      foregroundColor: Colors.black,
-                                      shape: const StadiumBorder(),
-                                    ),
-                                    child: Text(
-                                      "Create a new Playlist",
-                                      style: textStyleBold.copyWith(color: Colors.black, fontSize: 16),
-                                    ),
-                                  ),
-                                )
-                              : Column(
-                                  children: [
-                                    TextField(
-                                      controller: _newPlaylistController,
-                                      style: textStyleBold.copyWith(fontSize: 18),
-                                      decoration: InputDecoration(
-                                        hintText: "Playlist name",
-                                        hintStyle: textStyleBold.copyWith(color: Colors.grey),
-                                        enabledBorder: const UnderlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.grey),
-                                        ),
-                                        focusedBorder: const UnderlineInputBorder(
-                                          borderSide: BorderSide(color: Colors.white),
-                                        ),
-                                      ),
-                                      autofocus: true,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        TextButton(
-                                          onPressed: () => setState(() => _isCreating = false),
-                                          child: Text("Cancel", style: textStyleBold.copyWith(fontSize: 16)),
-                                        ),
-                                        const SizedBox(width: 16),
-                                        ElevatedButton(
-                                          onPressed: _createNewPlaylist,
+                          curve: Curves.easeInOut,
+                        );
+                        setState(() => _isCreating = true);
+                      },
+                      child: Text(
+                        "Create Playlist",
+                        style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            Flexible(
+              fit: FlexFit.loose,
+              child: AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                alignment: Alignment.topCenter,
+                child: _isLoading
+                    ? const SizedBox(height: 100, child: Center(child: CircularProgressIndicator()))
+                    : ListView(
+                        controller: _controller,
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 150),
+                              child: !_isCreating
+                                  ? VisibilityDetector(
+                                      key: _buttonKey,
+                                      onVisibilityChanged: (info) {
+                                        if (!mounted) return;
+                                        setState(() {
+                                          _buttonVisible = info.visibleFraction > 0;
+                                        });
+                                      },
+                                      child: SizedBox(
+                                        width: double.infinity,
+                                        height: 48,
+                                        child: ElevatedButton(
+                                          onPressed: () => setState(() => _isCreating = true),
                                           style: ElevatedButton.styleFrom(
-                                            backgroundColor: _spotifyGreen,
+                                            backgroundColor: Colors.white,
                                             foregroundColor: Colors.black,
+                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                             shape: const StadiumBorder(),
-                                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                                           ),
                                           child: Text(
-                                            "Add",
+                                            "Create a new Playlist",
                                             style: textStyleBold.copyWith(color: Colors.black, fontSize: 16),
                                           ),
                                         ),
+                                      ),
+                                    )
+                                  : Column(
+                                      children: [
+                                        TextField(
+                                          controller: _newPlaylistController,
+                                          style: textStyleBold.copyWith(fontSize: 16),
+                                          decoration: InputDecoration(
+                                            hintText: "Playlist name",
+                                            hintStyle: textStyleBold.copyWith(color: Colors.grey),
+                                            enabledBorder: const UnderlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.grey),
+                                            ),
+                                            focusedBorder: const UnderlineInputBorder(
+                                              borderSide: BorderSide(color: Colors.white),
+                                            ),
+                                          ),
+                                          autofocus: true,
+                                        ),
+                                        const SizedBox(height: 12),
+                                        Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            TextButton(
+                                              onPressed: () => setState(() => _isCreating = false),
+                                              child: Text("Cancel", style: textStyleBold.copyWith(fontSize: 14)),
+                                            ),
+                                            const SizedBox(width: 14),
+                                            ElevatedButton(
+                                              onPressed: _createNewPlaylist,
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: _spotifyGreen,
+                                                foregroundColor: Colors.black,
+                                                shape: const StadiumBorder(),
+                                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                              ),
+                                              child: Text(
+                                                "Add",
+                                                style: textStyleBold.copyWith(color: Colors.black, fontSize: 14),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        const Divider(color: Colors.grey),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    const Divider(color: Colors.grey),
-                                  ],
-                                ),
-                        ),
-                      ),
-
-                      // Playlist List Header
-                      if (_playlists.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.list, color: Colors.white),
-                              const SizedBox(width: 8),
-                              Text("Most relevant playlists", style: textStyleBold.copyWith(fontSize: 18)),
-                            ],
+                            ),
                           ),
-                        ),
 
-                      // Playlist Items
-                      ..._playlists.map((playlist) => _buildPlaylistItem(playlist, textStyleBold, textStyleNormal)),
+                          // Playlist List Header
+                          if (_playlists.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.list, color: Colors.white),
+                                  const SizedBox(width: 8),
+                                  Text("Most relevant playlists", style: textStyleBold.copyWith(fontSize: 14)),
+                                ],
+                              ),
+                            ),
 
-                      const SizedBox(height: 16),
-                    ],
-                  ),
-          ),
+                          ..._playlists.map((playlist) => _buildPlaylistItem(playlist, textStyleBold, textStyleNormal)),
 
-          // --- Done Button (Sticky Bottom) ---
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
-              onPressed: () {
-                // Handle Done logic here
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _spotifyGreen,
-                foregroundColor: Colors.black,
-                shape: const StadiumBorder(),
-                padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 12),
+                          const SizedBox(height: 16),
+                        ],
+                      ),
               ),
-              child: Text("Done", style: textStyleBold.copyWith(color: Colors.black, fontSize: 16)),
             ),
-          ),
-        ],
+
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _spotifyGreen,
+                  foregroundColor: Colors.black,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                ),
+                child: Text("Done", style: textStyleBold.copyWith(color: Colors.black, fontSize: 16)),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -297,6 +275,8 @@ class _AddToPlaylistScreenState extends State<AddToPlaylistScreen> {
   Widget _buildPlaylistItem(Playlist playlist, TextStyle titleStyle, TextStyle subtitleStyle) {
     return InkWell(
       onTap: () => _toggleTrackInPlaylist(playlist.id),
+      onLongPress: () => Fluttertoast.showToast(msg: "Playlist: ${playlist.name}"),
+      splashColor: Colors.white24,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
@@ -307,10 +287,10 @@ class _AddToPlaylistScreenState extends State<AddToPlaylistScreen> {
               child: SizedBox(
                 width: 48,
                 height: 48,
-                child: Image.network(
-                  playlist.imageUrl ?? "",
+                child: CachedNetworkImage(
+                  imageUrl: playlist.photoUrl ?? "https://i.pravatar.cc/300?u=${playlist.id}",
                   fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
+                  errorWidget: (context, error, stackTrace) => Container(
                     color: Colors.grey[800],
                     child: const Icon(Icons.music_note, color: Colors.white),
                   ),
@@ -319,30 +299,32 @@ class _AddToPlaylistScreenState extends State<AddToPlaylistScreen> {
             ),
             const SizedBox(width: 16),
 
-            // Text Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
                 children: [
-                  Text(playlist.name, style: titleStyle.copyWith(fontSize: 16)),
+                  Text(playlist.name, style: titleStyle.copyWith(fontSize: 14)),
                   Text(
-                    "${playlist.trackCount} tracks",
-                    style: subtitleStyle.copyWith(color: Colors.grey, fontSize: 14),
+                    "${playlist.trackIds.length} tracks",
+                    style: subtitleStyle.copyWith(color: Colors.grey, fontSize: 12),
                   ),
                 ],
               ),
             ),
 
-            // Custom Selection Indicator (Mimicking Radio/Checkbox)
             Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: playlist.isContainsTrack ? Colors.white : Colors.grey, width: 2),
-                color: playlist.isContainsTrack ? Colors.white : Colors.transparent,
+                border: Border.all(
+                  color: playlist.trackIds.contains(widget.trackId) ? Colors.white : Colors.grey,
+                  width: 2,
+                ),
+                color: playlist.trackIds.contains(widget.trackId) ? Colors.white : Colors.transparent,
               ),
-              child: playlist.isContainsTrack
+              child: playlist.trackIds.contains(widget.trackId)
                   ? const Center(
                       child: Icon(Icons.circle, size: 12, color: Colors.black), // Dot inside
                     )
