@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
@@ -30,7 +31,32 @@ class _LibraryPageState extends ConsumerState<LibraryPage> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AnimatedIcon(icon: AnimatedIcons.close_menu, progress: animation, size: 72.0, semanticLabel: 'Show menu'),
+      child: Column(
+        spacing: 4,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          AnimatedIcon(icon: AnimatedIcons.close_menu, progress: animation, size: 72.0, semanticLabel: 'Show menu'),
+          OutlinedButton(
+            onPressed: () => showModalBottomSheet(
+              context: context,
+              useRootNavigator: true,
+              isScrollControlled: true,
+              useSafeArea: true,
+              isDismissible: true,
+              backgroundColor: Colors.transparent,
+              builder: (context) => DraggableScrollableSheet(
+                initialChildSize: 0.5,
+                minChildSize: 0.5,
+                maxChildSize: 1.0,
+                snap: true,
+                snapSizes: const [0.5, 0.75, 1.0],
+                builder: (context, scrollController) => QueueBottomSheet(scrollController: scrollController),
+              ),
+            ),
+            child: const Text('Show Queue Bottom Sheet'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -42,7 +42,7 @@ class PlaybackControls extends ConsumerWidget {
 
     return VisibilityDetector(
       key: const Key('playback-controls-visibility-detector'),
-      onVisibilityChanged: (info) => onVisibilityChanged(info.visibleFraction < 0.25),
+      onVisibilityChanged: (info) => onVisibilityChanged(info.visibleFraction < 1.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [

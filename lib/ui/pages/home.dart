@@ -8,6 +8,7 @@ import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
+import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -254,7 +255,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                       (context, index) => TrackTile(
                         track: tracks[index],
                         onTap: () => _playTrack(ref, tracks, index),
-                        onLongPress: () {},
+                        onLongPress: () => showModalBottomSheet(
+                          context: context,
+                          useRootNavigator: true,
+                          isScrollControlled: true,
+                          useSafeArea: true,
+                          backgroundColor: Colors.transparent,
+                          builder: (context) => DraggableScrollableSheet(
+                            initialChildSize: 0.5,
+                            minChildSize: 0.5,
+                            maxChildSize: 1.0,
+                            snap: true,
+                            snapSizes: const [0.5, 1.0],
+                            builder: (context, controller) =>
+                                TrackOptionsBottomSheet(track: tracks[index], scrollController: controller),
+                          ),
+                        ),
                         currentTrackId: currentTrack?.id,
                       ),
                       childCount: tracks.length,
@@ -287,9 +303,9 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    final Color backgroundColor = overlapsContent
-        ? Theme.of(context).colorScheme.surfaceDim.withAlpha(100)
-        : Colors.transparent;
+    // final Color backgroundColor = overlapsContent
+    //     ? Theme.of(context).colorScheme.surfaceDim.withAlpha(100)
+    //     : Colors.transparent;
 
     final double blurAmount = overlapsContent ? 5.0 : 0.0;
     return ClipRect(

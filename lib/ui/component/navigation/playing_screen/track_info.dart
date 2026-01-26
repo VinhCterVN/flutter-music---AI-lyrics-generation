@@ -51,12 +51,18 @@ class TrackInfo extends ConsumerWidget {
                 onPressed: () => showModalBottomSheet(
                   context: context,
                   useRootNavigator: true,
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-                  enableDrag: true,
-                  showDragHandle: true,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  isScrollControlled: true,
+                  useSafeArea: true,
                   isDismissible: true,
-                  builder: (context) => QueueBottomSheet(),
+                  backgroundColor: Colors.transparent,
+                  builder: (context) => DraggableScrollableSheet(
+                    initialChildSize: 0.5,
+                    minChildSize: 0.5,
+                    maxChildSize: 1.0,
+                    snap: true,
+                    snapSizes: const [0.5, 0.75, 1.0],
+                    builder: (context, scrollController) => QueueBottomSheet(scrollController: scrollController),
+                  ),
                 ),
               ),
               IconButton(

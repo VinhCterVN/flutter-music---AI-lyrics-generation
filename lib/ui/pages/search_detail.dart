@@ -4,7 +4,6 @@ import 'package:flutter_ai_music/data/models/search.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/search/search_result_detail.dart';
 import 'package:flutter_ai_music/ui/component/element/search/search_suggestion.dart';
-import 'package:flutter_ai_music/ui/component/navigation/my_navigation_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
@@ -137,7 +136,6 @@ class _SearchDetailPageState extends ConsumerState<SearchDetailPage> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceDim,
       appBar: _buildAppBar(theme),
-      bottomNavigationBar: MyNavigationBar(currentIndex: -1, onTap: (_) {}),
       body: Stack(
         children: [
           if (_searchResult != null)
