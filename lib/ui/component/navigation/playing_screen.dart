@@ -2,19 +2,17 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ai_music/provider/artist_provider.dart';
-import 'package:flutter_ai_music/ui/component/element/button/large_lyrics_button.dart';
-import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:hugeicons/hugeicons.dart';
-import 'package:hugeicons/styles/stroke_rounded.dart';
-import 'package:just_audio/just_audio.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../../data/models/track.dart';
 import '../../../provider/audio_provider.dart';
 import '../element/artist_card.dart';
+import '../element/button/large_lyrics_button.dart';
+import 'playing_screen/album_artwork.dart';
+import 'playing_screen/playback_controls.dart';
+import 'playing_screen/progress_bar.dart';
+import 'playing_screen/sticky_mini_player.dart';
+import 'playing_screen/track_info.dart';
 
 class PlayingScreen extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -28,6 +26,7 @@ class PlayingScreen extends ConsumerStatefulWidget {
 class _PlayingScreenState extends ConsumerState<PlayingScreen>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool _isUserSeeking = false;
+  bool _floatingShow = false;
   double _sliderProgress = 0.0;
 
   late AnimationController _pulseController;
@@ -81,113 +80,17 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
         return Scaffold(
           body: Stack(
             children: [
-              Positioned.fill(
-                child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 500),
-                  child: SizedBox.expand(
-                    key: ValueKey(currentTrack.images.first),
-                    child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: ListenableBuilder(
-                  listenable: widget.scrollController,
-                  builder: (context, child) {
-                    final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
-                    final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
-                    return BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
-                      child: Container(color: Colors.black.withAlpha(55)),
-                    );
-                  },
-                ),
-              ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.transparent, Colors.black.withAlpha(200)],
-                    ),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: CustomScrollView(
-                  controller: widget.scrollController,
-                  slivers: <Widget>[
-                    SliverAppBar(
-                      toolbarHeight: kToolbarHeight + 10,
-                      leading: Padding(
-                        padding: const EdgeInsets.only(top: 10),
-                        child: IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.keyboard_arrow_down),
-                        ),
-                      ),
-                      actions: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 10),
-                          child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
-                        ),
-                      ],
-                      flexibleSpace: FlexibleSpaceBar(
-                        title: const Text(
-                          'Playing View',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontFamily: "SpotifyMixUI",
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: -0.5,
-                          ),
-                        ),
-                        centerTitle: true,
-                      ),
-                      backgroundColor: Colors.transparent,
-                    ),
-
-                    SliverToBoxAdapter(
-                      child: Container(
-                        height: screenHeight,
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _AlbumArtwork(imageUrl: currentTrack.images.first, pulseAnimation: _pulseAnimation),
-                            const SizedBox(height: 50),
-                            _TrackInfo(track: currentTrack),
-                            const SizedBox(height: 16),
-                            _ProgressBar(
-                              isUserSeeking: _isUserSeeking,
-                              sliderProgress: _sliderProgress,
-                              onChanged: (value) => setState(() {
-                                _sliderProgress = value;
-                                _isUserSeeking = true;
-                              }),
-                              onChangeEnd: (value) async {
-                                setState(() => _isUserSeeking = false);
-                                await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            const _PlaybackControls(),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: ArtistCard(
-                        borderRadius: BorderRadius.circular(20),
-                        imageBorderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    SliverToBoxAdapter(
-                      child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 80), child: LargeLyricsButton()),
-                    ),
-                  ],
-                ),
+              _buildBackgroundImage(currentTrack.images.first),
+              _buildBlurOverlay(),
+              _buildGradientOverlay(),
+              _buildMainContent(currentTrack, screenHeight),
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                left: 12,
+                right: 12,
+                bottom: _floatingShow ? 16 : -100,
+                child: StickyMiniPlayer(track: currentTrack),
               ),
             ],
           ),
@@ -207,297 +110,126 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
       ),
     );
   }
-}
 
-class _AlbumArtwork extends ConsumerWidget {
-  final String imageUrl;
-  final Animation<double> pulseAnimation;
+  Widget _buildBackgroundImage(String imageUrl) {
+    return Positioned.fill(
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: SizedBox.expand(
+          key: ValueKey(imageUrl),
+          child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
+        ),
+      ),
+    );
+  }
 
-  const _AlbumArtwork({required this.imageUrl, required this.pulseAnimation});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
-    return RepaintBoundary(
-      child: AnimatedBuilder(
-        animation: pulseAnimation,
+  Widget _buildBlurOverlay() {
+    return Positioned.fill(
+      child: ListenableBuilder(
+        listenable: widget.scrollController,
         builder: (context, child) {
-          return Transform.scale(
-            scale: isPlaying ? pulseAnimation.value : 1.0,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              height: MediaQuery.of(context).size.width * 0.9,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black12.withAlpha(100),
-                    offset: const Offset(0, 4),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Hero(
-                  tag: "now-playing-track-$imageUrl",
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrl,
-                    fit: BoxFit.cover,
-                    errorWidget: (context, error, stackTrace) => Container(
-                      color: Colors.grey[900],
-                      child: const Icon(Icons.music_note, size: 100, color: Colors.white54),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
+          final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
+          return BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
+            child: Container(color: Colors.black.withAlpha(55)),
           );
         },
       ),
     );
   }
-}
 
-class _TrackInfo extends ConsumerWidget {
-  final Track track;
-
-  const _TrackInfo({required this.track});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentArtist = ref.watch(currentArtistProvider).value;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w700),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  currentArtist?.name ?? 'Unknown Artist',
-                  style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
-                    fontSize: 16,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
-                  ),
-                ),
-              ],
-            ),
+  Widget _buildGradientOverlay() {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.transparent, Colors.black.withAlpha(200)],
           ),
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.queue_music_rounded),
-                iconSize: 24,
-                onPressed: () => showModalBottomSheet(
-                  context: context,
-                  useRootNavigator: true,
-                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
-                  enableDrag: true,
-                  showDragHandle: true,
-                  backgroundColor: Theme.of(context).colorScheme.surface,
-                  isDismissible: true,
-                  builder: (context) => QueueBottomSheet(),
-                ),
-              ),
-              IconButton(
-                icon: track.isFavorite
-                    ? FaIcon(FontAwesomeIcons.solidHeart, size: 20)
-                    : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
-                color: track.isFavorite
-                    ? Theme.of(context).colorScheme.primary
-                    : Theme.of(context).textTheme.bodyLarge?.color,
-                iconSize: 24,
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
-}
 
-class _ProgressBar extends ConsumerWidget {
-  final bool isUserSeeking;
-  final double sliderProgress;
-  final ValueChanged<double> onChanged;
-  final ValueChanged<double> onChangeEnd;
-
-  const _ProgressBar({
-    required this.isUserSeeking,
-    required this.sliderProgress,
-    required this.onChanged,
-    required this.onChangeEnd,
-  });
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = duration.inSeconds % 60;
-    return '$minutes:${seconds.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final progress = ref.watch(progressProvider).value;
-
-    if (progress == null) return const SizedBox.shrink();
-
-    return Column(
-      children: [
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: isUserSeeking ? 3 : 5, end: isUserSeeking ? 5 : 3),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOutCubic,
-          builder: (context, trackHeight, child) => SliderTheme(
-            data: SliderThemeData(
-              trackHeight: trackHeight,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-              activeTrackColor: Theme.of(context).textTheme.bodyLarge?.color,
-              inactiveTrackColor: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha((0.2 * 255).toInt()),
-              thumbColor: Theme.of(context).textTheme.bodyLarge?.color,
+  Widget _buildMainContent(dynamic currentTrack, double screenHeight) {
+    return Positioned.fill(
+      child: CustomScrollView(
+        controller: widget.scrollController,
+        slivers: <Widget>[
+          // App Bar
+          SliverAppBar(
+            toolbarHeight: kToolbarHeight + 10,
+            leading: Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.keyboard_arrow_down)),
             ),
-            child: child!,
-          ),
-          child: Slider(
-            value: isUserSeeking ? sliderProgress : progress.position.inMilliseconds.toDouble(),
-            max: (progress.duration?.inMilliseconds ?? 1).toDouble(),
-            onChanged: onChanged,
-            onChangeEnd: onChangeEnd,
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                _formatDuration(progress.position),
-                style: TextStyle(
-                  fontFamily: "SpotifyMixUI",
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
-                ),
-              ),
-              Text(
-                _formatDuration(progress.duration ?? Duration.zero),
-                style: TextStyle(
-                  fontFamily: "SpotifyMixUI",
-                  fontSize: 12,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
-                ),
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
               ),
             ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _PlaybackControls extends ConsumerWidget {
-  const _PlaybackControls();
-
-  void togglePlayPause(WidgetRef ref, bool isPlaying) {
-    final playerController = ref.read(playerControllerProvider);
-    if (isPlaying) {
-      playerController.pause();
-    } else {
-      playerController.play();
-    }
-  }
-
-  void toggleShuffle(WidgetRef ref) {
-    final playerController = ref.read(playerControllerProvider);
-    playerController.toggleShuffle();
-  }
-
-  void toggleRepeat(WidgetRef ref) {
-    final playerController = ref.read(playerControllerProvider);
-    playerController.switchRepeatMode();
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
-    final isBuffering = ref.watch(isBufferingProvider).value ?? false;
-    final playerController = ref.watch(playerControllerProvider);
-    final isShuffleOn = ref.watch(shuffleModeProvider).value ?? false;
-    final loopMode = ref.watch(repeatModeProvider).value ?? LoopMode.off;
-    final variant = Theme.of(context).colorScheme.surfaceContainerHighest;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        IconButton(
-          icon: HugeIcon(
-            icon: HugeIconsStrokeRounded.shuffle,
-            strokeWidth: isShuffleOn ? 3.0 : 1.5,
-            color: isShuffleOn ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          iconSize: 28,
-          onPressed: () => playerController.toggleShuffle(),
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: const Icon(Icons.skip_previous_rounded),
-          iconSize: 40,
-          onPressed: () => playerController.skipPrev(),
-        ),
-        const SizedBox(width: 16),
-        Container(
-          width: 79,
-          height: 79,
-          decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge?.color, shape: BoxShape.circle),
-          child: isBuffering
-              ? Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: CircularProgressIndicator(strokeWidth: 3, valueColor: AlwaysStoppedAnimation<Color>(variant)),
-                )
-              : IconButton(
-                  icon: Icon(
-                    isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                    color: Theme.of(context).scaffoldBackgroundColor,
-                  ),
-                  iconSize: 48,
-                  onPressed: () => togglePlayPause(ref, isPlaying),
+            flexibleSpace: FlexibleSpaceBar(
+              title: const Text(
+                'Playing View',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontFamily: "SpotifyMixUI",
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
                 ),
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: const Icon(Icons.skip_next_rounded),
-          iconSize: 40,
-          onPressed: () => playerController.skipNext(),
-        ),
-        const SizedBox(width: 16),
-        IconButton(
-          icon: HugeIcon(
-            icon: loopMode == LoopMode.one
-                ? HugeIcons.strokeRoundedRepeatOne01
-                : loopMode == LoopMode.all
-                ? HugeIcons.strokeRoundedRepeat
-                : HugeIcons.strokeRoundedRepeatOff,
-            color: loopMode == LoopMode.off
-                ? Theme.of(context).colorScheme.onSurfaceVariant
-                : Theme.of(context).colorScheme.primary,
-            strokeWidth: loopMode == LoopMode.off ? 1.5 : 3.0,
+              ),
+              centerTitle: true,
+            ),
+            backgroundColor: Colors.transparent,
           ),
-          iconSize: 28,
-          onPressed: () => toggleRepeat(ref),
-        ),
-      ],
+          // Player Content
+          SliverToBoxAdapter(
+            child: Container(
+              height: screenHeight,
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  AlbumArtwork(imageUrl: currentTrack.images.first, pulseAnimation: _pulseAnimation),
+                  const SizedBox(height: 50),
+                  TrackInfo(track: currentTrack),
+                  const SizedBox(height: 16),
+                  ProgressBar(
+                    isUserSeeking: _isUserSeeking,
+                    sliderProgress: _sliderProgress,
+                    onChanged: (value) => setState(() {
+                      _sliderProgress = value;
+                      _isUserSeeking = true;
+                    }),
+                    onChangeEnd: (value) async {
+                      setState(() => _isUserSeeking = false);
+                      await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  PlaybackControls(
+                    onVisibilityChanged: (info) {
+                      if (!mounted) return;
+                      setState(() => _floatingShow = info);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Artist Card
+          SliverToBoxAdapter(
+            child: ArtistCard(borderRadius: BorderRadius.circular(20), imageBorderRadius: BorderRadius.circular(12)),
+          ),
+          // Lyrics Button
+          SliverToBoxAdapter(
+            child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: LargeLyricsButton()),
+          ),
+        ],
+      ),
     );
   }
 }

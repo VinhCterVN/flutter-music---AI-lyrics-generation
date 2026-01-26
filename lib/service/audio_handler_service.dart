@@ -20,11 +20,18 @@ class AudioPlayerHandler extends BaseAudioHandler with QueueHandler, SeekHandler
 
     _player.durationStream.listen((duration) {
       final index = _player.currentIndex ?? 0;
-      final queue = _queueSubject.valueOrNull ?? [];
-      if (index >= 0 && index < queue.length) {
-        final newMediaItem = queue[index].copyWith(duration: duration);
+      final currentQueue = _queueSubject.valueOrNull ?? [];
+      if (index >= 0 && index < currentQueue.length && duration != null) {
+        final newMediaItem = currentQueue[index].copyWith(duration: duration);
         _mediaItemSubject.add(newMediaItem);
         mediaItem.add(newMediaItem);
+
+        final updatedQueue = List<MediaItem>.from(currentQueue);
+        updatedQueue[index] = newMediaItem;
+        _queueSubject.add(updatedQueue);
+        queue.add(updatedQueue);
+
+        _broadcastState(_player.playbackEvent);
       }
     });
 
@@ -43,6 +50,10 @@ class AudioPlayerHandler extends BaseAudioHandler with QueueHandler, SeekHandler
         _player.seek(Duration.zero, index: 0);
       }
     });
+
+    _player.positionStream.throttleTime(const Duration(seconds: 1)).listen((position) {
+      _broadcastState(_player.playbackEvent);
+    });
   }
 
   void _broadcastState(PlaybackEvent event) {
@@ -50,15 +61,19 @@ class AudioPlayerHandler extends BaseAudioHandler with QueueHandler, SeekHandler
     final queueIndex = _player.currentIndex;
 
     playbackState.add(
-      playbackState.value.copyWith(
+      PlaybackState(
         controls: [
           MediaControl.skipToPrevious,
           if (playing) MediaControl.pause else MediaControl.play,
           MediaControl.skipToNext,
         ],
-        systemActions: const {MediaAction.seek, MediaAction.seekForward, MediaAction.seekBackward},
+        systemActions: const {
+          MediaAction.seek,
+          MediaAction.seekForward,
+          MediaAction.seekBackward,
+          MediaAction.setSpeed,
+        },
         androidCompactActionIndices: const [0, 1, 2],
-
         processingState: const {
           ProcessingState.idle: AudioProcessingState.idle,
           ProcessingState.loading: AudioProcessingState.loading,
@@ -66,12 +81,9 @@ class AudioPlayerHandler extends BaseAudioHandler with QueueHandler, SeekHandler
           ProcessingState.ready: AudioProcessingState.ready,
           ProcessingState.completed: AudioProcessingState.completed,
         }[_player.processingState]!,
-
         playing: playing,
-
         updatePosition: _player.position,
         bufferedPosition: _player.bufferedPosition,
-
         speed: _player.speed,
         queueIndex: queueIndex,
       ),

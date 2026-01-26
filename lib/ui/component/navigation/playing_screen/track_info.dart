@@ -1,0 +1,78 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hugeicons/hugeicons.dart';
+
+import '../../../../data/models/track.dart';
+import '../../../../provider/artist_provider.dart';
+import '../queue_bottom_sheet.dart';
+
+class TrackInfo extends ConsumerWidget {
+  final Track track;
+
+  const TrackInfo({super.key, required this.track});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentArtist = ref.watch(currentArtistProvider).value;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  track.name,
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  currentArtist?.name ?? 'Unknown Artist',
+                  style: TextStyle(
+                    fontFamily: "SpotifyMixUI",
+                    fontSize: 16,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.queue_music_rounded),
+                iconSize: 24,
+                onPressed: () => showModalBottomSheet(
+                  context: context,
+                  useRootNavigator: true,
+                  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(12))),
+                  enableDrag: true,
+                  showDragHandle: true,
+                  backgroundColor: Theme.of(context).colorScheme.surface,
+                  isDismissible: true,
+                  builder: (context) => QueueBottomSheet(),
+                ),
+              ),
+              IconButton(
+                icon: track.isFavorite
+                    ? FaIcon(FontAwesomeIcons.solidHeart, size: 20)
+                    : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
+                color: track.isFavorite
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).textTheme.bodyLarge?.color,
+                iconSize: 24,
+                onPressed: () {},
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
