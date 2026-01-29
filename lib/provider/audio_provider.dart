@@ -13,6 +13,7 @@ import '../data/models/artist.dart';
 import '../data/models/track.dart';
 import '../service/audio_handler_service.dart';
 import 'artist_provider.dart';
+import 'track_provider.dart';
 
 final audioPlayerProvider = Provider<AudioPlayer>((ref) {
   final player = AudioPlayer();
@@ -123,4 +124,26 @@ final shuffleModeProvider = StreamProvider<bool>((ref) {
 final repeatModeProvider = StreamProvider<LoopMode>((ref) {
   final player = ref.watch(audioPlayerProvider);
   return player.loopModeStream;
+});
+
+final listenHistoryTrackerProvider = Provider<void>((ref) {
+  ref.keepAlive();
+  int? previousTrackId;
+
+  ref.listen<AsyncValue<Track?>>(currentTrackProvider, (previous, next) async {
+    final currentTrack = next.value;
+    final currentId = currentTrack?.id;
+
+    if (currentId == null || currentId == previousTrackId) return;
+
+    final trackIdAtStart = currentId;
+    previousTrackId = currentId;
+
+    await Future.delayed(const Duration(seconds: 2));
+
+    final trackAfterDelay = ref.read(currentTrackProvider).value;
+    if (trackAfterDelay?.id == trackIdAtStart) {
+      await ref.read(trackServiceProvider).addToListenHistory(trackIdAtStart);
+    }
+  });
 });

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/app_drawer.dart';
 import 'package:flutter_ai_music/ui/component/navigation/my_navigation_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ class _AppLayoutState extends ConsumerState<AppLayout> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       FocusManager.instance.primaryFocus?.unfocus();
       ref.read(ambientColorControllerProvider);
+      ref.read(listenHistoryTrackerProvider);
     });
   }
 

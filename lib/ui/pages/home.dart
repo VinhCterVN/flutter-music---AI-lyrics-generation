@@ -1,17 +1,14 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
-import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
-import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -20,8 +17,8 @@ import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 
-import '../../data/database/track_database.dart';
 import '../component/element/recent_tracks.dart';
+import '../component/element/recently_played_section.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -33,40 +30,20 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
-  bool _isFetching = false;
-  int _page = 0;
-  final int _pageSize = 20;
-  late bool _hasNextPage;
   int selectedGenreIndex = -1;
+  UIState _state = UIState.loading;
 
   @override
   void initState() {
     super.initState();
     _controller = ScrollController();
-    _controller.addListener(() {
-      if (_controller.position.pixels >= _controller.position.maxScrollExtent - 100) {
-        if (!_isFetching && _hasNextPage) {
-          _page++;
-          fetchTracks();
-        }
-      }
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
-  }
-
-  Future<void> fetchTracks({bool reset = false}) async {
-    if (reset) {
-      _page = 0;
-      tracks.clear();
-    }
-    setState(() => _isFetching = true);
-    final trackService = ref.read(trackServiceProvider);
-    final res = await trackService.getTrackPage(page: _page, pageSize: _pageSize);
-    if (!mounted) return;
-    setState(() {
-      tracks = [...tracks, ...res.data];
-      _hasNextPage = res.hasNextPage;
-      _isFetching = false;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Timer(const Duration(milliseconds: 2000), () {
+        setState(() {
+          tracks = mockTracks;
+          _state = UIState.ready;
+        });
+      });
     });
   }
 
@@ -76,37 +53,8 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-  Future<void> _loadSavedTracks() async {
-    setState(() => _isFetching = true);
-    final savedTracks = await TrackDatabase.instance.getAllTracks();
-    log("Loaded ${savedTracks.length} saved tracks from database");
-    if (!mounted) return;
-    if (savedTracks.isEmpty) {
-      await fetchTracks();
-      return;
-    }
-    setState(() {
-      tracks = savedTracks;
-      _isFetching = false;
-    });
-  }
-
   Future<void> _onGenreChanged(int index) async {
-    setState(() {
-      if (index == selectedGenreIndex) {
-        selectedGenreIndex = -1;
-      } else {
-        selectedGenreIndex = index;
-      }
-    });
-  }
-
-  Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
-    try {
-      AudioHelper.playTrackFromList(ref, allTracks: allTracks, selectedIndex: selectedIndex);
-    } catch (e) {
-      Fluttertoast.showToast(msg: 'Error playing track: $e');
-    }
+    setState(() {});
   }
 
   List<EffectState> _buildStates(double height) => [
@@ -172,7 +120,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
         RefreshIndicator(
-          onRefresh: () async => await fetchTracks(reset: true),
+          onRefresh: () async => Fluttertoast.showToast(msg: 'Already up to date!'),
           child: Scrollbar(
             controller: _controller,
             interactive: true,
@@ -207,15 +155,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ),
                             PopupMenuButton<SortType>(
                               icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
-                              onSelected: (value) {
-                                setState(() {
-                                  tracks = switch (value) {
-                                    SortType.newest => tracks..sort((a, b) => b.createdAt.compareTo(a.createdAt)),
-                                    SortType.popular => tracks,
-                                    SortType.duration => tracks..shuffle(),
-                                  };
-                                });
-                              },
+                              onSelected: (value) {},
                               itemBuilder: (context) => const [
                                 PopupMenuItem(value: SortType.newest, child: Text('Newest')),
                                 PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
@@ -232,7 +172,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   pinned: true,
                   delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
                 ),
-                if (tracks.isEmpty)
+                if (_state == UIState.loading)
                   SliverToBoxAdapter(
                     child: SizedBox(
                       width: double.infinity,
@@ -240,24 +180,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   )
                 else ...[
-                  SliverPadding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                    sliver: const TopCategories(),
-                  ),
-                  SliverToBoxAdapter(
-                    child: RecentTracksSection(
-                      tracks: tracks,
-                      onTrackTap: (track) {
-                        final index = tracks.indexOf(track);
-                        _playTrack(ref, tracks, index);
-                      },
-                    ),
-                  ),
+                  SliverPadding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: const TopCategories()),
+                  const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+                  SliverToBoxAdapter(child: const RecentTracksSection()),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => TrackTile(
                         track: tracks[index],
-                        onTap: () => _playTrack(ref, tracks, index),
+                        onTap: () {},
                         onLongPress: () => showModalBottomSheet(
                           context: context,
                           useRootNavigator: true,
@@ -278,7 +208,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       ),
                       childCount: tracks.length,
                     ),
-                  ),
+                  )
                 ],
                 // if (_isFetching)
                 //   SliverToBoxAdapter(

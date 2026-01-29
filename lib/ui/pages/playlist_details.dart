@@ -90,7 +90,111 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     final topPadding = MediaQuery.paddingOf(context).top;
 
     return switch (_state) {
-      UIState.loading => const Scaffold(body: Center(child: CircularProgressIndicator())),
+      UIState.loading => Scaffold(
+        backgroundColor: Colors.black87,
+        body: CustomScrollView(
+          physics: const NeverScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Container(
+                padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Photo placeholder
+                    Center(
+                      child: Container(
+                        width: width * 0.6,
+                        height: width * 0.6,
+                        decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Title placeholder
+                    Container(
+                      width: width * 0.5,
+                      height: 28,
+                      decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const SizedBox(height: 16),
+                    // Author row placeholder
+                    Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(color: Colors.grey.shade800, shape: BoxShape.circle),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: width * 0.4,
+                          height: 14,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade800,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    // Date placeholder
+                    Container(
+                      width: width * 0.35,
+                      height: 14,
+                      decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+            // Track list placeholders
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              sliver: SliverList.builder(
+                itemCount: 5,
+                itemBuilder: (context, index) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: double.infinity,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade800,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              width: width * 0.3,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade800,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
       _ => Scaffold(
         backgroundColor: mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
         body: Stack(
@@ -101,7 +205,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                 slivers: [
                   SliverToBoxAdapter(
                     child: Container(
-                      padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 4),
+                      padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 12),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: AlignmentGeometry.topCenter,
@@ -113,7 +217,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                             mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
                           ],
                         ),
-                        border: Border(bottom: BorderSide(color: Colors.black54.withAlpha(100), width: 1)),
+                        // border: Border(bottom: BorderSide(color: Colors.black54.withAlpha(100), width: 1)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -146,9 +250,10 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                           ),
                           VisibilityDetector(
                             key: const Key("playlist_title_visibility_detector"),
-                            onVisibilityChanged: (info) => setState(() {
-                              titleOpacity = info.visibleFraction.clamp(0.0, 1.0);
-                            }),
+                            onVisibilityChanged: (info) {
+                              if (!mounted) return;
+                              setState(() => titleOpacity = info.visibleFraction.clamp(0.0, 1.0));
+                            },
                             child: Padding(
                               padding: EdgeInsets.symmetric(vertical: 16),
                               child: Text(
@@ -235,43 +340,58 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                   else
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      sliver: SliverList.builder(
+                      sliver: SliverReorderableList(
                         itemCount: _tracks.length,
+                        onReorder: (oldIndex, newIndex) {
+                          setState(() {
+                            if (newIndex > oldIndex) newIndex--;
+                            final track = _tracks.removeAt(oldIndex);
+                            _tracks.insert(newIndex, track);
+                          });
+                        },
                         itemBuilder: (context, index) {
                           final track = _tracks[index];
-                          return ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(4),
-                              child: CachedNetworkImage(
-                                imageUrl: track.images.first,
-                                width: 48,
-                                height: 48,
-                                fit: BoxFit.cover,
-                                errorWidget: (_, __, ___) => Container(
-                                  color: Colors.grey.shade800,
-                                  child: const Icon(Icons.music_note, color: Colors.white54),
+                          return ReorderableDelayedDragStartListener(
+                            key: ValueKey(track.id),
+                            index: index,
+                            child: ListTile(
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: CachedNetworkImage(
+                                  imageUrl: track.images.first,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorWidget: (_, __, ___) => Container(
+                                    color: Colors.grey.shade800,
+                                    child: const Icon(Icons.music_note, color: Colors.white54),
+                                  ),
                                 ),
                               ),
-                            ),
-                            title: Text(
-                              track.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
+                              title: Text(
+                                track.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontFamily: "SpotifyMixUI",
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
-                            ),
-                            subtitle: Text(
-                              track.artistName ?? "Unknown Artist",
-                              style: TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 14,
-                                color: Colors.white.withAlpha((0.7 * 255).toInt()),
+                              subtitle: Text(
+                                track.artistName ?? "Unknown Artist",
+                                style: TextStyle(
+                                  fontFamily: "SpotifyMixUI",
+                                  fontSize: 14,
+                                  color: Colors.white.withAlpha((0.7 * 255).toInt()),
+                                ),
                               ),
+                              trailing: ReorderableDragStartListener(
+                                index: index,
+                                child: const Icon(Icons.drag_handle, color: Colors.white54),
+                              ),
+                              onTap: () {},
                             ),
-                            onTap: () {},
                           );
                         },
                       ),
@@ -283,7 +403,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
             ),
             Align(
               alignment: Alignment.topCenter,
-              child: Opacity(
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 100),
                 opacity: 1.0 - titleOpacity,
                 child: Container(
                   height: 86,
@@ -292,11 +413,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        mixColors([
-                          MapEntry(_ambientColor, 0.9),
-                          MapEntry(Colors.white, 0.1),
-                        ]).withAlpha(255 - (titleOpacity * 255).round()),
-                        _ambientColor.withAlpha(255 - (titleOpacity * 255).round()),
+                        mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.white, 0.1)]),
+                        _ambientColor,
                       ],
                     ),
                   ),

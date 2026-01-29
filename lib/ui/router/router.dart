@@ -43,9 +43,30 @@ GoRouter createRouter(WidgetRef ref) {
               GoRoute(
                 path: '/playlist/:id',
                 name: 'PlaylistDetailsPage',
-                builder: (context, state) {
+                pageBuilder: (context, state) {
                   final id = state.pathParameters['id']!;
-                  return PlaylistDetails(playlistId: id);
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierColor: Colors.black54,
+                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                      child: child,
+                    ),
+                    child: Dismissible(
+                      key: const Key('playlist_details_dismissible'),
+                      onDismissed: (_) => context.pop(),
+                      movementDuration: const Duration(milliseconds: 300),
+                      direction: DismissDirection.startToEnd,
+                      child: Material(
+                        child: PlaylistDetails(playlistId: id),
+                      ),
+                    ),
+                  );
                 },
               ),
             ],

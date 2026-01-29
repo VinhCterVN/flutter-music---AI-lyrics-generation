@@ -94,4 +94,21 @@ class TrackService {
       'listened_at': DateTime.now().toIso8601String(),
     });
   }
+
+  Future<TrackPage> getRecentTracks({int page = 0, int pageSize = 20}) async {
+    final response = await _supabase
+        .from('listen_histories')
+        .select("""
+          track:tracks (
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+          )
+        """)
+        .order('listened_at', ascending: false)
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+    final list = response as List;
+    final tracks = list.map((e) => Track.fromJson(e['track'])).toList();
+    return TrackPage(data: tracks, total: tracks.length, hasNextPage: tracks.length == pageSize);
+  }
 }

@@ -140,8 +140,18 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                         children: [
                           Row(
                             children: [
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
+                              Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(4),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withAlpha((0.4 * 255).round()),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                clipBehavior: Clip.antiAlias,
                                 child: CachedNetworkImage(
                                   imageUrl: currentTrack.images.isNotEmpty ? currentTrack.images.first : '',
                                   width: 44,
