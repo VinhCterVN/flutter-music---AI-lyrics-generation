@@ -1,5 +1,9 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/queue_bottom_sheet.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class LibraryPage extends ConsumerStatefulWidget {
@@ -54,6 +58,22 @@ class _LibraryPageState extends ConsumerState<LibraryPage> with SingleTickerProv
               ),
             ),
             child: const Text('Show Queue Bottom Sheet'),
+          ),
+          OutlinedButton(
+            onPressed: () async {
+              final modes = await FlutterDisplayMode.supported;
+              modes.forEach((mode) => log('Supported mode: ${mode.width}x${mode.height} @ ${mode.refreshRate}Hz'));
+            },
+            child: const Text('Show Supported Display Modes'),
+          ),
+
+          OutlinedButton(
+            onPressed: () async {
+              final service = ref.read(playlistServiceProvider);
+              final res = await service.getWeeklyHistory();
+              res.forEach(print);
+            },
+            child: const Text('Test Button'),
           ),
         ],
       ),

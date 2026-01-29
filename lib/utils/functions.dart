@@ -46,13 +46,13 @@ Color paletteToColor(PaletteColor color) {
 }
 
 Future<Color> getDominantColor(String? imageUrl) async {
-  const defaultColor = Color(0xFF5D5DFF);
+  const defaultColor = Color(0xFF2505B0);
 
   if (imageUrl == null) return defaultColor;
   try {
     final palette = await ImagePaletteService.instance.getPalette(VibrantRequest(imageUrl));
 
-    return paletteToColor(palette.darkVibrant);
+    return paletteToColor(palette.darkMuted);
   } on DioException catch (e) {
     log("Network error: ${e.message}");
     return defaultColor;

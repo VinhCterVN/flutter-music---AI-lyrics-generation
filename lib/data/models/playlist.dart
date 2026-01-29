@@ -38,3 +38,26 @@ class Playlist {
 
   bool containsTrack(int trackId) => trackIds.contains(trackId);
 }
+
+class WeeklyHistory {
+  final List<int> trackIds;
+  final DateTime listenedAt;
+
+  const WeeklyHistory({
+    required this.trackIds,
+    required this.listenedAt,
+  });
+
+  factory WeeklyHistory.fromJson(Map<String, dynamic> json) {
+    final trackIds = (json['track_ids'] as List).map((e) => e as int).toList();
+    return WeeklyHistory(
+      trackIds: trackIds,
+      listenedAt: DateTime.parse(json['listened_at'] as String),
+    );
+  }
+
+  @override
+  String toString() {
+    return 'WeeklyHistory(trackIds: $trackIds, listenedAt: $listenedAt)';
+  }
+}

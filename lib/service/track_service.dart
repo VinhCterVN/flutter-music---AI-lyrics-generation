@@ -87,4 +87,11 @@ class TrackService {
     final result = (response as List).map((e) => Track.fromJson(e)).toList();
     return result;
   }
+
+  Future<void> addToListenHistory(int trackId) async {
+    await _supabase.from('listen_histories').insert({
+      'track_id': trackId,
+      'listened_at': DateTime.now().toIso8601String(),
+    });
+  }
 }

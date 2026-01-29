@@ -3,6 +3,7 @@ import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/router/router.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
 import 'package:flutter_ai_music/ui/theme/util.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:media_kit/media_kit.dart';
@@ -13,6 +14,7 @@ void main() async {
   MediaKit.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
+  await FlutterDisplayMode.setHighRefreshRate();
   await Supabase.initialize(url: dotenv.get('SUPABASE_URL'), anonKey: dotenv.get('SUPABASE_ANON_KEY'));
 
   runApp(const ProviderScope(child: MyApp()));
@@ -23,7 +25,7 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.watch(audioHandlerProvider);
+    ref.read(audioHandlerProvider);
     final textTheme = createTextTheme(context, "Roboto", "Montserrat");
     final theme = MaterialTheme(textTheme);
     return MaterialApp.router(

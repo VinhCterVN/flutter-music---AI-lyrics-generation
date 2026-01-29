@@ -27,7 +27,7 @@ class TrackInfo extends ConsumerWidget {
               children: [
                 Text(
                   track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w700),
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w800),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),

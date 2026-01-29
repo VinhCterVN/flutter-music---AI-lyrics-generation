@@ -146,7 +146,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withAlpha(200)],
+            colors: [Colors.transparent, Colors.black.withAlpha(255)],
           ),
         ),
       ),

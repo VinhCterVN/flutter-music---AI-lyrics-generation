@@ -1,3 +1,4 @@
+import 'package:flutter_ai_music/service/user_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -17,3 +18,5 @@ final authStateProvider = StreamProvider<User?>((ref) {
 final currentUserProvider = StateProvider<User?>((ref) {
   return ref.watch(authStateProvider).value;
 });
+
+final userServiceProvider = Provider<UserService>((ref) => UserService(ref));

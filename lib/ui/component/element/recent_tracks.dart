@@ -49,7 +49,7 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                       style: TextStyle(
                         fontFamily: "SpotifyMixUI",
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
                       maxLines: 1,

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
 import 'package:flutter_ai_music/ui/pages/library.dart';
+import 'package:flutter_ai_music/ui/pages/playlist_details.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
@@ -37,7 +38,17 @@ GoRouter createRouter(WidgetRef ref) {
         },
         branches: [
           StatefulShellBranch(
-            routes: [GoRoute(path: '/home', name: 'HomePage', builder: (context, state) => const HomePage())],
+            routes: [
+              GoRoute(path: '/home', name: 'HomePage', builder: (context, state) => const HomePage()),
+              GoRoute(
+                path: '/playlist/:id',
+                name: 'PlaylistDetailsPage',
+                builder: (context, state) {
+                  final id = state.pathParameters['id']!;
+                  return PlaylistDetails(playlistId: id);
+                },
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],

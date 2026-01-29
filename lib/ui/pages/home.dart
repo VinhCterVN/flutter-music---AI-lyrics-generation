@@ -2,11 +2,13 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:ui';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
+import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
 import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
@@ -49,7 +51,7 @@ class _HomePageState extends ConsumerState<HomePage> {
         }
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedTracks());
+    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
   }
 
   Future<void> fetchTracks({bool reset = false}) async {
@@ -107,7 +109,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
-  List<EffectState> buildStates(double height) => [
+  List<EffectState> _buildStates(double height) => [
     EffectState(
       height: height * 0.75,
       alignment: const Alignment(-0.85, -0.65),
@@ -133,7 +135,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final currentTrack = ref.watch(currentTrackProvider).value;
     final height = MediaQuery.of(context).size.height;
     final surfaceDim = Theme.of(context).colorScheme.surfaceDim;
-    final states = buildStates(height);
+    final states = _buildStates(height);
 
     return Stack(
       children: [
@@ -230,26 +232,27 @@ class _HomePageState extends ConsumerState<HomePage> {
                   pinned: true,
                   delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
                 ),
-                SliverToBoxAdapter(
-                  child: tracks.isNotEmpty
-                      ? RecentTracksSection(
-                          tracks: tracks,
-                          onTrackTap: (track) {
-                            final index = tracks.indexOf(track);
-                            _playTrack(ref, tracks, index);
-                          },
-                        )
-                      : SizedBox.shrink(),
-                ),
-
-                if (tracks.isEmpty && !_isFetching)
+                if (tracks.isEmpty)
                   SliverToBoxAdapter(
                     child: SizedBox(
                       width: double.infinity,
                       child: Lottie.asset("assets/animations/impress.json", repeat: false),
                     ),
                   )
-                else
+                else ...[
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                    sliver: const TopCategories(),
+                  ),
+                  SliverToBoxAdapter(
+                    child: RecentTracksSection(
+                      tracks: tracks,
+                      onTrackTap: (track) {
+                        final index = tracks.indexOf(track);
+                        _playTrack(ref, tracks, index);
+                      },
+                    ),
+                  ),
                   SliverList(
                     delegate: SliverChildBuilderDelegate(
                       (context, index) => TrackTile(
@@ -264,9 +267,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                           builder: (context) => DraggableScrollableSheet(
                             initialChildSize: 0.5,
                             minChildSize: 0.5,
-                            maxChildSize: 1.0,
+                            maxChildSize: 0.75,
                             snap: true,
-                            snapSizes: const [0.5, 1.0],
+                            snapSizes: const [0.5, 0.75],
                             builder: (context, controller) =>
                                 TrackOptionsBottomSheet(track: tracks[index], scrollController: controller),
                           ),
@@ -276,15 +279,16 @@ class _HomePageState extends ConsumerState<HomePage> {
                       childCount: tracks.length,
                     ),
                   ),
-                if (_isFetching)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      child: Center(
-                        child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                      ),
-                    ),
-                  ),
+                ],
+                // if (_isFetching)
+                //   SliverToBoxAdapter(
+                //     child: Padding(
+                //       padding: const EdgeInsets.symmetric(vertical: 16.0),
+                //       child: Center(
+                //         child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant),
+                //       ),
+                //     ),
+                //   ),
                 SliverToBoxAdapter(child: const SizedBox(height: 200)),
               ],
             ),

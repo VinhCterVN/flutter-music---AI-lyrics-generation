@@ -37,6 +37,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
       final currentArtist = ref.read(currentArtistProvider).value;
       if (currentArtist == null) return;
       final status = await ref.read(artistServiceProvider).getFollowStatus(currentArtist.id);
+      if (!mounted) return;
       setState(() => _followed = status);
     });
   }
@@ -118,7 +119,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Text(
-                      "Information about the artist",
+                      "About the artist",
                       style: TextStyle(
                         color: Colors.white.withAlpha((0.9 * 255).toInt()),
                         fontSize: 14,
