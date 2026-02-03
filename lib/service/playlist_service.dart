@@ -86,10 +86,39 @@ class PlaylistService {
     await _supabase.from('playlists').delete().eq('id', playlistId);
   }
 
-
-
   Future<List<WeeklyHistory>> getWeeklyHistory() async {
     final res = await _supabase.rpc('get_weekly_history');
     return (res as List).map((e) => WeeklyHistory.fromJson(e)).toList();
+  }
+
+  /// Stream playlists with real-time updates from Supabase.
+  /// Returns max [limit] playlists sorted by created_at desc.
+  Stream<List<Playlist>> streamPlaylists({int limit = 10}) {
+    return _supabase
+        .from('playlists')
+        .stream(primaryKey: ['id'])
+        .order('created_at', ascending: true)
+        .limit(limit)
+        .asyncMap((event) async {
+          final playlists = event.map((e) => Playlist.fromJson(e)).toList();
+          if (playlists.isEmpty) return playlists;
+
+          final playlistIds = playlists.map((p) => p.id).toList();
+          final relatedData = await _supabase
+              .from('playlists_tracks')
+              .select('playlist_id, track_id')
+              .inFilter('playlist_id', playlistIds);
+
+          for (var playlist in playlists) {
+            final tracksForThisPlaylist = (relatedData as List)
+                .where((item) => item['playlist_id'] == playlist.id)
+                .map((item) => item['track_id'])
+                .toList();
+
+            playlist.trackIds.addAll(tracksForThisPlaylist.cast<int>());
+          }
+
+          return playlists;
+        });
   }
 }

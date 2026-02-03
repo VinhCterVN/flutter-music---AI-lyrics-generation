@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter_ai_music/data/models/wikipedia_summary.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
 import 'package:flutter_ai_music/service/artist_service.dart';

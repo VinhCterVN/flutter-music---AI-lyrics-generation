@@ -7,12 +7,16 @@ import 'package:flutter_ai_music/data/models/user.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
+import 'package:flutter_ai_music/ui/layout/loading_scaffold.dart';
 import 'package:flutter_ai_music/utils/functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
 import 'package:visibility_detector/visibility_detector.dart';
+
+import '../../utils/audio_helper.dart';
 
 class PlaylistDetails extends ConsumerStatefulWidget {
   final String playlistId;
@@ -24,6 +28,7 @@ class PlaylistDetails extends ConsumerStatefulWidget {
 }
 
 class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
+  late final ScrollController _controller;
   late Playlist _playlist;
 
   late String _photoUrl;
@@ -37,6 +42,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   @override
   void initState() {
     super.initState();
+    _controller = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _fetchPlaylist();
       await _loadPhotoUrl();
@@ -44,6 +50,12 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
       setState(() => _state = UIState.ready);
       await _fetchTracks();
     });
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    _controller.dispose();
   }
 
   Future<void> _fetchPlaylist() async {
@@ -57,6 +69,10 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   }
 
   Future<void> _loadPhotoUrl() async {
+    if (_playlist.photoUrl != null) {
+      setState(() => _photoUrl = _playlist.photoUrl!);
+      return;
+    }
     if (_playlist.trackIds.isEmpty) {
       setState(() => _photoUrl = "https://i.pravatar.cc/300?u=${_playlist.id}");
       return;
@@ -80,6 +96,14 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     setState(() => _tracks = tracks);
   }
 
+  Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
+    try {
+      AudioHelper.playTrackFromList(ref, allTracks: allTracks, selectedIndex: selectedIndex);
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error playing track: $e');
+    }
+  }
+
   String formatDateTime(DateTime time) {
     return '${time.month.toString().padLeft(2, '0')}/${time.day.toString().padLeft(2, '0')}/${time.year}';
   }
@@ -90,111 +114,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     final topPadding = MediaQuery.paddingOf(context).top;
 
     return switch (_state) {
-      UIState.loading => Scaffold(
-        backgroundColor: Colors.black87,
-        body: CustomScrollView(
-          physics: const NeverScrollableScrollPhysics(),
-          slivers: [
-            SliverToBoxAdapter(
-              child: Container(
-                padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Photo placeholder
-                    Center(
-                      child: Container(
-                        width: width * 0.6,
-                        height: width * 0.6,
-                        decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Title placeholder
-                    Container(
-                      width: width * 0.5,
-                      height: 28,
-                      decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
-                    ),
-                    const SizedBox(height: 16),
-                    // Author row placeholder
-                    Row(
-                      children: [
-                        Container(
-                          width: 24,
-                          height: 24,
-                          decoration: BoxDecoration(color: Colors.grey.shade800, shape: BoxShape.circle),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          width: width * 0.4,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade800,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Date placeholder
-                    Container(
-                      width: width * 0.35,
-                      height: 14,
-                      decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                ),
-              ),
-            ),
-            // Track list placeholders
-            SliverPadding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(color: Colors.grey.shade800, borderRadius: BorderRadius.circular(4)),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              width: double.infinity,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade800,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Container(
-                              width: width * 0.3,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade800,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      UIState.loading => const LoadingScaffold(),
       _ => Scaffold(
         backgroundColor: mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
         body: Stack(
@@ -202,6 +122,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
           children: [
             Positioned.fill(
               child: CustomScrollView(
+                controller: _controller,
                 slivers: [
                   SliverToBoxAdapter(
                     child: Container(
@@ -285,7 +206,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                               ),
 
                               Text(
-                                "${_author.displayName} • ${_playlist.trackIds.length} songs",
+                                "${_author.displayName.isNotEmpty ? _author.displayName : "Author"}  •  ${_playlist.trackIds.length} songs",
                                 style: TextStyle(
                                   fontFamily: "SpotifyMixUI",
                                   fontSize: 14,
@@ -297,36 +218,66 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            child: Text(
-                              "Playlist • ${formatDateTime(_playlist.createdAt)}",
-                              textAlign: TextAlign.left,
-                              style: TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 14,
-                                color: Colors.white.withAlpha((0.7 * 255).toInt()),
-                                letterSpacing: (-0.25),
-                              ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              spacing: 8,
+                              children: [
+                                const HugeIcon(icon: HugeIconsStrokeRounded.playlist01, color: Colors.white54),
+                                Text(
+                                  "Playlist • ${formatDateTime(_playlist.createdAt)}",
+                                  textAlign: TextAlign.left,
+                                  style: TextStyle(
+                                    fontFamily: "SpotifyMixUI",
+                                    fontSize: 14,
+                                    color: Colors.white.withAlpha((0.7 * 255).toInt()),
+                                    letterSpacing: (-0.25),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
                           Row(
                             spacing: 4,
                             children: [
-                              IconButton(
-                                onPressed: () {},
-                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.add01),
+                              Container(
+                                width: 36,
+                                height: 48,
+                                margin: const EdgeInsets.only(right: 8),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: Colors.white54, width: 2),
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(3),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(4),
+                                    child: CachedNetworkImage(imageUrl: _photoUrl, fit: BoxFit.cover, scale: 1.1),
+                                  ),
+                                ),
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.add01),
+                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.downloadCircle01),
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.add01),
+                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.share08),
                               ),
                               IconButton(
                                 onPressed: () {},
-                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.add01),
+                                icon: const HugeIcon(icon: HugeIconsStrokeRounded.moreVertical),
+                              ),
+                              const Spacer(),
+                              IconButton(
+                                style: IconButton.styleFrom(
+                                  backgroundColor: Colors.greenAccent.shade400,
+                                  foregroundColor: Colors.black,
+                                  padding: const EdgeInsets.all(0),
+                                ),
+                                onPressed: () => _playTrack(ref, _tracks, 0),
+                                icon: const Icon(Icons.play_arrow_rounded),
                               ),
                             ],
                           ),
@@ -336,7 +287,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                   ),
 
                   if (_tracks.isEmpty)
-                    SliverToBoxAdapter(child: const Text("No tracks found."))
+                    SliverToBoxAdapter(child: Center(child: const Text("No tracks found.")))
                   else
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -355,27 +306,28 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                             key: ValueKey(track.id),
                             index: index,
                             child: ListTile(
-                              leading: ClipRRect(
-                                borderRadius: BorderRadius.circular(4),
-                                child: CachedNetworkImage(
-                                  imageUrl: track.images.first,
-                                  width: 48,
-                                  height: 48,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (_, __, ___) => Container(
-                                    color: Colors.grey.shade800,
-                                    child: const Icon(Icons.music_note, color: Colors.white54),
-                                  ),
-                                ),
-                              ),
+                              // leading: ClipRRect(
+                              //   borderRadius: BorderRadius.circular(4),
+                              //   child: CachedNetworkImage(
+                              //     imageUrl: track.images.first,
+                              //     width: 48,
+                              //     height: 48,
+                              //     fit: BoxFit.cover,
+                              //     errorWidget: (_, __, ___) => Container(
+                              //       color: Colors.grey.shade800,
+                              //       child: const Icon(Icons.music_note, color: Colors.white54),
+                              //     ),
+                              //   ),
+                              // ),
                               title: Text(
                                 track.name,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   fontFamily: "SpotifyMixUI",
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: (-0.15),
                                 ),
                               ),
                               subtitle: Text(
@@ -390,7 +342,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                 index: index,
                                 child: const Icon(Icons.drag_handle, color: Colors.white54),
                               ),
-                              onTap: () {},
+                              onTap: () => _playTrack(ref, _tracks, index)
                             ),
                           );
                         },

@@ -39,6 +39,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     _controller = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Timer(const Duration(milliseconds: 2000), () {
+        if (!mounted) return;
         setState(() {
           tracks = mockTracks;
           _state = UIState.ready;
@@ -120,7 +121,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
         RefreshIndicator(
-          onRefresh: () async => Fluttertoast.showToast(msg: 'Already up to date!'),
+          onRefresh: () async => build(context),
           child: Scrollbar(
             controller: _controller,
             interactive: true,

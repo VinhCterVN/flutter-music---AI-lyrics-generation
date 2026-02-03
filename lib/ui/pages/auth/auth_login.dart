@@ -24,6 +24,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   bool _obscurePassword = true;
   bool _isLoading = false;
 
+  final _nameFocusNode = FocusNode();
+  final _emailFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+
   late AnimationController _backgroundAnimController;
   late AnimationController _formAnimController;
   late Animation<double> _fadeAnimation;
@@ -55,6 +59,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
+    _nameFocusNode.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     _backgroundAnimController.dispose();
     _formAnimController.dispose();
     super.dispose();
@@ -204,9 +211,12 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                           children: [
                             _buildTextField(
                               controller: _nameController,
+                              focusNode: _nameFocusNode,
                               label: 'Username',
                               icon: Icons.person_rounded,
                               primaryColor: primaryColor,
+                              textInputAction: TextInputAction.next,
+                              onFieldSubmitted: (_) => _emailFocusNode.requestFocus(),
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Please enter your name';
@@ -222,10 +232,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
 
                 _buildTextField(
                   controller: _emailController,
+                  focusNode: _emailFocusNode,
                   label: 'Email',
                   icon: Icons.email_rounded,
                   primaryColor: primaryColor,
                   keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _passwordFocusNode.requestFocus(),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Enter a valid email address';
@@ -240,10 +253,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
 
                 _buildTextField(
                   controller: _passwordController,
+                  focusNode: _passwordFocusNode,
                   label: 'Password',
                   icon: Icons.lock_rounded,
                   primaryColor: primaryColor,
                   obscureText: _obscurePassword,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _submitForm(),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_rounded : Icons.visibility_off_rounded,
@@ -295,14 +311,20 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
     required String label,
     required IconData icon,
     required Color primaryColor,
+    FocusNode? focusNode,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    void Function(String)? onFieldSubmitted,
     bool obscureText = false,
     Widget? suffixIcon,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       obscureText: obscureText,
       validator: validator,
       style: const TextStyle(fontFamily: "SpotifyMixUI", color: Colors.white, fontSize: 16),

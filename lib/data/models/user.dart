@@ -1,6 +1,6 @@
 class User {
   final String id;
-  final String? displayName;
+  final String displayName;
   final String email;
   final bool isEmailVerified;
   final String? photoUrl;
@@ -13,7 +13,7 @@ class User {
     required this.isEmailVerified,
     required this.lastActive,
     required this.createdAt,
-    this.displayName,
+    required this.displayName,
     this.photoUrl,
   });
 

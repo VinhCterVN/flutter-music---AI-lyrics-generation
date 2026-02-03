@@ -46,6 +46,8 @@ class QueueController extends StateNotifier<QueueState> {
     state = state.copyWith(rawTracks: newRawTracks);
   }
 
+  Future<void> addToQueue(Track track) async {}
+
   void toggleFavoriteAtIndex(int index) {
     final track = state.rawTracks[index];
     final updatedTrack = Track(

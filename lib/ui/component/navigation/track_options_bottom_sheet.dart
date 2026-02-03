@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/models/track.dart';
+import '../../../provider/audio_provider.dart';
 
 class TrackOptionsBottomSheet extends ConsumerWidget {
   final ScrollController scrollController;
@@ -77,7 +78,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
                       icon: HugeIcons.strokeRoundedQueue02,
                       title: 'Add to Queue',
                       subtitle: 'Play this track next',
-                      onTap: () => _placeholder(context, 'Add to Queue'),
+                      onTap: () => _addToQueue(context, ref),
                     ),
                   ),
 
@@ -205,6 +206,12 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
     Navigator.pop(context);
     final shareText = 'Check out "${track.name}" by ${track.artistName ?? "Unknown Artist"}! 🎵';
     SharePlus.instance.share(ShareParams(text: shareText));
+  }
+
+  void _addToQueue(BuildContext context, WidgetRef ref) {
+    Navigator.pop(context);
+    ref.read(queueProvider.notifier).addToQueue(track);
+    Fluttertoast.showToast(msg: 'Added "${track.name}" to queue', toastLength: Toast.LENGTH_SHORT);
   }
 
   void _placeholder(BuildContext context, String feature) {

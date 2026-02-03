@@ -107,8 +107,47 @@ class TrackService {
         """)
         .order('listened_at', ascending: false)
         .range(page * pageSize, page * pageSize + pageSize - 1);
-    final list = response as List;
-    final tracks = list.map((e) => Track.fromJson(e['track'])).toList();
-    return TrackPage(data: tracks, total: tracks.length, hasNextPage: tracks.length == pageSize);
+    final trackWithArtist = (response as List).map((e) async {
+      final trackData = e['track'];
+      final isSpotifyArtist = trackData['artist_type'] == 'SpotifyArtist';
+      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(trackData['artist_id'] ?? '') : null;
+
+      return Track.fromJson(trackData).copyWith(artistName: artist?.name);
+    }).toList();
+    final trackList = await Future.wait(trackWithArtist);
+    return TrackPage(data: trackList, total: trackList.length, hasNextPage: trackList.length == pageSize);
+  }
+
+  /// Stream recent tracks with real-time updates from Supabase.
+  /// Returns distinct tracks (by track_id), sorted by listened_at desc.
+  Stream<List<Track>> streamRecentTracks({int limit = 10}) {
+    return _supabase
+        .from('listen_histories')
+        .stream(primaryKey: ['id'])
+        .order('listened_at', ascending: false)
+        .asyncMap((rows) async {
+          // Distinct by track_id, keep the latest listened_at for each track
+          final uniqueTrackIds = <int>{};
+          final distinctRows = <Map<String, dynamic>>[];
+
+          for (final row in rows) {
+            final trackId = row['track_id'] as int;
+            if (!uniqueTrackIds.contains(trackId)) {
+              uniqueTrackIds.add(trackId);
+              distinctRows.add(row);
+              if (distinctRows.length >= limit) break;
+            }
+          }
+
+          if (distinctRows.isEmpty) return <Track>[];
+
+          // Fetch full track details for the distinct track_ids
+          final orderedTrackIds = distinctRows.map((r) => r['track_id'].toString()).toList();
+          final tracks = await getTracksByIds(orderedTrackIds);
+
+          // Reorder tracks to match the order of orderedTrackIds (most recent first)
+          final trackMap = {for (final t in tracks) t.id.toString(): t};
+          return orderedTrackIds.map((id) => trackMap[id]).whereType<Track>().toList();
+        });
   }
 }

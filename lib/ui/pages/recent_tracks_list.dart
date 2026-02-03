@@ -6,9 +6,13 @@ import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sh
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hugeicons/hugeicons.dart';
+import 'package:hugeicons/styles/stroke_rounded.dart';
 
-class RecentTracksListPage extends ConsumerWidget {
-  const RecentTracksListPage({super.key});
+class TracksListPage extends ConsumerWidget {
+  final List<Track> tracks;
+
+  const TracksListPage({super.key, this.tracks = const []});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -16,16 +20,10 @@ class RecentTracksListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => context.pop(),
-        ),
+        leading: IconButton(icon: const HugeIcon(icon: HugeIconsStrokeRounded.arrowLeft01), onPressed: context.pop),
         title: const Text(
           'Recently Played',
-          style: TextStyle(
-            fontFamily: 'SpotifyMixUI',
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 16, fontWeight: FontWeight.w800),
         ),
         centerTitle: true,
         backgroundColor: Colors.transparent,
@@ -34,8 +32,7 @@ class RecentTracksListPage extends ConsumerWidget {
       body: StreamBuilder<List<Track>>(
         stream: trackService.streamRecentTracks(limit: 50),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -45,19 +42,11 @@ class RecentTracksListPage extends ConsumerWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.history_rounded,
-                    size: 64,
-                    color: Colors.grey.shade600,
-                  ),
+                  Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade600),
                   const SizedBox(height: 16),
                   Text(
                     'No recently played tracks',
-                    style: TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 18,
-                      color: Colors.grey.shade400,
-                    ),
+                    style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 18, color: Colors.grey.shade400),
                   ),
                 ],
               ),
@@ -71,11 +60,7 @@ class RecentTracksListPage extends ConsumerWidget {
               final track = tracks[index];
               return _RecentTrackListTile(
                 track: track,
-                onTap: () => AudioHelper.playTrackFromList(
-                  ref,
-                  allTracks: tracks,
-                  selectedIndex: index,
-                ),
+                onTap: () => AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: index),
                 onLongPress: () => _showTrackOptions(context, track),
               );
             },
@@ -97,10 +82,8 @@ class RecentTracksListPage extends ConsumerWidget {
         initialChildSize: 0.5,
         minChildSize: 0.5,
         maxChildSize: 1.0,
-        builder: (context, scrollController) => TrackOptionsBottomSheet(
-          track: track,
-          scrollController: scrollController,
-        ),
+        builder: (context, scrollController) =>
+            TrackOptionsBottomSheet(track: track, scrollController: scrollController),
       ),
     );
   }
@@ -111,11 +94,7 @@ class _RecentTrackListTile extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  const _RecentTrackListTile({
-    required this.track,
-    required this.onTap,
-    required this.onLongPress,
-  });
+  const _RecentTrackListTile({required this.track, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -134,11 +113,7 @@ class _RecentTrackListTile extends StatelessWidget {
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(
-                  width: 56,
-                  height: 56,
-                  color: Colors.grey.shade800,
-                ),
+                placeholder: (_, __) => Container(width: 56, height: 56, color: Colors.grey.shade800),
                 errorWidget: (_, __, ___) => Container(
                   width: 56,
                   height: 56,
@@ -154,11 +129,7 @@ class _RecentTrackListTile extends StatelessWidget {
                 children: [
                   Text(
                     track.name,
-                    style: const TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 16, fontWeight: FontWeight.w600),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -176,10 +147,7 @@ class _RecentTrackListTile extends StatelessWidget {
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.more_vert_rounded),
-              onPressed: onLongPress,
-            ),
+            IconButton(icon: const Icon(Icons.more_vert_rounded), onPressed: onLongPress),
           ],
         ),
       ),

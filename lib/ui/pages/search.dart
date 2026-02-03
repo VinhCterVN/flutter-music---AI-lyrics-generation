@@ -31,7 +31,7 @@ class _SearchPageState extends ConsumerState<SearchPage> {
   void initState() {
     super.initState();
     _controller = ScrollController();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadSavedTracks());
+    WidgetsBinding.instance.addPostFrameCallback((_) => fetchTracks());
   }
 
   @override

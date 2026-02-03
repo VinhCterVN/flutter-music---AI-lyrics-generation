@@ -92,7 +92,7 @@ class _TrackCardDemoState extends ConsumerState<TrackCardDemo> with SingleTicker
                         fit: BoxFit.cover,
                         errorWidget: (context, url, error) => Container(
                           decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerHighest),
-                          child: Center(child: Icon(Icons.error_rounded)),
+                          child: const Center(child: Icon(Icons.error_rounded)),
                         ),
                       ),
                     ),
@@ -184,9 +184,9 @@ class _TrackCardDemoState extends ConsumerState<TrackCardDemo> with SingleTicker
                               widget.track.name,
                               style: TextStyle(
                                 fontFamily: "SpotifyMixUI",
-                                fontSize: 18,
+                                fontSize: 17,
                                 color: Colors.white.withAlpha(200),
-                                fontWeight: FontWeight.bold,
+                                fontWeight: FontWeight.w800,
                                 shadows: [Shadow(color: Colors.black45, offset: Offset(0, 2), blurRadius: 4)],
                               ),
                               maxLines: 2,

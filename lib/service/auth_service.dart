@@ -6,7 +6,9 @@ class AuthenticationService {
   final SupabaseClient _supabase;
 
   AuthenticationService(this._supabase);
+
   Stream<User?> get authStateChanges => _supabase.auth.onAuthStateChange.map((event) => event.session?.user);
+
   User? get currentUser => _supabase.auth.currentUser;
 
   Future<String?> signIn({required String email, required String password}) async {
@@ -42,12 +44,10 @@ class AuthenticationService {
       final user = currentUser;
       if (user == null) return 'No user is currently signed in.';
 
-      final updates = UserAttributes(data: {'display_name': displayName.trim()});
-
+      final updates = UserAttributes(data: {'displayName': displayName.trim()});
       await _supabase.auth.updateUser(updates);
 
       final updatedUser = _supabase.auth.currentUser!;
-
       await saveUserData(updatedUser);
       return null;
     } on AuthException catch (e) {
@@ -71,8 +71,8 @@ class AuthenticationService {
 
   Future<String?> saveUserData(User user) async {
     try {
-      final displayName = user.userMetadata?['display_name'] ?? '';
-      final photoUrl = user.userMetadata?['avatar_url'] ?? '';
+      final displayName = user.userMetadata?['displayName'] ?? '';
+      final photoUrl = user.userMetadata?['photoUrl'] ?? '';
 
       final data = {
         'id': user.id,
@@ -83,7 +83,7 @@ class AuthenticationService {
         'last_active': DateTime.now().toIso8601String(),
       };
 
-      await _supabase.from('users').upsert(data);
+      await _supabase.from('users').upsert(data, onConflict: 'id');
 
       return null;
     } catch (e) {

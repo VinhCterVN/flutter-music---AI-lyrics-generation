@@ -1,6 +1,7 @@
 import 'dart:developer';
 
 import 'package:dio/dio.dart';
+import 'package:flutter_ai_music/data/database/artist_database.dart';
 import 'package:flutter_ai_music/data/models/artist.dart';
 import 'package:flutter_ai_music/service/secure_storage_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -24,11 +25,22 @@ class SpotifyService {
 
   SpotifyService._internal();
 
-  static Future<Artist?> getSpotifyArtist(String artistId) async => getSpotifyResource<Artist>(
-    resourceType: SpotifyResourceType.artist,
-    id: artistId,
-    transform: (json) => Artist.fromJson(json),
-  );
+  static Future<Artist?> getSpotifyArtist(String artistId) async {
+    final cachedArtist = await ArtistDatabase.instance.getArtistById(artistId);
+    if (cachedArtist != null) return cachedArtist;
+
+    final artist = await getSpotifyResource<Artist>(
+      resourceType: SpotifyResourceType.artist,
+      id: artistId,
+      transform: (json) => Artist.fromJson(json),
+    );
+
+    if (artist != null) {
+      await ArtistDatabase.instance.insertArtist(artist);
+    }
+
+    return artist;
+  }
 
   static Future<T?> getSpotifyResource<T>({
     required SpotifyResourceType resourceType,

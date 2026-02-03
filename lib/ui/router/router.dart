@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 
 import '../layout/app_layout.dart';
 import '../pages/home.dart';
+import '../pages/recent_tracks_list.dart';
 
 GoRouter createRouter(WidgetRef ref) {
   return GoRouter(
@@ -39,7 +40,11 @@ GoRouter createRouter(WidgetRef ref) {
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/home', name: 'HomePage', builder: (context, state) => const HomePage()),
+              GoRoute(
+                path: '/home',
+                name: 'HomePage',
+                builder: (context, state) => const HomePage(),
+              ),
               GoRoute(
                 path: '/playlist/:id',
                 name: 'PlaylistDetailsPage',
@@ -50,39 +55,71 @@ GoRouter createRouter(WidgetRef ref) {
                     opaque: false,
                     barrierDismissible: true,
                     barrierColor: Colors.black54,
-                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 1),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
-                      child: child,
-                    ),
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        SlideTransition(
+                          position:
+                              Tween<Offset>(
+                                begin: const Offset(0, 1),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: ani1,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              ),
+                          child: child,
+                        ),
                     child: Dismissible(
                       key: const Key('playlist_details_dismissible'),
                       onDismissed: (_) => context.pop(),
                       movementDuration: const Duration(milliseconds: 300),
                       direction: DismissDirection.startToEnd,
-                      child: Material(
-                        child: PlaylistDetails(playlistId: id),
-                      ),
+                      child: Material(child: PlaylistDetails(playlistId: id)),
                     ),
                   );
                 },
               ),
+              GoRoute(
+                path: '/recent-tracks',
+                name: 'RecentTracksPage',
+                builder: (context, state) => const TracksListPage(),
+              ),
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
+            routes: [
+              GoRoute(
+                path: '/search',
+                name: 'SearchPage',
+                builder: (context, state) => const SearchPage(),
+              ),
+            ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],
+            routes: [
+              GoRoute(
+                path: '/bolt',
+                name: 'BoltPage',
+                builder: (context, state) => const BoltPage(),
+              ),
+            ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/library', name: 'LibraryPage', builder: (context, state) => const LibraryPage())],
+            routes: [
+              GoRoute(
+                path: '/library',
+                name: 'LibraryPage',
+                builder: (context, state) => const LibraryPage(),
+              ),
+            ],
           ),
         ],
       ),
-      GoRoute(name: 'LoginPage', path: '/login', builder: (context, state) => const AuthScreen()),
+      GoRoute(
+        name: 'LoginPage',
+        path: '/login',
+        builder: (context, state) => const AuthScreen(),
+      ),
       GoRoute(
         path: '/search_detail',
         pageBuilder: (context, state) {
@@ -92,7 +129,10 @@ GoRouter createRouter(WidgetRef ref) {
             opaque: false,
             barrierDismissible: true,
             transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-              position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
+              position: Tween<Offset>(
+                begin: const Offset(1, 0),
+                end: Offset.zero,
+              ).animate(ani1),
               child: child,
             ),
             child: Dismissible(
@@ -107,7 +147,8 @@ GoRouter createRouter(WidgetRef ref) {
       ),
       GoRoute(
         path: '/',
-        builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        builder: (_, _) =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
     ],
   );

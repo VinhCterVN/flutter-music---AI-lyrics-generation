@@ -64,10 +64,9 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
       getFollowStatus(nex.value?.id ?? '');
     });
 
-    final fallbackRandom = Random().nextInt(100000);
     final imageUrl = currentArtist != null
         ? currentArtist.images.first.url
-        : 'https://picsum.photos/1000/500?random=$fallbackRandom';
+        : 'https://picsum.photos/1000/500?random=1000';
 
     return AnimatedSize(
       alignment: Alignment.topCenter,

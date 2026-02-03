@@ -9,42 +9,38 @@ import 'package:go_router/go_router.dart';
 
 import '../../../provider/track_provider.dart';
 
-class TopCategories extends ConsumerStatefulWidget {
+class TopCategories extends ConsumerWidget {
   const TopCategories({super.key});
 
   @override
-  ConsumerState<TopCategories> createState() => _TopCategoriesState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final playlistService = ref.watch(playlistServiceProvider);
 
-class _TopCategoriesState extends ConsumerState<TopCategories> {
-  List<Playlist> _playlists = [];
+    return StreamBuilder<List<Playlist>>(
+      stream: playlistService.streamPlaylists(limit: 10),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
+        }
 
-  @override
-  void initState() {
-    super.initState();
-    fetchPlaylists();
-  }
+        final playlists = snapshot.data ?? [];
+        if (playlists.isEmpty) {
+          return const SliverToBoxAdapter(child: SizedBox.shrink());
+        }
 
-  Future<void> fetchPlaylists() async {
-    final res = await ref.read(playlistServiceProvider).getPlaylists();
-
-    if (!mounted) return;
-    setState(() => _playlists = res);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return SliverGrid(
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 8,
-        mainAxisExtent: 48,
-      ),
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => _QuickPlayCard(playlist: _playlists[index]),
-        childCount: _playlists.length,
-      ),
+        return SliverGrid(
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            mainAxisExtent: 48,
+          ),
+          delegate: SliverChildBuilderDelegate(
+            (context, index) => _QuickPlayCard(playlist: playlists[index]),
+            childCount: playlists.length,
+          ),
+        );
+      },
     );
   }
 }
@@ -68,6 +64,7 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
   }
 
   Future<void> _loadPhotoUrl() async {
+    if (_photoUrl != null) return;
     if (widget.playlist.trackIds.isEmpty) {
       setState(() => _photoUrl = "https://i.pravatar.cc/300?u=${widget.playlist.id}");
       return;
@@ -102,7 +99,11 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
       onTap: () => context.push('/playlist/${widget.playlist.id}'),
       borderRadius: BorderRadius.circular(4),
       child: Container(
-        decoration: BoxDecoration(color: Colors.white70.withAlpha(30), borderRadius: BorderRadius.circular(4)),
+        decoration: BoxDecoration(
+          color: Colors.white70.withAlpha(30),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
         child: Row(
           children: [
             ClipRRect(
@@ -111,7 +112,7 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
                 width: 48,
                 height: 48,
                 child: GestureDetector(
-                  onTap: () => _playPlaylist(widget.playlist) ,
+                  onTap: () => _playPlaylist(widget.playlist),
                   child: _photoUrl == null
                       ? Container(
                           color: Colors.grey.shade800,

@@ -27,16 +27,16 @@ class TrackInfo extends ConsumerWidget {
               children: [
                 Text(
                   track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 21, fontWeight: FontWeight.w800),
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.w800),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  currentArtist?.name ?? 'Unknown Artist',
+                  currentArtist?.name ?? track.artistType.name,
                   style: TextStyle(
                     fontFamily: "SpotifyMixUI",
-                    fontSize: 16,
+                    fontSize: 14,
                     color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                   ),
                 ),

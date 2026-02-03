@@ -51,6 +51,13 @@ class ArtistDatabase {
     log('Inserted ${artists.length} artists into the database.');
   }
 
+  Future<Artist?> getArtistById(String id) async {
+    final db = await instance.database;
+    final result = await db.query('artists', where: 'id = ?', whereArgs: [id]);
+    if (result.isEmpty) return null;
+    return Artist.fromDatabase(result.first);
+  }
+
   Future<List<Artist>> getAllArtists() async {
     final db = await instance.database;
     final result = await db.query('artists');
