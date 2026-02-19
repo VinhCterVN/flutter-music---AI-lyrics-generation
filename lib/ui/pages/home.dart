@@ -7,12 +7,9 @@ import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
-import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
-import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
@@ -83,7 +80,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     final currentTrack = ref.watch(currentTrackProvider).value;
     final height = MediaQuery.of(context).size.height;
-    final surfaceDim = Theme.of(context).colorScheme.surfaceDim;
+    final scheme = Theme.of(context).colorScheme;
     final states = _buildStates(height);
 
     return Stack(
@@ -107,10 +104,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         stops: [0.0, 1.0],
-                        colors: [
-                          Color.lerp(surfaceDim, Theme.of(context).colorScheme.onPrimaryFixed, opacity)!,
-                          Colors.transparent,
-                        ],
+                        colors: [Color.lerp(scheme.surfaceDim, scheme.onPrimaryFixed, opacity)!, Colors.transparent],
                       ),
                     ),
                   ),
@@ -121,7 +115,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           },
         ),
         RefreshIndicator(
-          onRefresh: () async => build(context),
+          onRefresh: () async {},
           child: Scrollbar(
             controller: _controller,
             interactive: true,
@@ -180,36 +174,36 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: Lottie.asset("assets/animations/impress.json", repeat: false),
                     ),
                   )
-                else ...[
-                  SliverPadding(padding: const EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: const TopCategories()),
-                  const SliverToBoxAdapter(child: RecentlyPlayedSection()),
-                  SliverToBoxAdapter(child: const RecentTracksSection()),
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) => TrackTile(
-                        track: tracks[index],
-                        onTap: () {},
-                        onLongPress: () => showModalBottomSheet(
-                          context: context,
-                          useRootNavigator: true,
-                          isScrollControlled: true,
-                          useSafeArea: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => DraggableScrollableSheet(
-                            initialChildSize: 0.5,
-                            minChildSize: 0.5,
-                            maxChildSize: 0.75,
-                            snap: true,
-                            snapSizes: const [0.5, 0.75],
-                            builder: (context, controller) =>
-                                TrackOptionsBottomSheet(track: tracks[index], scrollController: controller),
-                          ),
-                        ),
-                        currentTrackId: currentTrack?.id,
-                      ),
-                      childCount: tracks.length,
-                    ),
-                  )
+                else ...const [
+                  SliverPadding(padding: EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: TopCategories()),
+                  SliverToBoxAdapter(child: RecentlyPlayedSection()),
+                  SliverToBoxAdapter(child: RecentTracksSection()),
+                  // SliverList(
+                  //   delegate: SliverChildBuilderDelegate(
+                  //     (context, index) => TrackTile(
+                  //       track: tracks[index],
+                  //       onTap: () {},
+                  //       onLongPress: () => showModalBottomSheet(
+                  //         context: context,
+                  //         useRootNavigator: true,
+                  //         isScrollControlled: true,
+                  //         useSafeArea: true,
+                  //         backgroundColor: Colors.transparent,
+                  //         builder: (context) => DraggableScrollableSheet(
+                  //           initialChildSize: 0.5,
+                  //           minChildSize: 0.5,
+                  //           maxChildSize: 0.75,
+                  //           snap: true,
+                  //           snapSizes: [0.5, 0.75],
+                  //           builder: (context, controller) =>
+                  //               TrackOptionsBottomSheet(track: tracks[index], scrollController: controller),
+                  //         ),
+                  //       ),
+                  //       currentTrackId: currentTrack?.id,
+                  //     ),
+                  //     childCount: tracks.length,
+                  //   ),
+                  // )
                 ],
                 // if (_isFetching)
                 //   SliverToBoxAdapter(
@@ -220,7 +214,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 //       ),
                 //     ),
                 //   ),
-                SliverToBoxAdapter(child: const SizedBox(height: 200)),
+                SliverToBoxAdapter(child: SizedBox(height: 200)),
               ],
             ),
           ),

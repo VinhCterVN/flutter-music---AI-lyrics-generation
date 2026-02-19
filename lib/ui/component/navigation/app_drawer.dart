@@ -59,6 +59,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
     }
     final supabase = ref.read(supabaseClientProvider);
     final response = await supabase.auth.updateUser(UserAttributes(data: {'photoUrl': url}));
+    await ref.read(authenticationServiceProvider).saveUserData(response.user);
 
     if (response.user == null) {
       Fluttertoast.showToast(msg: 'Failed to update avatar. Please try again.');

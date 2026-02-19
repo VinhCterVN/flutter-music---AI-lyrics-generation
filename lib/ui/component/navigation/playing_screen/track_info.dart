@@ -60,7 +60,7 @@ class TrackInfo extends ConsumerWidget {
                     minChildSize: 0.5,
                     maxChildSize: 1.0,
                     snap: true,
-                    snapSizes: const [0.5, 0.75, 1.0],
+                    snapSizes: const [0.5, 1.0],
                     builder: (context, scrollController) => QueueBottomSheet(scrollController: scrollController),
                   ),
                 ),

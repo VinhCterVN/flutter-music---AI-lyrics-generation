@@ -138,17 +138,22 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                                       children: [
                                         Text(
                                           track.name,
-                                          style: TextStyle(
+                                          style: const TextStyle(
                                             fontFamily: "SpotifyMixUI",
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: (-0.15),
                                           ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                         Text(
                                           track.artistName ?? track.artistType.name,
-                                          style: TextStyle(fontFamily: "SpotifyMixUI"),
+                                          style: TextStyle(
+                                            fontFamily: "SpotifyMixUI",
+                                            fontSize: 12,
+                                            color: Colors.white.withAlpha((0.7 * 255).toInt()),
+                                          ),
                                           maxLines: 1,
                                           overflow: TextOverflow.ellipsis,
                                         ),

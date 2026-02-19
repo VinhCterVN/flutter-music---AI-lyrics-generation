@@ -241,7 +241,12 @@ class OptionTile extends StatelessWidget {
         leading: HugeIcon(icon: icon, size: 28, color: Theme.of(context).colorScheme.onSurface),
         title: Text(
           title,
-          style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 16, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            fontFamily: "SpotifyMixUI",
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            letterSpacing: (-0.25),
+          ),
         ),
         // visualDensity: const VisualDensity(vertical: -2),
         // minVerticalPadding: 0,

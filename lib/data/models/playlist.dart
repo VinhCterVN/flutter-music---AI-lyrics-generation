@@ -5,6 +5,7 @@ class Playlist {
   final String userId;
   final String name;
   final String? photoUrl;
+  final PlaylistType type;
   final DateTime createdAt;
   final DateTime updatedAt;
   final List<Track> tracks;
@@ -17,6 +18,7 @@ class Playlist {
     required this.photoUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.type = PlaylistType.playlist,
     this.tracks = const [],
     this.trackIds = const [],
   });
@@ -60,4 +62,8 @@ class WeeklyHistory {
   String toString() {
     return 'WeeklyHistory(trackIds: $trackIds, listenedAt: $listenedAt)';
   }
+}
+
+enum PlaylistType {
+  favorite, playlist
 }

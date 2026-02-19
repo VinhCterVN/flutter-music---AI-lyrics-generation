@@ -20,7 +20,7 @@ class TopCategories extends ConsumerWidget {
       stream: playlistService.streamPlaylists(limit: 10),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const SliverToBoxAdapter(child: SizedBox.shrink());
+          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
         }
 
         final playlists = snapshot.data ?? [];
@@ -36,7 +36,7 @@ class TopCategories extends ConsumerWidget {
             mainAxisExtent: 48,
           ),
           delegate: SliverChildBuilderDelegate(
-            (context, index) => _QuickPlayCard(playlist: playlists[index]),
+            (context, index) => _QuickPlayCard(key: Key(playlists[index].id), playlist: playlists[index]),
             childCount: playlists.length,
           ),
         );
@@ -48,7 +48,7 @@ class TopCategories extends ConsumerWidget {
 class _QuickPlayCard extends ConsumerStatefulWidget {
   final Playlist playlist;
 
-  const _QuickPlayCard({required this.playlist});
+  const _QuickPlayCard({required super.key, required this.playlist});
 
   @override
   ConsumerState<_QuickPlayCard> createState() => _QuickPlayCardState();
@@ -96,6 +96,7 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
   @override
   Widget build(BuildContext context) {
     return InkWell(
+      key: widget.key,
       onTap: () => context.push('/playlist/${widget.playlist.id}'),
       borderRadius: BorderRadius.circular(4),
       child: Container(

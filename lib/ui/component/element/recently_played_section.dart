@@ -36,7 +36,7 @@ class RecentlyPlayedSection extends ConsumerWidget {
                   children: [
                     const Text(
                       "Recently Played",
-                      style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 20, fontWeight: FontWeight.w800),
+                      style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.w800),
                     ),
                     TextButton(
                       onPressed: () => context.push('/recent-tracks'),
@@ -110,7 +110,7 @@ class _RecentTrackCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               track.name,
-              style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -20,7 +20,10 @@ class TracksListPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(icon: const HugeIcon(icon: HugeIconsStrokeRounded.arrowLeft01), onPressed: context.pop),
+        leading: IconButton(
+          icon: const HugeIcon(icon: HugeIconsStrokeRounded.arrowLeft01),
+          onPressed: context.pop,
+        ),
         title: const Text(
           'Recently Played',
           style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 16, fontWeight: FontWeight.w800),
@@ -129,7 +132,12 @@ class _RecentTrackListTile extends StatelessWidget {
                 children: [
                   Text(
                     track.name,
-                    style: const TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 16, fontWeight: FontWeight.w600),
+                    style: const TextStyle(
+                      fontFamily: "SpotifyMixUI",
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      letterSpacing: (-0.15),
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

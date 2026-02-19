@@ -19,3 +19,10 @@ extension LoopModeX on LoopMode {
   Color color(BuildContext context) =>
       this == LoopMode.off ? Theme.of(context).colorScheme.onSurfaceVariant : Theme.of(context).colorScheme.primary;
 }
+
+extension StringCasingExtension on String {
+  String capitalize() {
+    if (isEmpty) return this;
+    return this[0].toUpperCase() + substring(1);
+  }
+}

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:photo_view/photo_view.dart';
 
 class FullscreenImagePage extends StatelessWidget {
@@ -11,7 +12,7 @@ class FullscreenImagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
+      onTap: context.pop,
       child: PhotoView(
         imageProvider: CachedNetworkImageProvider(imageUrl),
         minScale: PhotoViewComputedScale.contained,

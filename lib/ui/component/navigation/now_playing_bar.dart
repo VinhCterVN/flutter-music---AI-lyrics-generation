@@ -278,6 +278,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                               FontAwesomeIcons.solidHeart,
                                               size: 20,
                                               color: Theme.of(context).colorScheme.primary,
+                                        semanticLabel: "Favourite",
                                             )
                                           : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
                                     ),
@@ -305,6 +306,7 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                                             child: FaIcon(
                                               isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
                                               size: 20,
+                                              shadows: [Shadow(blurRadius: 4, color: Colors.black54.withAlpha(100))],
                                             ),
                                           ),
                                     SizedBox(width: 4),

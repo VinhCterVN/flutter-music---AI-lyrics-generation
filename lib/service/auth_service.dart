@@ -69,7 +69,8 @@ class AuthenticationService {
     }
   }
 
-  Future<String?> saveUserData(User user) async {
+  Future<String?> saveUserData(User? user) async {
+    if (user == null) return "User is null";
     try {
       final displayName = user.userMetadata?['displayName'] ?? '';
       final photoUrl = user.userMetadata?['photoUrl'] ?? '';
