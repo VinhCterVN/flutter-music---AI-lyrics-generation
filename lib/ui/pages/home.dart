@@ -174,10 +174,10 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: Lottie.asset("assets/animations/impress.json", repeat: false),
                     ),
                   )
-                else ...const [
-                  SliverPadding(padding: EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: TopCategories()),
-                  SliverToBoxAdapter(child: RecentlyPlayedSection()),
-                  SliverToBoxAdapter(child: RecentTracksSection()),
+                else ...[
+                  const SliverPadding(padding: EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: TopCategories()),
+                  const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+                  const SliverToBoxAdapter(child: RecentTracksSection()),
                   // SliverList(
                   //   delegate: SliverChildBuilderDelegate(
                   //     (context, index) => TrackTile(

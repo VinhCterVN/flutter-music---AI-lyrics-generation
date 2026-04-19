@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -74,6 +75,18 @@ class TrackInfo extends ConsumerWidget {
                     : Theme.of(context).textTheme.bodyLarge?.color,
                 iconSize: 24,
                 onPressed: () {},
+                onLongPress: () => showGeneralDialog(
+                  context: context,
+                  barrierDismissible: true,
+                  barrierLabel: "Dialog",
+                  barrierColor: Colors.black54,
+                  transitionDuration: const Duration(milliseconds: 50),
+                  pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+                    backgroundColor: Colors.transparent,
+                    insetPadding: const EdgeInsets.all(16),
+                    child: AddToPlaylistScreen(trackId: track.id, trackName: track.name),
+                  ),
+                ),
               ),
             ],
           ),

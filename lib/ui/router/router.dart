@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
 import 'package:flutter_ai_music/ui/pages/library.dart';
+import 'package:flutter_ai_music/ui/pages/liked_songs_page.dart';
 import 'package:flutter_ai_music/ui/pages/playlist_details.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
@@ -75,6 +76,33 @@ GoRouter createRouter(WidgetRef ref) {
                       movementDuration: const Duration(milliseconds: 300),
                       direction: DismissDirection.startToEnd,
                       child: Material(child: PlaylistDetails(playlistId: id)),
+                    ),
+                  );
+                },
+              ),
+              GoRoute(
+                path: '/liked-songs',
+                name: 'LikedSongsPage',
+                pageBuilder: (context, state) {
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierColor: Colors.black54,
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                          child: child,
+                        ),
+                    child: Dismissible(
+                      key: const Key('liked_songs_dismissible'),
+                      onDismissed: (_) => context.pop(),
+                      movementDuration: const Duration(milliseconds: 300),
+                      direction: DismissDirection.startToEnd,
+                      child: const Material(child: LikedSongsPage()),
                     ),
                   );
                 },

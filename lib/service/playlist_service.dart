@@ -82,8 +82,27 @@ class PlaylistService {
     await _supabase.from('playlists_tracks').delete().eq('playlist_id', playlistId).eq('track_id', trackId);
   }
 
+  Future<void> updatePlaylistPhoto(String playlistId, String photoUrl) async {
+    await _supabase.from('playlists').update({'photo_url': photoUrl}).eq('id', playlistId);
+  }
+
+  Future<void> renamePlaylist(String playlistId, String newName) async {
+    await _supabase.from('playlists').update({'name': newName}).eq('id', playlistId);
+  }
+
   Future<void> deletePlaylist(String playlistId) async {
     await _supabase.from('playlists').delete().eq('id', playlistId);
+  }
+
+  Future<List<int>> getFavouriteTrackIds() async {
+    final userId = ref.read(currentUserProvider)?.id;
+    if (userId == null) return [];
+    final res = await _supabase
+        .from('favourites')
+        .select('track_id')
+        .eq('user_id', userId)
+        .order('created_at', ascending: false);
+    return (res as List).map((e) => e['track_id'] as int).toList();
   }
 
   Future<List<WeeklyHistory>> getWeeklyHistory() async {

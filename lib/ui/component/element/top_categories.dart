@@ -8,6 +8,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../provider/track_provider.dart';
+import '../dialog/playlist_options_bottom_sheet.dart';
 
 class TopCategories extends ConsumerWidget {
   const TopCategories({super.key});
@@ -24,9 +25,9 @@ class TopCategories extends ConsumerWidget {
         }
 
         final playlists = snapshot.data ?? [];
-        if (playlists.isEmpty) {
-          return const SliverToBoxAdapter(child: SizedBox.shrink());
-        }
+
+        // Total count = 1 (Liked Songs) + real playlists
+        final itemCount = 1 + playlists.length;
 
         return SliverGrid(
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -36,8 +37,14 @@ class TopCategories extends ConsumerWidget {
             mainAxisExtent: 48,
           ),
           delegate: SliverChildBuilderDelegate(
-            (context, index) => _QuickPlayCard(key: Key(playlists[index].id), playlist: playlists[index]),
-            childCount: playlists.length,
+            (context, index) {
+              if (index == 0) return const _LikedSongsCard();
+              return _QuickPlayCard(
+                key: Key(playlists[index - 1].id),
+                playlist: playlists[index - 1],
+              );
+            },
+            childCount: itemCount,
           ),
         );
       },
@@ -98,6 +105,11 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
     return InkWell(
       key: widget.key,
       onTap: () => context.push('/playlist/${widget.playlist.id}'),
+      onLongPress: () => showPlaylistOptions(
+        context,
+        playlist: widget.playlist,
+        photoUrl: _photoUrl,
+      ),
       borderRadius: BorderRadius.circular(4),
       child: Container(
         decoration: BoxDecoration(
@@ -143,6 +155,62 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
                     fontFamily: "SpotifyMixUI",
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LikedSongsCard extends StatelessWidget {
+  const _LikedSongsCard();
+
+  static const _thumbUrl = 'https://misc.scdn.co/liked-songs/liked-songs-640.jpg';
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: () => context.push('/liked-songs'),
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF4C2B8A), Color(0xFF2D1B5E)],
+          ),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: [BoxShadow(color: Colors.black.withAlpha(60), blurRadius: 4, offset: const Offset(0, 2))],
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: CachedNetworkImage(
+                  imageUrl: _thumbUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (_, __) => Container(color: const Color(0xFF4C2B8A)),
+                  errorWidget: (_, __, ___) => const Icon(Icons.favorite, color: Colors.pinkAccent),
+                ),
+              ),
+            ),
+            const Expanded(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  'Liked Songs',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'SpotifyMixUI',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                     color: Colors.white,
                   ),
                 ),

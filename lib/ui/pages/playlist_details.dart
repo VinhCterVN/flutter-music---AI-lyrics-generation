@@ -1,10 +1,12 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
+import 'package:flutter_ai_music/service/api_service.dart';
 import 'package:flutter_ai_music/ui/component/element/playlist_author.dart';
 import 'package:flutter_ai_music/ui/layout/loading_scaffold.dart';
 import 'package:flutter_ai_music/utils/extensions.dart';
@@ -38,6 +40,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   double titleOpacity = 1.0;
   List<Track> _tracks = [];
   UIState _state = UIState.loading;
+  String _errorMessage = '';
+  bool _isUploadingPhoto = false;
 
   @override
   void initState() {
@@ -45,6 +49,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     _controller = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _fetchPlaylist();
+      if (_state == UIState.error) return;
       await _loadPhotoUrl();
       await _fetchAmbientColor();
       if (!mounted) return;
@@ -62,6 +67,14 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   Future<void> _fetchPlaylist() async {
     setState(() => _state = UIState.loading);
     final res = await ref.read(playlistServiceProvider).getPlaylistByIds([widget.playlistId]);
+    if (!mounted) return;
+    if (res.isEmpty) {
+      setState(() {
+        _errorMessage = 'This playlist no longer exists\n(ID: ${widget.playlistId})';
+        _state = UIState.error;
+      });
+      return;
+    }
     setState(() => _playlist = res.first);
   }
 
@@ -101,6 +114,32 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     }
   }
 
+  Future<void> _handlePickCoverPhoto() async {
+    if (_isUploadingPhoto) {
+      Fluttertoast.showToast(msg: 'Upload in progress. Please wait.');
+      return;
+    }
+    final picked = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
+    if (picked == null || picked.files.isEmpty) return;
+    setState(() => _isUploadingPhoto = true);
+    try {
+      final url = await ApiService.instance.uploadToCloudinary(picked.files.first);
+      if (url == null) {
+        Fluttertoast.showToast(msg: 'Upload failed. Please try again.');
+        return;
+      }
+      await ref.read(playlistServiceProvider).updatePlaylistPhoto(_playlist.id, url);
+      if (!mounted) return;
+      setState(() => _photoUrl = url);
+      await _fetchAmbientColor();
+      Fluttertoast.showToast(msg: 'Cover updated!');
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error: $e');
+    } finally {
+      if (mounted) setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   String formatDateTime(DateTime time) {
     return '${time.month.toString().padLeft(2, '0')}/${time.day.toString().padLeft(2, '0')}/${time.year}';
   }
@@ -112,6 +151,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
 
     return switch (_state) {
       UIState.loading => const LoadingScaffold(),
+      UIState.error => _buildErrorScaffold(),
       _ => Scaffold(
         backgroundColor: mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
         body: Stack(
@@ -167,14 +207,51 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                           pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: _photoUrl),
                                         ),
                                       ),
-                                      child: CachedNetworkImage(
-                                        imageUrl: _photoUrl,
-                                        fit: BoxFit.cover,
-                                        placeholder: (_, __) => Container(color: Colors.grey.shade800),
-                                        errorWidget: (_, __, ___) => Container(
-                                          color: Colors.grey.shade800,
-                                          child: const Icon(Icons.music_note, color: Colors.white54),
-                                        ),
+                                      onLongPress: _handlePickCoverPhoto,
+                                      child: Stack(
+                                        fit: StackFit.expand,
+                                        children: [
+                                          CachedNetworkImage(
+                                            imageUrl: _photoUrl,
+                                            fit: BoxFit.cover,
+                                            placeholder: (_, __) => Container(color: Colors.grey.shade800),
+                                            errorWidget: (_, __, ___) => Container(
+                                              color: Colors.grey.shade800,
+                                              child: const Icon(Icons.music_note, color: Colors.white54),
+                                            ),
+                                          ),
+                                          // Upload overlay
+                                          AnimatedOpacity(
+                                            opacity: _isUploadingPhoto ? 1.0 : 0.0,
+                                            duration: const Duration(milliseconds: 200),
+                                            child: Container(
+                                              color: Colors.black54,
+                                              child: const Center(
+                                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                                              ),
+                                            ),
+                                          ),
+                                          // Long-press hint badge (visible when not uploading)
+                                          if (!_isUploadingPhoto)
+                                            Align(
+                                              alignment: Alignment.bottomRight,
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(8),
+                                                child: Container(
+                                                  padding: const EdgeInsets.all(6),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.black45,
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: const Icon(
+                                                    Icons.camera_alt_rounded,
+                                                    size: 16,
+                                                    color: Colors.white70,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                   ),
@@ -191,6 +268,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                 padding: EdgeInsets.symmetric(vertical: 16),
                                 child: Text(
                                   _playlist.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontFamily: "SpotifyMixUI",
                                     fontWeight: FontWeight.w800,
@@ -385,6 +464,65 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
         ),
       ),
     };
+  }
+
+  Widget _buildErrorScaffold() {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D0D),
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withAlpha(15)),
+                  child: const Icon(Icons.error_outline_rounded, size: 40, color: Colors.white54),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Playlist Not Found',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'SpotifyMixUI',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 22,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  _errorMessage,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'SpotifyMixUI',
+                    fontSize: 14,
+                    color: Colors.white.withAlpha(120),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 36),
+                OutlinedButton.icon(
+                  onPressed: context.pop,
+                  icon: const Icon(Icons.arrow_back_rounded),
+                  label: const Text('Go Back'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: const BorderSide(color: Colors.white30),
+                    padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                    textStyle: const TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w600, fontSize: 15),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
