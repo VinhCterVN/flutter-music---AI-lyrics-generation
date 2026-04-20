@@ -14,3 +14,24 @@ final trackSearchProvider = StreamProvider.autoDispose<List<Track>>((ref) {
   final query = ref.watch(trackSearchQueryProvider);
   return ref.read(trackServiceProvider).searchTracks(query).asStream();
 });
+
+class HomeDiscoveryData {
+  final List<Track> topListenedTracks;
+  final List<Track> suggestedTracks;
+
+  const HomeDiscoveryData({required this.topListenedTracks, required this.suggestedTracks});
+}
+
+final homeDiscoveryProvider = FutureProvider.autoDispose<HomeDiscoveryData>((ref) async {
+  final trackService = ref.read(trackServiceProvider);
+
+  final results = await Future.wait([
+    trackService.getTopListenedTracks(limit: 12),
+    trackService.getSuggestedTracks(limit: 24),
+  ]);
+
+  return HomeDiscoveryData(
+    topListenedTracks: results[0],
+    suggestedTracks: results[1],
+  );
+});

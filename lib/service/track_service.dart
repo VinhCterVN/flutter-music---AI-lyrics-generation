@@ -94,6 +94,59 @@ class TrackService {
     return await Future.wait(trackWithArtist);
   }
 
+  Future<List<Track>> getTopListenedTracks({int limit = 12}) async {
+    final response = await _supabase
+        .from('listen_histories')
+        .select("""
+          track:tracks (
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+          )
+        """)
+        .order('listened_at', ascending: false)
+        .limit(200);
+
+    final counts = <int, int>{};
+    final orderedTracks = <Track>[];
+
+    for (final row in response as List) {
+      final trackData = row['track'];
+      if (trackData == null) continue;
+
+      final track = Track.fromJson(trackData);
+      counts[track.id] = (counts[track.id] ?? 0) + 1;
+      orderedTracks.add(track);
+    }
+
+    final uniqueTracks = <int, Track>{};
+    for (final track in orderedTracks) {
+      uniqueTracks.putIfAbsent(track.id, () => track);
+    }
+
+    final sorted = uniqueTracks.values.toList()
+      ..sort((a, b) {
+        final countCompare = (counts[b.id] ?? 0).compareTo(counts[a.id] ?? 0);
+        if (countCompare != 0) return countCompare;
+        return b.createdAt.compareTo(a.createdAt);
+      });
+
+    final topTracks = sorted.take(limit).toList();
+    final trackWithArtist = topTracks.map((track) async {
+      final isSpotifyArtist = track.artistType == ArtistType.SpotifyArtist;
+      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(track.artistId) : null;
+      return track.copyWith(artistName: artist?.name);
+    }).toList();
+
+    return await Future.wait(trackWithArtist);
+  }
+
+  Future<List<Track>> getSuggestedTracks({int limit = 16}) async {
+    final tracks = await getTrackPage(page: 0, pageSize: limit * 2);
+    final shuffled = List<Track>.from(tracks.data)..shuffle();
+    return shuffled.take(limit).toList();
+  }
+
   Future<List<Track>> searchTracks(String query) async {
     if (query.isEmpty) {
       final response = await _supabase

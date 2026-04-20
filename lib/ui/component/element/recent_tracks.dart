@@ -47,6 +47,9 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
     final trackGroups = _tracks.isEmpty
         ? []
         : List<List<Track>>.generate((_tracks.length / 4).ceil(), (index) => _tracks.skip(index * 4).take(4).toList());
+
+    if (_tracks.isEmpty) return SizedBox.shrink();
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Container(

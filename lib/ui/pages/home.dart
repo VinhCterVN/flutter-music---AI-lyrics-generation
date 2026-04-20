@@ -6,6 +6,7 @@ import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
+import 'package:flutter_ai_music/ui/component/element/home/home_discovery_sections.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -175,45 +176,13 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   )
                 else ...[
-                  const SliverPadding(padding: EdgeInsets.fromLTRB(12, 0, 12, 12), sliver: TopCategories()),
-                  const SliverToBoxAdapter(child: RecentlyPlayedSection()),
-                  const SliverToBoxAdapter(child: RecentTracksSection()),
-                  // SliverList(
-                  //   delegate: SliverChildBuilderDelegate(
-                  //     (context, index) => TrackTile(
-                  //       track: tracks[index],
-                  //       onTap: () {},
-                  //       onLongPress: () => showModalBottomSheet(
-                  //         context: context,
-                  //         useRootNavigator: true,
-                  //         isScrollControlled: true,
-                  //         useSafeArea: true,
-                  //         backgroundColor: Colors.transparent,
-                  //         builder: (context) => DraggableScrollableSheet(
-                  //           initialChildSize: 0.5,
-                  //           minChildSize: 0.5,
-                  //           maxChildSize: 0.75,
-                  //           snap: true,
-                  //           snapSizes: [0.5, 0.75],
-                  //           builder: (context, controller) =>
-                  //               TrackOptionsBottomSheet(track: tracks[index], scrollController: controller),
-                  //         ),
-                  //       ),
-                  //       currentTrackId: currentTrack?.id,
-                  //     ),
-                  //     childCount: tracks.length,
-                  //   ),
-                  // )
+                  const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
+                  ...[
+                    const HomeDiscoverySections(),
+                    const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+                    const SliverToBoxAdapter(child: RecentTracksSection()),
+                  ]..shuffle(),
                 ],
-                // if (_isFetching)
-                //   SliverToBoxAdapter(
-                //     child: Padding(
-                //       padding: const EdgeInsets.symmetric(vertical: 16.0),
-                //       child: Center(
-                //         child: CircularProgressIndicator(color: Theme.of(context).colorScheme.onSurfaceVariant),
-                //       ),
-                //     ),
-                //   ),
                 SliverToBoxAdapter(child: SizedBox(height: 200)),
               ],
             ),
