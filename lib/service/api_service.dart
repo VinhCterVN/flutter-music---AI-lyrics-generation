@@ -18,13 +18,20 @@ class ApiService {
     return await _dio.get(url, queryParameters: queryParameters, options: options);
   }
 
-  Future<WikipediaSummary> getSummary(String title) async {
-    final response = await get('https://en.wikipedia.org/api/rest_v1/page/summary/$title');
-    if (response.statusCode == 200) {
-      return WikipediaSummary.fromJson(response.data);
-    } else {
-      throw Exception('Failed to load summary');
+  Future<WikipediaSummary?> getSummary(String title) async {
+    if (title.trim().isEmpty) return null;
+
+    try {
+      final encodedTitle = Uri.encodeComponent(title.trim());
+      final response = await get('https://en.wikipedia.org/api/rest_v1/page/summary/$encodedTitle');
+      if (response.statusCode == 200) {
+        return WikipediaSummary.fromJson(response.data);
+      }
+    } on DioException {
+      return null;
     }
+
+    return null;
   }
 
   Future<String?> uploadToCloudinary(PlatformFile file) async {

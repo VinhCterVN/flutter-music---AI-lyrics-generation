@@ -39,7 +39,7 @@ class _TrackTileState extends State<TrackTile> {
       );
     }
     return ListTile(
-      visualDensity: VisualDensity(vertical: -3),
+      visualDensity: const VisualDensity(vertical: -1.5),
       minVerticalPadding: 0,
       leading: Container(
         width: 48,

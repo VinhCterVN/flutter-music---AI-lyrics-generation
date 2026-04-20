@@ -2,11 +2,13 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/models/track.dart';
 import '../../../provider/audio_provider.dart';
+import '../../../provider/artist_provider.dart';
 
 class TrackOptionsBottomSheet extends ConsumerWidget {
   final ScrollController scrollController;
@@ -98,7 +100,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
                       icon: HugeIcons.strokeRoundedUserAccount,
                       title: 'Go to Artist',
                       subtitle: 'View artist profile',
-                      onTap: () => _placeholder(context, 'Go to Artist'),
+                      onTap: () => _goToArtist(context),
                     ),
                   ),
 
@@ -212,6 +214,18 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
     Navigator.pop(context);
     ref.read(queueProvider.notifier).addToQueue(track);
     Fluttertoast.showToast(msg: 'Added "${track.name}" to queue', toastLength: Toast.LENGTH_SHORT);
+  }
+
+  void _goToArtist(BuildContext context) {
+    Navigator.pop(context);
+    context.push(
+      artistRouteLocation(
+        artistId: track.artistId,
+        artistType: track.artistType,
+        artistName: track.artistName,
+        imageUrl: track.images.isEmpty ? null : track.images.first,
+      ),
+    );
   }
 
   void _placeholder(BuildContext context, String feature) {

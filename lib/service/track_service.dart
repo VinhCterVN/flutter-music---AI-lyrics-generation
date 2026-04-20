@@ -70,6 +70,30 @@ class TrackService {
     return await Future.wait(trackWithArtist);
   }
 
+  Future<List<Track>> getTracksByArtistId({required String artistId, required ArtistType artistType}) async {
+    if (artistId.isEmpty) return [];
+
+    final response = await _supabase
+        .from("tracks")
+        .select("""
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+              """)
+        .eq('artist_id', artistId)
+        .eq('artist_type', artistType.name)
+        .order('created_at', ascending: false);
+
+    final trackWithArtist = (response as List).map((e) async {
+      final isSpotifyArtist = e['artist_type'] == ArtistType.SpotifyArtist.name;
+      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '') : null;
+
+      return Track.fromJson(e).copyWith(artistName: artist?.name);
+    }).toList();
+
+    return await Future.wait(trackWithArtist);
+  }
+
   Future<List<Track>> searchTracks(String query) async {
     if (query.isEmpty) {
       final response = await _supabase

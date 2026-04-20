@@ -3,8 +3,8 @@ class WikipediaSummary {
   final String title;
   final String displayTitle;
   final Map<String, String> titles;
-  final WikipediaImage thumbnail;
-  final WikipediaImage originalImage;
+  final WikipediaImage? thumbnail;
+  final WikipediaImage? originalImage;
   final String description;
   final String extract;
 
@@ -22,21 +22,25 @@ class WikipediaSummary {
   factory WikipediaSummary.fromJson(Map<String, dynamic> json) {
     return WikipediaSummary(
       type: json['type'],
-      title: json['title'],
-      displayTitle: json['displaytitle'],
-      titles: Map<String, String>.from(json['titles']),
-      thumbnail: WikipediaImage(
-        source: json['thumbnail']['source'],
-        width: json['thumbnail']['width'],
-        height: json['thumbnail']['height'],
-      ),
-      originalImage: WikipediaImage(
-        source: json['originalimage']['source'],
-        width: json['originalimage']['width'],
-        height: json['originalimage']['height'],
-      ),
-      description: json['description'],
-      extract: json['extract'],
+      title: json['title'] ?? '',
+      displayTitle: json['displaytitle'] ?? '',
+      titles: Map<String, String>.from(json['titles'] ?? const {}),
+      thumbnail: json['thumbnail'] == null
+          ? null
+          : WikipediaImage(
+              source: json['thumbnail']['source'],
+              width: json['thumbnail']['width'],
+              height: json['thumbnail']['height'],
+            ),
+      originalImage: json['originalimage'] == null
+          ? null
+          : WikipediaImage(
+              source: json['originalimage']['source'],
+              width: json['originalimage']['width'],
+              height: json['originalimage']['height'],
+            ),
+      description: json['description'] ?? '',
+      extract: json['extract'] ?? '',
     );
   }
 }

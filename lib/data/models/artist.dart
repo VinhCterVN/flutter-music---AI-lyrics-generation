@@ -21,11 +21,11 @@ class Artist {
     return Artist(
       id: json['id'],
       name: json['name'],
-      images: (json['images'] as List<dynamic>).map((imageJson) {
+      images: ((json['images'] as List?) ?? const []).map((imageJson) {
         return ArtistImage(url: imageJson['url'], height: imageJson['height'], width: imageJson['width']);
       }).toList(),
-      popularity: json['popularity'],
-      artistType: json['artist_type'] ?? ArtistType.SpotifyArtist,
+      popularity: (json['popularity'] as num?)?.toInt() ?? 0,
+      artistType: _parseArtistType(json['artist_type']),
     );
   }
 
@@ -51,6 +51,19 @@ class Artist {
       'popularity': popularity,
       'artist_type': artistType.name,
     };
+  }
+
+  String? get primaryImageUrl => images.isEmpty ? null : images.first.url;
+
+  static ArtistType _parseArtistType(dynamic value) {
+    if (value is ArtistType) return value;
+    if (value is String) {
+      for (final type in ArtistType.values) {
+        if (type.name == value) return type;
+      }
+      return ArtistType.SpotifyArtist;
+    }
+    return ArtistType.SpotifyArtist;
   }
 }
 

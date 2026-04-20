@@ -78,7 +78,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final currentTrack = ref.watch(currentTrackProvider).value;
+    ref.watch(currentTrackProvider);
     final height = MediaQuery.of(context).size.height;
     final scheme = Theme.of(context).colorScheme;
     final states = _buildStates(height);

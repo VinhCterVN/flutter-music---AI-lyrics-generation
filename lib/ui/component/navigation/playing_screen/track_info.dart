@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/ui/component/dialog/add_track_to_playlist.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../../../../data/models/track.dart';
@@ -33,12 +34,25 @@ class TrackInfo extends ConsumerWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  currentArtist?.name ?? track.artistType.name,
-                  style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
-                    fontSize: 14,
-                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+                GestureDetector(
+                  onTap: () {
+                    context.pop();
+                    context.push(
+                    artistRouteLocation(
+                      artistId: track.artistId,
+                      artistType: track.artistType,
+                      artistName: currentArtist?.name ?? track.artistName,
+                      imageUrl: currentArtist?.primaryImageUrl ?? (track.images.isEmpty ? null : track.images.first),
+                    ),
+                  );
+                  },
+                  child: Text(
+                    currentArtist?.name ?? track.artistType.name,
+                    style: TextStyle(
+                      fontFamily: "SpotifyMixUI",
+                      fontSize: 14,
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+                    ),
                   ),
                 ),
               ],
