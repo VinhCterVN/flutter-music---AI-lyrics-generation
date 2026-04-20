@@ -113,6 +113,9 @@ GoRouter createRouter(WidgetRef ref) {
 
                   return CustomTransitionPage(
                     key: state.pageKey,
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierColor: Colors.black54,
                     transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
                       position: Tween<Offset>(
                         begin: const Offset(0, 1),
@@ -120,12 +123,20 @@ GoRouter createRouter(WidgetRef ref) {
                       ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
                       child: child,
                     ),
-                    child: ArtistDetailsPage(
-                      args: ArtistRouteArgs(
-                        artistId: artistId,
-                        artistType: artistType,
-                        fallbackName: query['name'],
-                        fallbackImageUrl: query['image'],
+                    child: Dismissible(
+                      key: const Key('artist_details_dismissible'),
+                      onDismissed: (_) => context.pop(),
+                      movementDuration: const Duration(milliseconds: 300),
+                      direction: DismissDirection.startToEnd,
+                      child: Material(
+                        child: ArtistDetailsPage(
+                          args: ArtistRouteArgs(
+                            artistId: artistId,
+                            artistType: artistType,
+                            fallbackName: query['name'],
+                            fallbackImageUrl: query['image'],
+                          ),
+                        ),
                       ),
                     ),
                   );

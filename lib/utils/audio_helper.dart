@@ -13,14 +13,16 @@ class AudioHelper {
     if (allTracks.isEmpty || selectedIndex < 0 || selectedIndex >= allTracks.length) {
       throw ArgumentError('Invalid track selection');
     }
-    final audioSources = allTracks.toAudioSources();
-    ref.read(playerControllerProvider);
-    ref.read(queueProvider.notifier).setQueueAndPlayAt(audioSources, allTracks, selectedIndex);
+    await ref.read(playerControllerProvider).replaceQueueAndPlayAt(rawTracks: allTracks, currentIndex: selectedIndex);
     return true;
   }
 
   static Future<void> playSingleTrack(WidgetRef ref, {required Track track, bool navigateToPlayer = true}) async {
     await playTrackFromList(ref, allTracks: [track], selectedIndex: 0, navigateToPlayer: navigateToPlayer);
+  }
+
+  static Future<void> addTracksToQueue(WidgetRef ref, {required List<Track> tracks}) async {
+    await ref.read(playerControllerProvider).addTracksToQueue(tracks);
   }
 
   static Future<void> resumePlayback(WidgetRef ref) async {
@@ -41,5 +43,9 @@ extension AudioHelperExtension on WidgetRef {
 
   Future<void> playSingleTrack({required Track track}) async {
     await AudioHelper.playSingleTrack(this, track: track);
+  }
+
+  Future<void> addTracksToQueue({required List<Track> tracks}) async {
+    await AudioHelper.addTracksToQueue(this, tracks: tracks);
   }
 }

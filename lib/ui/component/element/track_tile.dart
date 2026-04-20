@@ -1,20 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 import '../../../data/models/track.dart';
 
 class TrackTile extends StatefulWidget {
   final Track? track;
-  final Function onTap;
-  final Function onLongPress;
+  final VoidCallback onTap;
   final int? currentTrackId;
 
   const TrackTile({
     super.key,
     required this.track,
     required this.onTap,
-    required this.onLongPress,
     required this.currentTrackId,
   });
 
@@ -75,8 +74,8 @@ class _TrackTileState extends State<TrackTile> {
         style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
       ),
       trailing: widget.currentTrackId == widget.track!.id ? HugeIcon(icon: HugeIcons.strokeRoundedWave) : null,
-      onTap: () => widget.onTap(),
-      onLongPress: () => widget.onLongPress(),
+      onTap: widget.onTap,
+      onLongPress: () => showTrackOptions(widget.track!, context),
     );
   }
 }

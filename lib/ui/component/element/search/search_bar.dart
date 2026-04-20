@@ -142,7 +142,6 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
                                 (context, index) => TrackTile(
                                   track: tracks[index + 1],
                                   onTap: () => _playTrack(ref, tracks, index + 1),
-                                  onLongPress: () => Fluttertoast.showToast(msg: tracks[index + 1].name),
                                   currentTrackId: -1,
                                 ),
                                 childCount: tracks.length - 1,

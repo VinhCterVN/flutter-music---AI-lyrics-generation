@@ -5,7 +5,6 @@ import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/artist_provider.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/track_tile.dart';
-import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 import 'package:flutter_ai_music/ui/layout/loading_scaffold.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_ai_music/utils/functions.dart';
@@ -89,7 +88,8 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                               fit: BoxFit.cover,
                               errorWidget: (_, __, ___) => _ArtistHeroFallback(artist: artist),
                             )
-                          else _ArtistHeroFallback(artist: artist),
+                          else
+                            _ArtistHeroFallback(artist: artist),
                           DecoratedBox(
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
@@ -169,7 +169,10 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                         backgroundColor: Colors.black.withAlpha(70),
                         foregroundColor: Colors.white,
                       ),
-                      child: Text(followState ? 'Following' : 'Follow', style: const TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700))
+                      child: Text(
+                        followState ? 'Following' : 'Follow',
+                        style: const TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -275,7 +278,6 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                         track: track,
                         currentTrackId: currentTrackId,
                         onTap: () => AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: index),
-                        onLongPress: () => _showTrackOptions(track),
                       ),
                     );
                   },
@@ -301,24 +303,6 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
         setState(() => _isUpdatingFollow = false);
       }
     }
-  }
-
-  void _showTrackOptions(Track track) {
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        snap: true,
-        snapSizes: const [0.5, 0.75, 1.0],
-        initialChildSize: 0.5,
-        minChildSize: 0.5,
-        maxChildSize: 1.0,
-        builder: (context, scrollController) =>
-            TrackOptionsBottomSheet(track: track, scrollController: scrollController),
-      ),
-    );
   }
 }
 

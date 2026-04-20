@@ -23,7 +23,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        color: Theme.of(context).colorScheme.surfaceDim,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -212,7 +212,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
 
   void _addToQueue(BuildContext context, WidgetRef ref) {
     Navigator.pop(context);
-    ref.read(queueProvider.notifier).addToQueue(track);
+    ref.read(playerControllerProvider).addTrackToQueue(track);
     Fluttertoast.showToast(msg: 'Added "${track.name}" to queue', toastLength: Toast.LENGTH_SHORT);
   }
 

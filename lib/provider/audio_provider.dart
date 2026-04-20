@@ -1,7 +1,6 @@
 import 'dart:developer';
 
 import 'package:audio_service/audio_service.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import 'package:just_audio/just_audio.dart';
@@ -60,6 +59,13 @@ final queueProvider = StateNotifierProvider<QueueController, QueueState>((ref) {
 final playerControllerProvider = Provider<PlayerController>((ref) {
   final player = ref.watch(audioPlayerProvider);
   final controller = PlayerController(player, ref);
+  final currentIndexSubscription = player.currentIndexStream.listen((index) {
+    if (index != null) {
+      ref.read(queueProvider.notifier).syncCurrentIndex(index);
+    }
+  });
+
+  ref.onDispose(currentIndexSubscription.cancel);
 
   ref.listen<AsyncValue<Artist?>>(currentArtistProvider, (_, next) {
     next.whenData((artist) {
@@ -67,15 +73,6 @@ final playerControllerProvider = Provider<PlayerController>((ref) {
         ref.read(currentTrackProvider).value?.updateArtistName(artist.name);
       }
     });
-  });
-
-  ref.listen(queueProvider, (previous, next) {
-    if (previous == null || previous.tracks != next.tracks || previous.currentIndex != next.currentIndex) {
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await controller.loadQueue();
-        await controller.play();
-      });
-    }
   });
 
   return controller;

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
-import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
+import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RecentTracksSection extends ConsumerStatefulWidget {
@@ -102,21 +102,7 @@ class _RecentTracksSectionState extends ConsumerState<RecentTracksSection> {
                           final track = group[index] as Track;
                           return InkWell(
                             onTap: () {},
-                            onLongPress: () => showModalBottomSheet(
-                              context: context,
-                              useRootNavigator: true,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) => DraggableScrollableSheet(
-                                snap: true,
-                                snapSizes: [0.5, 0.75, 1.0],
-                                initialChildSize: 0.5,
-                                minChildSize: 0.5,
-                                maxChildSize: 1.0,
-                                builder: (context, scrollController) =>
-                                    TrackOptionsBottomSheet(track: track, scrollController: scrollController),
-                              ),
-                            ),
+                            onLongPress: () => showTrackOptions(track, context),
                             borderRadius: BorderRadius.circular(8),
                             child: Padding(
                               padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
+import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
@@ -75,7 +76,11 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
               separatorBuilder: (context, index) => const SizedBox(width: 12),
               itemBuilder: (context, index) {
                 final track = _tracks[index];
-                return _RecentTrackCard(track: track, onTap: () => _playTrack(track));
+                return _RecentTrackCard(
+                  track: track,
+                  onTap: () => _playTrack(track),
+                  onLongPress: () => showTrackOptions(track, context),
+                );
               },
             ),
           ),
@@ -96,8 +101,9 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
 class _RecentTrackCard extends StatelessWidget {
   final Track track;
   final VoidCallback onTap;
+  final VoidCallback onLongPress;
 
-  const _RecentTrackCard({required this.track, required this.onTap});
+  const _RecentTrackCard({required this.track, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +111,7 @@ class _RecentTrackCard extends StatelessWidget {
       width: 140,
       child: GestureDetector(
         onTap: onTap,
+        onLongPress: onLongPress,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

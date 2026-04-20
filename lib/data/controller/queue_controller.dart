@@ -7,37 +7,61 @@ class QueueState {
   final List<AudioSource> tracks;
   final List<Track> rawTracks;
   final int currentIndex;
+  final int queuedUpNextCount;
 
-  QueueState({required this.tracks, required this.rawTracks, required this.currentIndex});
+  const QueueState({
+    required this.tracks,
+    required this.rawTracks,
+    required this.currentIndex,
+    required this.queuedUpNextCount,
+  });
 
-  QueueState copyWith({List<AudioSource>? tracks, List<Track>? rawTracks, int? currentIndex}) => QueueState(
-    tracks: tracks ?? this.tracks,
-    rawTracks: rawTracks ?? this.rawTracks,
-    currentIndex: currentIndex ?? this.currentIndex,
-  );
+  QueueState copyWith({List<AudioSource>? tracks, List<Track>? rawTracks, int? currentIndex, int? queuedUpNextCount}) =>
+      QueueState(
+        tracks: tracks ?? this.tracks,
+        rawTracks: rawTracks ?? this.rawTracks,
+        currentIndex: currentIndex ?? this.currentIndex,
+        queuedUpNextCount: queuedUpNextCount ?? this.queuedUpNextCount,
+      );
+
+  int get nextInsertionIndex {
+    if (tracks.isEmpty) return 0;
+    final candidate = currentIndex + 1 + queuedUpNextCount;
+    return candidate.clamp(0, tracks.length);
+  }
 }
 
 class QueueController extends StateNotifier<QueueState> {
-  QueueController() : super(QueueState(tracks: [], rawTracks: [], currentIndex: 0));
+  QueueController() : super(const QueueState(tracks: [], rawTracks: [], currentIndex: 0, queuedUpNextCount: 0));
 
-  void setQueue(List<AudioSource> list) {
-    state = state.copyWith(tracks: list, currentIndex: 0);
+  void replaceQueue(List<AudioSource> tracks, List<Track> rawTracks, int currentIndex) {
+    state = QueueState(tracks: tracks, rawTracks: rawTracks, currentIndex: currentIndex, queuedUpNextCount: 0);
   }
 
-  void setQueueAndPlayAt(List<AudioSource> tracks, List<Track> rawTracks, int currentIndex) {
-    state = state.copyWith(tracks: tracks, rawTracks: rawTracks, currentIndex: currentIndex);
-  }
+  void syncCurrentIndex(int currentIndex) {
+    final previousIndex = state.currentIndex;
+    var queuedUpNextCount = state.queuedUpNextCount;
 
-  void next() {
-    if (state.currentIndex < state.tracks.length - 1) {
-      state = state.copyWith(currentIndex: state.currentIndex + 1);
+    if (currentIndex > previousIndex && queuedUpNextCount > 0) {
+      final consumedQueuedItems = currentIndex - previousIndex;
+      queuedUpNextCount = (queuedUpNextCount - consumedQueuedItems).clamp(0, queuedUpNextCount);
     }
+
+    state = state.copyWith(currentIndex: currentIndex, queuedUpNextCount: queuedUpNextCount);
   }
 
-  void previous() {
-    if (state.currentIndex > 0) {
-      state = state.copyWith(currentIndex: state.currentIndex - 1);
-    }
+  void insertNext(List<AudioSource> tracks, List<Track> rawTracks) {
+    if (tracks.isEmpty || rawTracks.isEmpty) return;
+
+    final insertIndex = state.nextInsertionIndex;
+    final updatedTracks = List<AudioSource>.from(state.tracks)..insertAll(insertIndex, tracks);
+    final updatedRawTracks = List<Track>.from(state.rawTracks)..insertAll(insertIndex, rawTracks);
+
+    state = state.copyWith(
+      tracks: updatedTracks,
+      rawTracks: updatedRawTracks,
+      queuedUpNextCount: state.queuedUpNextCount + tracks.length,
+    );
   }
 
   void updateTrackAtIndex(int index, Track updatedTrack) {
@@ -45,8 +69,6 @@ class QueueController extends StateNotifier<QueueState> {
     newRawTracks[index] = updatedTrack;
     state = state.copyWith(rawTracks: newRawTracks);
   }
-
-  Future<void> addToQueue(Track track) async {}
 
   void toggleFavoriteAtIndex(int index) {
     final track = state.rawTracks[index];
