@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
@@ -115,6 +116,10 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   }
 
   Future<void> _handlePickCoverPhoto() async {
+    if (_playlist.userId != ref.read(currentUserProvider)?.id) {
+      Fluttertoast.showToast(msg: 'Only the playlist owner can change the cover photo.');
+      return;
+    }
     if (_isUploadingPhoto) {
       Fluttertoast.showToast(msg: 'Upload in progress. Please wait.');
       return;

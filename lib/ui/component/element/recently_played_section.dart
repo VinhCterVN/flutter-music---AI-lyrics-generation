@@ -7,70 +7,86 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 
-class RecentlyPlayedSection extends ConsumerWidget {
+class RecentlyPlayedSection extends ConsumerStatefulWidget {
   const RecentlyPlayedSection({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trackService = ref.watch(trackServiceProvider);
+  ConsumerState<RecentlyPlayedSection> createState() => _RecentlyPlayedSectionState();
+}
 
-    return StreamBuilder<List<Track>>(
-      stream: trackService.streamRecentTracks(limit: 10),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const SizedBox.shrink();
-        }
+class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
+  List<Track> _tracks = [];
+  bool _loaded = false;
 
-        final tracks = snapshot.data ?? [];
-        if (tracks.isEmpty) return const SizedBox.shrink();
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecentTracks());
+  }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      "Recently Played",
-                      style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.w800),
-                    ),
-                    TextButton(
-                      onPressed: () => context.push('/recent-tracks'),
-                      child: const Text(
-                        "See All",
-                        style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.w600),
-                      ),
-                    ),
-                  ],
+  Future<void> _fetchRecentTracks() async {
+    try {
+      final page = await ref.read(trackServiceProvider).getRecentTracks(pageSize: 10);
+      if (!mounted) return;
+      setState(() {
+        _tracks = page.data;
+        _loaded = true;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loaded = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_loaded || _tracks.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 12, 0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "Recently Played",
+                  style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.w800),
                 ),
-              ),
-              SizedBox(
-                height: 200,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  itemCount: tracks.length,
-                  separatorBuilder: (context, index) => const SizedBox(width: 12),
-                  itemBuilder: (context, index) {
-                    final track = tracks[index];
-                    return _RecentTrackCard(track: track, onTap: () => _playTrack(ref, tracks, index));
-                  },
+                TextButton(
+                  onPressed: () => context.push('/recent-tracks'),
+                  child: const Text(
+                    "See All",
+                    style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              itemCount: _tracks.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                final track = _tracks[index];
+                return _RecentTrackCard(track: track, onTap: () => _playTrack(track));
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  void _playTrack(WidgetRef ref, List<Track> tracks, int index) {
+  void _playTrack(Track track) {
     try {
-      AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: index);
+      AudioHelper.playTrackFromList(ref, allTracks: _tracks, selectedIndex: _tracks.indexOf(track));
     } catch (e) {
       Fluttertoast.showToast(msg: 'Error playing track: $e');
     }

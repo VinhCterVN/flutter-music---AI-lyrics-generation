@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
@@ -80,7 +81,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
         return Scaffold(
           body: Stack(
             children: [
-              _buildBackgroundImage(currentTrack.images.first),
+              _buildBackgroundImage(currentTrack.images.firstOrNull),
               _buildBlurOverlay(),
               _buildGradientOverlay(),
               _buildMainContent(currentTrack, screenHeight),
@@ -111,13 +112,13 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     );
   }
 
-  Widget _buildBackgroundImage(String imageUrl) {
+  Widget _buildBackgroundImage(String? imageUrl) {
     return Positioned.fill(
       child: AnimatedSwitcher(
         duration: const Duration(milliseconds: 500),
         child: SizedBox.expand(
           key: ValueKey(imageUrl),
-          child: CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
+          child: imageUrl == null ? SizedBox.shrink() : CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
         ),
       ),
     );
@@ -153,7 +154,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     );
   }
 
-  Widget _buildMainContent(dynamic currentTrack, double screenHeight) {
+  Widget _buildMainContent(Track currentTrack, double screenHeight) {
     return Positioned.fill(
       child: CustomScrollView(
         controller: widget.scrollController,
@@ -193,7 +194,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  AlbumArtwork(imageUrl: currentTrack.images.first, pulseAnimation: _pulseAnimation),
+                  AlbumArtwork(imageUrl: currentTrack.images.firstOrNull, pulseAnimation: _pulseAnimation),
                   const SizedBox(height: 50),
                   TrackInfo(track: currentTrack),
                   const SizedBox(height: 16),

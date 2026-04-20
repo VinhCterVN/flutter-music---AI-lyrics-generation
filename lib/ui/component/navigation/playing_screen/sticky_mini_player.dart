@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/enums/constraints.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/track.dart';
@@ -58,7 +59,7 @@ class StickyMiniPlayer extends ConsumerWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(8),
                           child: CachedNetworkImage(
-                            imageUrl: track.images.first,
+                            imageUrl: track.images.firstOrNull ?? url,
                             fit: BoxFit.cover,
                             errorWidget: (context, error, stackTrace) => Container(
                               color: Colors.grey[900],

@@ -35,7 +35,7 @@ class TrackService {
         .range(page * pageSize, page * pageSize + pageSize)
         .order('created_at', ascending: false);
 
-    final list = response as List;
+    final list = response as List..shuffle();
     final hasNextPage = list.length > pageSize;
     final trimmedList = hasNextPage ? list.sublist(0, pageSize) : list;
     final tracksWithArtist = trimmedList.map((e) async {
