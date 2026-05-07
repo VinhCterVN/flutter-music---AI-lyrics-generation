@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +15,7 @@ import 'playing_screen/playback_controls.dart';
 import 'playing_screen/progress_bar.dart';
 import 'playing_screen/sticky_mini_player.dart';
 import 'playing_screen/track_info.dart';
+import '../../../utils/widgets.dart';
 
 class PlayingScreen extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -169,7 +171,10 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
             actions: [
               Padding(
                 padding: const EdgeInsets.only(top: 10),
-                child: IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert_rounded)),
+                child: IconButton(
+                  onPressed: () => showTrackOptions(currentTrack, context),
+                  icon: const Icon(Icons.more_vert_rounded),
+                ),
               ),
             ],
             flexibleSpace: FlexibleSpaceBar(

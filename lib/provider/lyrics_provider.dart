@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/models/lyric_line.dart';
+import '../data/models/track.dart';
 import '../service/lyrics_service.dart';
 import 'auth_provider.dart';
 
@@ -31,7 +32,7 @@ final lyricsStreamProvider = StreamProvider.family<List<LyricsLine>, int>((ref, 
 });
 
 // Future provider for initial fetch
-final lyricsFutureProvider = FutureProvider.family<List<LyricsLine>, int>((ref, trackId) async {
+final lyricsFutureProvider = FutureProvider.family<List<LyricsLine>, Track>((ref, track) async {
   final service = ref.watch(lyricsServiceProvider);
-  return await service.getLyrics(trackId);
+  return await service.getLyrics(track);
 });

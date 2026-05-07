@@ -1,15 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_ai_music/data/models/track.dart';
 
 class ArtistShortcut extends StatefulWidget {
   final String? artistName;
   final VoidCallback onTap;
 
-  const ArtistShortcut({
-    super.key,
-    required this.onTap,
-    this.artistName,
-  });
+  const ArtistShortcut({super.key, required this.onTap, this.artistName});
 
   @override
   State<ArtistShortcut> createState() => _ArtistShortcutState();
