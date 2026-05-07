@@ -44,6 +44,8 @@ class _AddToPlaylistScreenState extends ConsumerState<AddToPlaylistScreen> {
   @override
   void initState() {
     super.initState();
+    _newPlaylistController.value = TextEditingValue(text: widget.trackName);
+    _newPlaylistController.selection = TextSelection(baseOffset: 0, extentOffset: widget.trackName.length);
     _fetchPlaylistData();
   }
 

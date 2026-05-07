@@ -28,6 +28,7 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   late ScrollController _controller;
   List<Track> tracks = [];
+  late final List<Widget> _dynamicHomeSections;
   int selectedGenreIndex = -1;
   UIState _state = UIState.loading;
 
@@ -35,6 +36,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _controller = ScrollController();
+    _dynamicHomeSections = [const HomeDiscoverySections(), const SliverToBoxAdapter(child: RecentTracksSection())]
+      ..shuffle();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       Timer(const Duration(milliseconds: 2000), () {
         if (!mounted) return;
@@ -117,75 +120,67 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         RefreshIndicator(
           onRefresh: () async {},
-          child: Scrollbar(
+          child: CustomScrollView(
             controller: _controller,
-            interactive: true,
-            radius: const Radius.elliptical(5, 5),
-            child: CustomScrollView(
-              controller: _controller,
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        GestureDetector(
-                          onTap: () => Scaffold.of(context).openDrawer(),
-                          child: Row(
-                            children: [
-                              SvgPicture.asset("assets/icons/cloud.svg", width: 42),
-                              const SizedBox(width: 10),
-                              const Text(
-                                'Flussic',
-                                style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 26, fontWeight: FontWeight.w900),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Row(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Scaffold.of(context).openDrawer(),
+                        child: Row(
                           children: [
-                            IconButton(
-                              onPressed: () => context.push('/search_detail'),
-                              icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
-                            ),
-                            PopupMenuButton<SortType>(
-                              icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
-                              onSelected: (value) {},
-                              itemBuilder: (context) => const [
-                                PopupMenuItem(value: SortType.newest, child: Text('Newest')),
-                                PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
-                                PopupMenuItem(value: SortType.duration, child: Text('Duration')),
-                              ],
+                            SvgPicture.asset("assets/icons/cloud.svg", width: 42),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Flussic',
+                              style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 26, fontWeight: FontWeight.w900),
                             ),
                           ],
                         ),
-                      ],
-                    ),
+                      ),
+                      Row(
+                        children: [
+                          IconButton(
+                            onPressed: () => context.push('/search_detail'),
+                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
+                          ),
+                          PopupMenuButton<SortType>(
+                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
+                            onSelected: (value) {},
+                            itemBuilder: (context) => const [
+                              PopupMenuItem(value: SortType.newest, child: Text('Newest')),
+                              PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
+                              PopupMenuItem(value: SortType.duration, child: Text('Duration')),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                SliverPersistentHeader(
-                  pinned: true,
-                  delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
-                ),
-                if (_state == UIState.loading)
-                  SliverToBoxAdapter(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: Lottie.asset("assets/animations/impress.json", repeat: false),
-                    ),
-                  )
-                else ...[
-                  const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
-                  ...[
-                    const HomeDiscoverySections(),
-                    const SliverToBoxAdapter(child: RecentlyPlayedSection()),
-                    const SliverToBoxAdapter(child: RecentTracksSection()),
-                  ]..shuffle(),
-                ],
-                SliverToBoxAdapter(child: SizedBox(height: 200)),
+              ),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
+              ),
+              if (_state == UIState.loading)
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: Lottie.asset("assets/animations/impress.json", repeat: false),
+                  ),
+                )
+              else ...[
+                const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
+                const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+                ..._dynamicHomeSections,
               ],
-            ),
+              SliverToBoxAdapter(child: SizedBox(height: 200)),
+            ],
           ),
         ),
       ],

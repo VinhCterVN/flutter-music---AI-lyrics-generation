@@ -16,32 +16,92 @@ class RecentlyPlayedSection extends ConsumerStatefulWidget {
 }
 
 class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
-  List<Track> _tracks = [];
-  bool _loaded = false;
+  static const _limit = 10;
+  static const _animationDuration = Duration(milliseconds: 280);
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _fetchRecentTracks());
-  }
-
-  Future<void> _fetchRecentTracks() async {
-    try {
-      final page = await ref.read(trackServiceProvider).getRecentTracks(pageSize: 10);
-      if (!mounted) return;
-      setState(() {
-        _tracks = page.data;
-        _loaded = true;
-      });
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _loaded = true);
-    }
-  }
+  final _listKey = GlobalKey<AnimatedListState>();
+  final List<Track> _visibleTracks = [];
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
-    if (!_loaded || _tracks.isEmpty) return const SizedBox.shrink();
+    final recentTracksAsync = ref.watch(recentTracksProvider(_limit));
+
+    ref.listen<AsyncValue<List<Track>>>(recentTracksProvider(_limit), (_, next) {
+      next.whenData(_syncVisibleTracks);
+    });
+
+    recentTracksAsync.whenData((tracks) {
+      if (_initialized) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncVisibleTracks(tracks));
+    });
+
+    if (!_initialized && recentTracksAsync.isLoading) {
+      return const SizedBox.shrink();
+    }
+
+    return recentTracksAsync.when(
+      loading: () => _buildContent(context),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (_) => _buildContent(context),
+    );
+  }
+
+  void _syncVisibleTracks(List<Track> nextTracks) {
+    if (!mounted) return;
+
+    if (!_initialized) {
+      setState(() {
+        _visibleTracks
+          ..clear()
+          ..addAll(nextTracks);
+        _initialized = true;
+      });
+      return;
+    }
+
+    final nextIds = nextTracks.map((track) => track.id).toSet();
+
+    for (var index = _visibleTracks.length - 1; index >= 0; index--) {
+      final track = _visibleTracks[index];
+      if (!nextIds.contains(track.id)) {
+        final removedTrack = _visibleTracks.removeAt(index);
+        _listKey.currentState?.removeItem(
+          index,
+          (context, animation) => _buildAnimatedItem(removedTrack, animation),
+          duration: _animationDuration,
+        );
+      }
+    }
+
+    for (var targetIndex = 0; targetIndex < nextTracks.length; targetIndex++) {
+      final nextTrack = nextTracks[targetIndex];
+      final currentIndex = _visibleTracks.indexWhere((track) => track.id == nextTrack.id);
+
+      if (currentIndex == -1) {
+        _visibleTracks.insert(targetIndex, nextTrack);
+        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
+        continue;
+      }
+
+      _visibleTracks[currentIndex] = nextTrack;
+
+      if (currentIndex != targetIndex) {
+        final movedTrack = _visibleTracks.removeAt(currentIndex);
+        _listKey.currentState?.removeItem(
+          currentIndex,
+          (context, animation) => _buildAnimatedItem(movedTrack, animation),
+          duration: _animationDuration,
+        );
+
+        _visibleTracks.insert(targetIndex, movedTrack);
+        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
+      }
+    }
+  }
+
+  Widget _buildContent(BuildContext context) {
+    if (_visibleTracks.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -69,15 +129,16 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
           ),
           SizedBox(
             height: 200,
-            child: ListView.separated(
+            child: AnimatedList(
+              key: _listKey,
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-              itemCount: _tracks.length,
-              separatorBuilder: (context, index) => const SizedBox(width: 12),
-              itemBuilder: (context, index) {
-                final track = _tracks[index];
-                return _RecentTrackCard(
-                  track: track,
+              padding: const EdgeInsets.fromLTRB(16, 12, 4, 0),
+              initialItemCount: _visibleTracks.length,
+              itemBuilder: (context, index, animation) {
+                final track = _visibleTracks[index];
+                return _buildAnimatedItem(
+                  track,
+                  animation,
                   onTap: () => _playTrack(track),
                   onLongPress: () => showTrackOptions(track, context),
                 );
@@ -89,9 +150,46 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
     );
   }
 
+  Widget _buildAnimatedItem(
+    Track track,
+    Animation<double> animation, {
+    VoidCallback? onTap,
+    VoidCallback? onLongPress,
+  }) {
+    final curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+      reverseCurve: Curves.easeInCubic,
+    );
+
+    return SizeTransition(
+      axis: Axis.horizontal,
+      sizeFactor: curvedAnimation,
+      child: FadeTransition(
+        opacity: curvedAnimation,
+        child: SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0.16, 0), end: Offset.zero).animate(curvedAnimation),
+          child: Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: _RecentTrackCard(
+              key: ValueKey(track.id),
+              track: track,
+              onTap: onTap ?? () {},
+              onLongPress: onLongPress ?? () {},
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _playTrack(Track track) {
     try {
-      AudioHelper.playTrackFromList(ref, allTracks: _tracks, selectedIndex: _tracks.indexOf(track));
+      AudioHelper.playTrackFromList(
+        ref,
+        allTracks: _visibleTracks,
+        selectedIndex: _visibleTracks.indexWhere((item) => item.id == track.id),
+      );
     } catch (e) {
       Fluttertoast.showToast(msg: 'Error playing track: $e');
     }
@@ -103,7 +201,7 @@ class _RecentTrackCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  const _RecentTrackCard({required this.track, required this.onTap, required this.onLongPress});
+  const _RecentTrackCard({super.key, required this.track, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {

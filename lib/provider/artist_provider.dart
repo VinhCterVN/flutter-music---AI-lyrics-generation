@@ -19,6 +19,12 @@ final currentArtistProvider = FutureProvider<Artist?>((ref) async {
   return await SpotifyService.getSpotifyArtist(artistId);
 });
 
+final spotifyArtistImageProvider = FutureProvider.autoDispose.family<String?, String>((ref, artistId) async {
+  if (artistId.isEmpty) return null;
+  final artist = await SpotifyService.getSpotifyArtist(artistId);
+  return artist?.primaryImageUrl;
+});
+
 final artistSummaryProvider = FutureProvider<WikipediaSummary?>((ref) async {
   final artist = await ref.watch(currentArtistProvider.future);
   if (artist == null) return null;

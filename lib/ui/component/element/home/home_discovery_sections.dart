@@ -109,7 +109,7 @@ class _ArtistGroup {
   final String artistId;
   final String artistName;
   final ArtistType artistType;
-  final String? imageUrl;
+  final String? fallbackImageUrl;
   final List<Track> tracks;
   final int score;
 
@@ -117,7 +117,7 @@ class _ArtistGroup {
     required this.artistId,
     required this.artistName,
     required this.artistType,
-    required this.imageUrl,
+    required this.fallbackImageUrl,
     required this.tracks,
     required this.score,
   });
@@ -165,7 +165,7 @@ class _ArtistTrackCarousel extends StatelessWidget {
         artistId: entry.key,
         artistName: artistName,
         artistType: firstTrack.artistType,
-        imageUrl: _pickImage(artistTracks),
+        fallbackImageUrl: _pickImage(artistTracks),
         tracks: artistTracks.take(4).toList(),
         score: score,
       );
@@ -196,6 +196,14 @@ class _ArtistTrackPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final artistImageAsync = group.artistType == ArtistType.SpotifyArtist
+        ? ref.watch(spotifyArtistImageProvider(group.artistId))
+        : const AsyncValue<String?>.data(null);
+    final backgroundImageUrl = artistImageAsync.maybeWhen(
+      data: (value) => value,
+      orElse: () => null,
+    ) ??
+        group.fallbackImageUrl;
     final gradient = [
       Theme.of(context).colorScheme.primaryContainer,
       Theme.of(context).colorScheme.secondaryContainer,
@@ -217,10 +225,10 @@ class _ArtistTrackPage extends ConsumerWidget {
         child: Stack(
           children: [
             Positioned.fill(
-              child: group.imageUrl == null
+              child: backgroundImageUrl == null
                   ? Container(color: Colors.black12)
                   : CachedNetworkImage(
-                      imageUrl: group.imageUrl!,
+                      imageUrl: backgroundImageUrl,
                       fit: BoxFit.cover,
                       errorWidget: (_, __, ___) => Container(color: Colors.black12),
                     ),
@@ -247,7 +255,7 @@ class _ArtistTrackPage extends ConsumerWidget {
                         artistId: group.artistId,
                         artistType: group.artistType,
                         artistName: group.artistName,
-                        imageUrl: group.imageUrl,
+                        imageUrl: backgroundImageUrl,
                       ),
                     ),
                     child: Row(
@@ -345,7 +353,7 @@ class _TrackRow extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
         child: InkWell(
           onTap: onTap,
           onLongPress: onLongPress,
@@ -353,7 +361,7 @@ class _TrackRow extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Colors.black.withAlpha(115),
+              color: Colors.black.withAlpha(85),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withAlpha(14)),
               boxShadow: [BoxShadow(color: Colors.black.withAlpha(28), blurRadius: 14, offset: const Offset(0, 6))],
