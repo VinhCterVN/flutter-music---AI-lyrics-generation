@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -7,6 +9,7 @@ import '../models/track.dart';
 class PlayerController {
   final AudioPlayer player;
   final Ref ref;
+  Timer? _sleepTimer;
 
   PlayerController(this.player, this.ref);
 
@@ -62,6 +65,23 @@ class PlayerController {
   Future<void> play() => player.play();
 
   Future<void> pause() => player.pause();
+
+  void setSleepTimer(Duration duration) {
+    _sleepTimer?.cancel();
+    _sleepTimer = Timer(duration, () {
+      unawaited(player.pause());
+      _sleepTimer = null;
+    });
+  }
+
+  void cancelSleepTimer() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+  }
+
+  void dispose() {
+    cancelSleepTimer();
+  }
 
   Future<void> toggleShuffle() async {
     final isEnabled = player.shuffleModeEnabled;

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
@@ -7,8 +8,8 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../data/models/track.dart';
-import '../../../provider/audio_provider.dart';
 import '../../../provider/artist_provider.dart';
+import '../../../provider/audio_provider.dart';
 
 class TrackOptionsBottomSheet extends ConsumerWidget {
   final ScrollController scrollController;
@@ -118,7 +119,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
                       icon: HugeIcons.strokeRoundedSleeping,
                       title: 'Sleep Timer',
                       subtitle: 'Stop playing after a set time',
-                      onTap: () => _placeholder(context, 'Sleep Timer'),
+                      onTap: () => _setSleepTimer(context, ref),
                     ),
                   ),
 
@@ -216,6 +217,46 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
     Fluttertoast.showToast(msg: 'Added "${track.name}" to queue', toastLength: Toast.LENGTH_SHORT);
   }
 
+  Future<void> _setSleepTimer(BuildContext context, WidgetRef ref) async {
+    final rootNavigator = Navigator.of(context, rootNavigator: true);
+    Navigator.pop(context);
+
+    final currentTrack = ref.read(currentTrackProvider).value;
+    if (currentTrack?.id != track.id) {
+      try {
+        await ref.read(playerControllerProvider).addTrackToQueue(track);
+        Fluttertoast.showToast(msg: 'Added "${track.name}" to queue', toastLength: Toast.LENGTH_SHORT);
+      } catch (e) {
+        Fluttertoast.showToast(msg: 'Could not add "${track.name}" to queue: $e', toastLength: Toast.LENGTH_LONG);
+        return;
+      }
+    }
+
+    await Future<void>.delayed(Duration.zero);
+    if (!rootNavigator.mounted) return;
+
+    final duration = await _showSleepTimerDialog(rootNavigator.context);
+    if (duration == null) return;
+
+    ref.read(playerControllerProvider).setSleepTimer(duration);
+    Fluttertoast.showToast(
+      msg: 'Sleep timer set for ${_formatTimerDuration(duration)}',
+      toastLength: Toast.LENGTH_SHORT,
+    );
+  }
+
+  Future<Duration?> _showSleepTimerDialog(BuildContext context) async {
+    return showDialog<Duration>(context: context, builder: (dialogContext) => const _SleepTimerDialog());
+  }
+
+  String _formatTimerDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    if (hours == 0) return '$minutes min';
+    if (minutes == 0) return '$hours hr';
+    return '$hours hr $minutes min';
+  }
+
   void _goToArtist(BuildContext context) {
     Navigator.pop(context);
     context.push(
@@ -231,6 +272,120 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
   void _placeholder(BuildContext context, String feature) {
     Navigator.pop(context);
     Fluttertoast.showToast(msg: '$feature feature is not implemented yet.', toastLength: Toast.LENGTH_SHORT);
+  }
+}
+
+class _SleepTimerDialog extends StatefulWidget {
+  const _SleepTimerDialog();
+
+  @override
+  State<_SleepTimerDialog> createState() => _SleepTimerDialogState();
+}
+
+class _SleepTimerDialogState extends State<_SleepTimerDialog> {
+  static const _quickDurations = [15, 30, 45, 60];
+
+  final _controller = TextEditingController(text: '30');
+  final _formKey = GlobalKey<FormState>();
+  int _selectedMinutes = 30;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final textColor = Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt());
+
+    return AlertDialog(
+      backgroundColor: scheme.surfaceDim,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text(
+        'Set sleep timer',
+        style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
+      ),
+      content: SingleChildScrollView(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Stop playback after',
+                style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 13, color: textColor),
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _quickDurations
+                    .map(
+                      (minutes) => ChoiceChip(
+                        label: Text('$minutes min'),
+                        selected: _selectedMinutes == minutes,
+                        onSelected: (_) {
+                          setState(() {
+                            _selectedMinutes = minutes;
+                            _controller.text = minutes.toString();
+                          });
+                        },
+                      ),
+                    )
+                    .toList(),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _controller,
+                autofocus: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                decoration: InputDecoration(
+                  labelText: 'Custom duration',
+                  suffixText: 'minutes',
+                  filled: true,
+                  fillColor: scheme.surfaceContainerHighest.withAlpha(120),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                validator: (value) {
+                  final minutes = int.tryParse(value?.trim() ?? '');
+                  if (minutes == null || minutes <= 0) {
+                    return 'Enter at least 1 minute';
+                  }
+                  if (minutes > 720) return 'Maximum is 720 minutes';
+                  return null;
+                },
+                onChanged: (value) {
+                  final minutes = int.tryParse(value);
+                  if (minutes == null) return;
+                  setState(() => _selectedMinutes = minutes);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text('Cancel', style: TextStyle(color: scheme.onSurface.withAlpha(170))),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (!(_formKey.currentState?.validate() ?? false)) return;
+            final minutes = int.parse(_controller.text.trim());
+            Navigator.pop(context, Duration(minutes: minutes));
+          },
+          child: const Text(
+            'Set Timer',
+            style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    );
   }
 }
 

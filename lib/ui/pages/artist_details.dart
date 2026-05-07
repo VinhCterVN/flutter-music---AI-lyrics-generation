@@ -309,15 +309,16 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
 class InfoPill extends StatelessWidget {
   final List<List<dynamic>> icon;
   final String label;
+  final double opacity;
 
-  const InfoPill({required this.icon, required this.label});
+  const InfoPill({super.key, required this.icon, required this.label, this.opacity = 1.0});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh.withAlpha((255 * opacity).toInt()),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(

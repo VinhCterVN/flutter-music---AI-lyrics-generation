@@ -151,6 +151,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                         label: currentArtist?.artistType == ArtistType.SpotifyArtist
                             ? 'Popularity ${currentArtist?.popularity}/100'
                             : 'Popularity pending',
+                        opacity: 0.5,
                       ),
                     ],
                   ),

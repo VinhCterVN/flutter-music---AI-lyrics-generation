@@ -66,6 +66,7 @@ final playerControllerProvider = Provider<PlayerController>((ref) {
   });
 
   ref.onDispose(currentIndexSubscription.cancel);
+  ref.onDispose(controller.dispose);
 
   ref.listen<AsyncValue<Artist?>>(currentArtistProvider, (_, next) {
     next.whenData((artist) {
