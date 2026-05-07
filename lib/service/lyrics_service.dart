@@ -75,26 +75,23 @@ class LyricsService {
   }
 
   List<LyricsLine> _parseSyncedLyrics(String syncedLyrics) {
-    final matches = RegExp(r'^\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\]\s*(.*)$', multiLine: true).allMatches(syncedLyrics).toList();
-    if (matches.isEmpty) return [];
+    final rawLines = syncedLyrics
+        .split('\n')
+        .map((line) => line.trimRight())
+        .where((line) => line.isNotEmpty)
+        .toList();
+    if (rawLines.isEmpty) return [];
 
-    final parsed = <({Duration startTime, String text})>[];
-    for (final match in matches) {
-      final minutes = int.parse(match.group(1)!);
-      final seconds = double.parse(match.group(2)!);
-      final text = match.group(3) ?? '';
-      final startTime = Duration(minutes: minutes) + Duration(milliseconds: (seconds * 1000).round());
-      parsed.add((startTime: startTime, text: text));
-    }
+    final parsedStarts = rawLines.map((line) => LyricsLine.fromString(line)).toList();
 
     final lines = <LyricsLine>[];
-    for (var i = 0; i < parsed.length; i++) {
-      final current = parsed[i];
-      final nextStart = i < parsed.length - 1
-          ? parsed[i + 1].startTime
+    for (var i = 0; i < parsedStarts.length; i++) {
+      final current = parsedStarts[i];
+      final nextStart = i < parsedStarts.length - 1
+          ? parsedStarts[i + 1].startTime
           : current.startTime + const Duration(seconds: 5);
       final endTime = nextStart > current.startTime ? nextStart : current.startTime + const Duration(milliseconds: 500);
-      lines.add(LyricsLine(startTime: current.startTime, endTime: endTime, text: current.text));
+      lines.add(LyricsLine.fromString(rawLines[i], endTime: endTime));
     }
 
     return lines;

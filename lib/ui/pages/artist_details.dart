@@ -187,14 +187,14 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                         spacing: 10,
                         runSpacing: 10,
                         children: [
-                          _InfoPill(
+                          InfoPill(
                             icon: HugeIcons.strokeRoundedStar,
                             label: artist.artistType == ArtistType.SpotifyArtist
                                 ? 'Popularity ${artist.popularity}/100'
                                 : 'Popularity pending',
                           ),
-                          _InfoPill(icon: HugeIcons.strokeRoundedMusicNote01, label: '${tracks.length} tracks'),
-                          _InfoPill(
+                          InfoPill(icon: HugeIcons.strokeRoundedMusicNote01, label: '${tracks.length} tracks'),
+                          InfoPill(
                             icon: followState ? HugeIcons.strokeRoundedTickDouble01 : HugeIcons.strokeRoundedUserAdd02,
                             label: followState ? 'Currently following' : 'Not following yet',
                           ),
@@ -306,11 +306,11 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
   }
 }
 
-class _InfoPill extends StatelessWidget {
+class InfoPill extends StatelessWidget {
   final List<List<dynamic>> icon;
   final String label;
 
-  const _InfoPill({required this.icon, required this.label});
+  const InfoPill({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

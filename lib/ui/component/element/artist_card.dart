@@ -1,10 +1,11 @@
 import 'dart:developer' as developer;
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/artist_provider.dart';
+import 'package:flutter_ai_music/ui/pages/artist_details.dart';
 import 'package:flutter_ai_music/utils/functions.dart';
-import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -145,18 +146,11 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                         ),
                       ),
 
-                      RatingBar(
-                        initialRating: (currentArtist?.popularity ?? 0) / 100 * 5,
-                        minRating: 0,
-                        maxRating: 100,
-                        allowHalfRating: true,
-                        ratingWidget: RatingWidget(
-                          full: Icon(Icons.star_rounded, color: Colors.amber, size: 8),
-                          half: Icon(Icons.star_half_rounded, color: Colors.amber, size: 8),
-                          empty: Icon(Icons.star_border_rounded, color: Colors.amber, size: 8),
-                        ),
-                        onRatingUpdate: (double value) {},
-                        ignoreGestures: true,
+                      InfoPill(
+                        icon: HugeIcons.strokeRoundedStar,
+                        label: currentArtist?.artistType == ArtistType.SpotifyArtist
+                            ? 'Popularity ${currentArtist?.popularity}/100'
+                            : 'Popularity pending',
                       ),
                     ],
                   ),

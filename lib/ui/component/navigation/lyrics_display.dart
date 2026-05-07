@@ -21,6 +21,18 @@ class LyricsDisplayWidget extends ConsumerStatefulWidget {
 }
 
 class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
+  static const double _lyricHorizontalPadding = 20;
+  static const double _activeLyricFontSize = 26;
+  static const double _inactiveLyricFontSize = 20;
+  static const Duration _lyricAnimationDuration = Duration(milliseconds: 300);
+  static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
+  static const TextStyle _lyricTextStyle = TextStyle(
+    fontFamily: "SpotifyMixUI",
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.25,
+    height: 1.3,
+  );
+
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _lineKeys = {};
   final Map<String, String> _wrappedTextCache = {};
@@ -191,32 +203,55 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-                  itemCount: lyrics.length,
-                  itemBuilder: (context, index) {
-                    final line = lyrics[index];
-                    final isActive = index == _currentLineIndex;
-                    final wrappedText = _getWrappedText(
-                      context: context,
-                      text: line.text,
-                      maxWidth: MediaQuery.of(context).size.width - 40,
-                    );
+              : LayoutBuilder(
+                  builder: (context, constraints) {
+                    final lyricMaxWidth = constraints.maxWidth - (_lyricHorizontalPadding * 2);
 
-                    return Padding(
-                      key: _lineKeys[index],
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 300),
-                        style: TextStyle(
-                          fontFamily: "SpotifyMixUI",
-                          color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
-                          fontSize: isActive ? 28 : 20,
-                          fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-                          height: 1.3,
-                        ),
-                        child: Text(wrappedText, textAlign: TextAlign.left),
+                    return ShaderMask(
+                      blendMode: BlendMode.dstOut,
+                      shaderCallback: (bounds) => const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [Colors.black, Colors.transparent, Colors.transparent, Colors.black],
+                        stops: [0.0, 0.08, 0.92, 1.0],
+                      ).createShader(bounds),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: _lyricHorizontalPadding, vertical: 40),
+                        itemCount: lyrics.length,
+                        itemBuilder: (context, index) {
+                          final line = lyrics[index];
+                          final isActive = index == _currentLineIndex;
+                          final wrappedText = _getWrappedText(
+                            context: context,
+                            text: line.text,
+                            maxWidth: lyricMaxWidth,
+                          );
+
+                          return AnimatedPadding(
+                            key: _lineKeys[index],
+                            duration: _lyricAnimationDuration,
+                            curve: Curves.easeInOut,
+                            padding: EdgeInsets.symmetric(vertical: isActive ? 12 : 6),
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: AnimatedContainer(
+                                duration: _lyricAnimationDuration,
+                                curve: Curves.easeInOut,
+                                width: lyricMaxWidth * (isActive ? 1 : _inactiveLyricWidthFactor),
+                                child: AnimatedDefaultTextStyle(
+                                  duration: _lyricAnimationDuration,
+                                  curve: Curves.easeInOut,
+                                  style: _lyricTextStyle.copyWith(
+                                    color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
+                                    fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
+                                  ),
+                                  child: Text(wrappedText, textAlign: TextAlign.left),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     );
                   },
@@ -227,31 +262,29 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
     );
   }
 
-  String _getWrappedText({
-    required BuildContext context,
-    required String text,
-    required double maxWidth,
-  }) {
+  String _getWrappedText({required BuildContext context, required String text, required double maxWidth}) {
     if (text.isEmpty) return text;
 
-    final cacheKey = '${maxWidth.toStringAsFixed(2)}|$text';
+    final activeStyle = _lyricTextStyle.copyWith(fontSize: _activeLyricFontSize);
+    final textDirection = Directionality.of(context);
+    final textScaler = MediaQuery.textScalerOf(context);
+    final scaledActiveFontSize = textScaler.scale(_activeLyricFontSize);
+    final cacheKey = '${maxWidth.toStringAsFixed(2)}|$scaledActiveFontSize|$textDirection|$text';
     final cached = _wrappedTextCache[cacheKey];
     if (cached != null) return cached;
 
-    final textPainter = TextPainter(
-      text: TextSpan(
-        text: text,
-        style: const TextStyle(
-          fontFamily: 'SpotifyMixUI',
-          fontSize: 28,
-          fontWeight: FontWeight.bold,
-          height: 1.3,
-        ),
-      ),
-      textDirection: Directionality.of(context),
-    )..layout(maxWidth: maxWidth);
+    bool fitsActiveLine(String value) {
+      final textPainter = TextPainter(
+        text: TextSpan(text: value, style: activeStyle),
+        textDirection: textDirection,
+        textScaler: textScaler,
+        maxLines: 1,
+      )..layout(maxWidth: double.infinity);
 
-    if (textPainter.width <= maxWidth) {
+      return textPainter.width <= maxWidth;
+    }
+
+    if (fitsActiveLine(text)) {
       _wrappedTextCache[cacheKey] = text;
       return text;
     }
@@ -263,20 +296,8 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
     for (final word in words) {
       if (word.isEmpty) continue;
       final candidate = currentLine.isEmpty ? word : '$currentLine $word';
-      final candidatePainter = TextPainter(
-        text: TextSpan(
-          text: candidate,
-          style: const TextStyle(
-            fontFamily: 'SpotifyMixUI',
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            height: 1.3,
-          ),
-        ),
-        textDirection: Directionality.of(context),
-      )..layout(maxWidth: maxWidth);
 
-      if (candidatePainter.width <= maxWidth || currentLine.isEmpty) {
+      if (fitsActiveLine(candidate) || currentLine.isEmpty) {
         currentLine = candidate;
       } else {
         wrappedLines.add(currentLine);
@@ -296,36 +317,47 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   Widget _buildHeader(Track track) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-      child: Row(
+      child: Stack(
+        fit: StackFit.loose,
         children: [
-          IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 32),
-            onPressed: () => Navigator.pop(context),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 32),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            children: [
-              Text(
-                track.name,
-                style: const TextStyle(
-                  fontFamily: "SpotifyMixUI",
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  shadows: [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
-                ),
-                textAlign: TextAlign.center,
+          Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  Text(
+                    track.name,
+                    style: const TextStyle(
+                      fontFamily: "SpotifyMixUI",
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      shadows: [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    track.artistName ?? track.artistType.name,
+                    style: TextStyle(
+                      fontFamily: "SpotifyMixUI",
+                      letterSpacing: (-0.2),
+                      color: Colors.white.withAlpha((0.8 * 255).round()),
+                      fontSize: 14,
+                      shadows: const [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
-              Text(
-                track.artistName ?? track.artistType.name,
-                style: TextStyle(
-                  color: Colors.white.withAlpha((0.8 * 255).round()),
-                  fontSize: 14,
-                  shadows: const [Shadow(color: Colors.black45, offset: Offset(0, 1), blurRadius: 3)],
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -372,7 +404,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
     final position = progress.position;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
       child: Column(
         children: [
           Row(
@@ -388,7 +420,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 4),
           SliderTheme(
             data: SliderThemeData(
               trackHeight: 2,
@@ -445,7 +477,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
               ),
             ),
           ),
-          const SizedBox(height: 20)
+          const SizedBox(height: 20),
         ],
       ),
     );

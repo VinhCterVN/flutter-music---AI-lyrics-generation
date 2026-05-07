@@ -5,9 +5,8 @@ class LyricsLine {
 
   LyricsLine({required this.startTime, required this.endTime, required this.text});
 
-  // Parse format: [00:00.000 --> 00:16.800] Lyrics text
-  factory LyricsLine.fromString(String line) {
-    final regex = RegExp(r'\[(\d{2}):(\d{2}\.\d{3}) --> (\d{2}):(\d{2}\.\d{3})\]\s*(.*)');
+  factory LyricsLine.fromString(String line, {Duration? endTime}) {
+    final regex = RegExp(r'^\[(\d{2}):(\d{2}(?:\.\d{1,3})?)\]\s*(.*)$');
     final match = regex.firstMatch(line);
 
     if (match == null) {
@@ -16,15 +15,12 @@ class LyricsLine {
 
     final startMin = int.parse(match.group(1)!);
     final startSec = double.parse(match.group(2)!);
-    final endMin = int.parse(match.group(3)!);
-    final endSec = double.parse(match.group(4)!);
-    final text = match.group(5)!;
+    final text = match.group(3) ?? '';
+    final startTime = Duration(minutes: startMin) + Duration(milliseconds: (startSec * 1000).round());
+    final resolvedEndTime = endTime != null && endTime > startTime ? endTime : startTime + const Duration(seconds: 5);
 
-    return LyricsLine(
-      startTime: Duration(minutes: startMin, milliseconds: (startSec * 1000).toInt()),
-      endTime: Duration(minutes: endMin, milliseconds: (endSec * 1000).toInt()),
-      text: text,
-    );
+    final cleaned = text.replaceAll(RegExp(r'[\r\n]+'), '').trim();
+    return LyricsLine(startTime: startTime, endTime: resolvedEndTime, text: cleaned);
   }
 
   factory LyricsLine.fromJson(Map<String, dynamic> json) {

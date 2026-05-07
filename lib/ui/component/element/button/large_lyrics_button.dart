@@ -33,7 +33,7 @@ class _LargeLyricsButtonState extends ConsumerState<LargeLyricsButton>
             padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
-          child: const Text('Bấm xem trước lời bài hát', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+          child: const Text('Lyrics Preview', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
         ),
       ),
       loading: () => const SizedBox.shrink(),
