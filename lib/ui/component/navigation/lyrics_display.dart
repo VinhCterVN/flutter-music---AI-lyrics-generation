@@ -22,7 +22,7 @@ class LyricsDisplayWidget extends ConsumerStatefulWidget {
 
 class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   static const double _lyricHorizontalPadding = 20;
-  static const double _activeLyricFontSize = 26;
+  static const double _activeLyricFontSize = 24;
   static const double _inactiveLyricFontSize = 20;
   static const Duration _lyricAnimationDuration = Duration(milliseconds: 300);
   static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
@@ -36,6 +36,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _lineKeys = {};
   final Map<String, String> _wrappedTextCache = {};
+  final ValueNotifier<int> _currentLineIndexNotifier = ValueNotifier<int>(-1);
   int _currentLineIndex = -1;
   bool _isFetchCalled = false;
   List<LyricsLine>? _cachedLyrics;
@@ -43,6 +44,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
 
   @override
   void dispose() {
+    _currentLineIndexNotifier.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -50,7 +52,6 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   @override
   Widget build(BuildContext context) {
     final currentTrackAsync = ref.watch(currentTrackProvider);
-    final progressAsync = ref.watch(progressProvider);
     final lyricService = ref.read(lyricsServiceProvider);
 
     return currentTrackAsync.when(
@@ -101,14 +102,10 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                       });
                     }
 
-                    return progressAsync.when(
-                      data: (progress) {
-                        final currentPosition = progress.position;
-                        _updateCurrentLineFromPosition(currentPosition, lyrics);
-                        return _buildContent(track, lyrics, currentPosition, progress);
-                      },
-                      loading: () => _buildLoadingState(track),
-                      error: (error, stack) => _buildErrorState(track, 'Error loading progress'),
+                    return _LyricsProgressListener(
+                      lyrics: lyrics,
+                      onProgress: _updateCurrentLineFromPosition,
+                      child: _buildContent(track, lyrics),
                     );
                   },
                   loading: () => _buildLoadingState(track),
@@ -128,6 +125,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
     if (_activeTrackId == trackId) return;
     _activeTrackId = trackId;
     _currentLineIndex = -1;
+    _currentLineIndexNotifier.value = -1;
     _isFetchCalled = false;
     _cachedLyrics = null;
     _lineKeys.clear();
@@ -149,18 +147,35 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   }
 
   void _updateCurrentLineFromPosition(Duration position, List<LyricsLine> lyrics) {
-    for (int i = 0; i < lyrics.length; i++) {
-      final line = lyrics[i];
-      if (position >= line.startTime && position < line.endTime) {
-        if (_currentLineIndex != i) {
-          setState(() {
-            _currentLineIndex = i;
-          });
-          _scrollToCurrentLine(i);
-        }
-        break;
+    if (!mounted) return;
+    final nextIndex = _findCurrentLineIndex(position, lyrics);
+    if (nextIndex == _currentLineIndex) return;
+
+    _currentLineIndex = nextIndex;
+    _currentLineIndexNotifier.value = nextIndex;
+    if (nextIndex >= 0) {
+      _scrollToCurrentLine(nextIndex);
+    }
+  }
+
+  int _findCurrentLineIndex(Duration position, List<LyricsLine> lyrics) {
+    var low = 0;
+    var high = lyrics.length - 1;
+
+    while (low <= high) {
+      final mid = low + ((high - low) >> 1);
+      final line = lyrics[mid];
+
+      if (position < line.startTime) {
+        high = mid - 1;
+      } else if (position >= line.endTime) {
+        low = mid + 1;
+      } else {
+        return mid;
       }
     }
+
+    return -1;
   }
 
   void _scrollToCurrentLine(int index) {
@@ -187,7 +202,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
     });
   }
 
-  Widget _buildContent(Track track, List<LyricsLine> lyrics, Duration currentPosition, TrackProgress progress) {
+  Widget _buildContent(Track track, List<LyricsLine> lyrics) {
     return Column(
       children: [
         _buildHeader(track),
@@ -218,38 +233,47 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                       child: ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(horizontal: _lyricHorizontalPadding, vertical: 40),
+                        cacheExtent: 1000.0,
+                        addAutomaticKeepAlives: false,
                         itemCount: lyrics.length,
                         itemBuilder: (context, index) {
                           final line = lyrics[index];
-                          final isActive = index == _currentLineIndex;
                           final wrappedText = _getWrappedText(
                             context: context,
                             text: line.text,
                             maxWidth: lyricMaxWidth,
                           );
 
-                          return AnimatedPadding(
-                            key: _lineKeys[index],
-                            duration: _lyricAnimationDuration,
-                            curve: Curves.easeInOut,
-                            padding: EdgeInsets.symmetric(vertical: isActive ? 12 : 6),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: AnimatedContainer(
+                          return ValueListenableBuilder<int>(
+                            valueListenable: _currentLineIndexNotifier,
+                            builder: (context, currentLineIndex, child) {
+                              final isActive = index == currentLineIndex;
+
+                              return AnimatedPadding(
+                                key: _lineKeys[index],
                                 duration: _lyricAnimationDuration,
                                 curve: Curves.easeInOut,
-                                width: lyricMaxWidth * (isActive ? 1 : _inactiveLyricWidthFactor),
-                                child: AnimatedDefaultTextStyle(
-                                  duration: _lyricAnimationDuration,
-                                  curve: Curves.easeInOut,
-                                  style: _lyricTextStyle.copyWith(
-                                    color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
-                                    fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
+                                padding: EdgeInsets.symmetric(vertical: isActive ? 16 : 6),
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: AnimatedContainer(
+                                    duration: _lyricAnimationDuration,
+                                    curve: Curves.easeInOut,
+                                    width: lyricMaxWidth * (isActive ? 1 : _inactiveLyricWidthFactor),
+                                    child: AnimatedDefaultTextStyle(
+                                      duration: _lyricAnimationDuration,
+                                      curve: Curves.easeInOut,
+                                      style: _lyricTextStyle.copyWith(
+                                        color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
+                                        fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
+                                      ),
+                                      child: child!,
+                                    ),
                                   ),
-                                  child: Text(wrappedText, textAlign: TextAlign.left),
                                 ),
-                              ),
-                            ),
+                              );
+                            },
+                            child: Text(wrappedText, textAlign: TextAlign.left),
                           );
                         },
                       ),
@@ -257,7 +281,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                   },
                 ),
         ),
-        _buildBottomControls(currentPosition, progress),
+        const _LyricsBottomControls(),
       ],
     );
   }
@@ -398,10 +422,50 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
       ],
     );
   }
+}
 
-  Widget _buildBottomControls(Duration currentPosition, TrackProgress progress) {
-    final duration = progress.duration ?? Duration.zero;
-    final position = progress.position;
+String _formatDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
+  final minutes = twoDigits(duration.inMinutes.remainder(60));
+  final seconds = twoDigits(duration.inSeconds.remainder(60));
+  return '$minutes:$seconds';
+}
+
+class _LyricsProgressListener extends ConsumerWidget {
+  final List<LyricsLine> lyrics;
+  final void Function(Duration position, List<LyricsLine> lyrics) onProgress;
+  final Widget child;
+
+  const _LyricsProgressListener({required this.lyrics, required this.onProgress, required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.listen<AsyncValue<TrackProgress>>(progressProvider, (_, next) {
+      next.whenData((progress) {
+        onProgress(progress.position, lyrics);
+      });
+    });
+
+    final progress = ref.read(progressProvider).value;
+    if (progress != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        onProgress(progress.position, lyrics);
+      });
+    }
+
+    return child;
+  }
+}
+
+class _LyricsBottomControls extends ConsumerWidget {
+  const _LyricsBottomControls();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(progressProvider).value;
+    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
+    final duration = progress?.duration ?? Duration.zero;
+    final position = progress?.position ?? Duration.zero;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
@@ -470,23 +534,12 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
               width: 70,
               height: 70,
               decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Icon(
-                ref.watch(audioPlayerProvider).playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                size: 40,
-                color: Colors.black,
-              ),
+              child: Icon(isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 40, color: Colors.black),
             ),
           ),
           const SizedBox(height: 20),
         ],
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    String twoDigits(int n) => n.toString().padLeft(2, '0');
-    final minutes = twoDigits(duration.inMinutes.remainder(60));
-    final seconds = twoDigits(duration.inSeconds.remainder(60));
-    return '$minutes:$seconds';
   }
 }

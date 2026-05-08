@@ -165,6 +165,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
             Positioned.fill(
               child: CustomScrollView(
                 controller: _controller,
+                cacheExtent: 2000,
                 slivers: [
                   SliverPersistentHeader(
                     delegate: PlaylistHeaderDelegate(
@@ -375,19 +376,6 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                             key: ValueKey(track.id),
                             index: index,
                             child: ListTile(
-                              // leading: ClipRRect(
-                              //   borderRadius: BorderRadius.circular(4),
-                              //   child: CachedNetworkImage(
-                              //     imageUrl: track.images.first,
-                              //     width: 48,
-                              //     height: 48,
-                              //     fit: BoxFit.cover,
-                              //     errorWidget: (_, __, ___) => Container(
-                              //       color: Colors.grey.shade800,
-                              //       child: const Icon(Icons.music_note, color: Colors.white54),
-                              //     ),
-                              //   ),
-                              // ),
                               title: Text(
                                 track.name,
                                 maxLines: 1,

@@ -4,8 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/enums/ui_state.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
-import 'package:flutter_ai_music/provider/audio_provider.dart';
-import 'package:flutter_ai_music/ui/component/element/background_effect.dart';
 import 'package:flutter_ai_music/ui/component/element/home/home_discovery_sections.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_ai_music/utils/mock_tracks.dart';
@@ -56,134 +54,79 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _onGenreChanged(int index) async {
-    setState(() {});
+    if (selectedGenreIndex == index) return;
+    setState(() {
+      selectedGenreIndex = index;
+    });
   }
-
-  List<EffectState> _buildStates(double height) => [
-    EffectState(
-      height: height * 0.75,
-      alignment: const Alignment(-0.85, -0.65),
-      radius: 0.55,
-      colors: [Colors.cyan.withAlpha(15), Colors.transparent],
-    ),
-    EffectState(
-      height: height * 0.75,
-      alignment: const Alignment(0.85, -0.6),
-      radius: 0.75,
-      colors: [Theme.of(context).colorScheme.onSecondaryFixed.withAlpha(100), Colors.transparent],
-    ),
-    EffectState(
-      height: height * 0.75,
-      alignment: const Alignment(0, -0.22),
-      radius: 0.55,
-      colors: [Theme.of(context).colorScheme.onTertiaryFixedVariant.withAlpha(25), Colors.transparent],
-    ),
-  ];
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(currentTrackProvider);
-    final height = MediaQuery.of(context).size.height;
-    final scheme = Theme.of(context).colorScheme;
-    final states = _buildStates(height);
-
-    return Stack(
-      children: [
-        AnimatedBuilder(
-          animation: _controller,
-          builder: (context, child) {
-            final scrollOffset = _controller.hasClients ? _controller.offset : 0.0;
-            final opacity = (1.0 - (scrollOffset / 200)).clamp(0.0, 1.0);
-
-            return Stack(
-              children: [
-                Positioned(
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  height: height * 0.75,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        stops: [0.0, 1.0],
-                        colors: [Color.lerp(scheme.surfaceDim, scheme.onPrimaryFixed, opacity)!, Colors.transparent],
-                      ),
+    return RefreshIndicator(
+      onRefresh: () async {},
+      child: CustomScrollView(
+        controller: _controller,
+        cacheExtent: 1000.0,
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Scaffold.of(context).openDrawer(),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset("assets/icons/cloud.svg", width: 42),
+                        const SizedBox(width: 10),
+                        const Text(
+                          'Flussic',
+                          style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 26, fontWeight: FontWeight.w900),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                ...states.map((effectState) => BackgroundEffect(state: effectState, opacity: opacity)),
-              ],
-            );
-          },
-        ),
-        RefreshIndicator(
-          onRefresh: () async {},
-          child: CustomScrollView(
-            controller: _controller,
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 8, left: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Row(
                     children: [
-                      GestureDetector(
-                        onTap: () => Scaffold.of(context).openDrawer(),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset("assets/icons/cloud.svg", width: 42),
-                            const SizedBox(width: 10),
-                            const Text(
-                              'Flussic',
-                              style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 26, fontWeight: FontWeight.w900),
-                            ),
-                          ],
-                        ),
+                      IconButton(
+                        onPressed: () => context.push('/search_detail'),
+                        icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
                       ),
-                      Row(
-                        children: [
-                          IconButton(
-                            onPressed: () => context.push('/search_detail'),
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch02),
-                          ),
-                          PopupMenuButton<SortType>(
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
-                            onSelected: (value) {},
-                            itemBuilder: (context) => const [
-                              PopupMenuItem(value: SortType.newest, child: Text('Newest')),
-                              PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
-                              PopupMenuItem(value: SortType.duration, child: Text('Duration')),
-                            ],
-                          ),
+                      PopupMenuButton<SortType>(
+                        icon: const HugeIcon(icon: HugeIcons.strokeRoundedChart03),
+                        onSelected: (value) {},
+                        itemBuilder: (context) => const [
+                          PopupMenuItem(value: SortType.newest, child: Text('Newest')),
+                          PopupMenuItem(value: SortType.popular, child: Text('Most popular')),
+                          PopupMenuItem(value: SortType.duration, child: Text('Duration')),
                         ],
                       ),
                     ],
                   ),
-                ),
+                ],
               ),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
-              ),
-              if (_state == UIState.loading)
-                SliverToBoxAdapter(
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: Lottie.asset("assets/animations/impress.json", repeat: false),
-                  ),
-                )
-              else ...[
-                const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
-                const SliverToBoxAdapter(child: RecentlyPlayedSection()),
-                ..._dynamicHomeSections,
-              ],
-              SliverToBoxAdapter(child: SizedBox(height: 200)),
-            ],
+            ),
           ),
-        ),
-      ],
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: GenreStickyDelegate(selectedIndex: selectedGenreIndex, onChanged: _onGenreChanged),
+          ),
+          if (_state == UIState.loading)
+            SliverToBoxAdapter(
+              child: SizedBox(
+                width: double.infinity,
+                child: Lottie.asset("assets/animations/impress.json", repeat: false),
+              ),
+            )
+          else ...[
+            const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
+            const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+            ..._dynamicHomeSections,
+          ],
+          SliverToBoxAdapter(child: SizedBox(height: 200)),
+        ],
+      ),
     );
   }
 }
@@ -196,10 +139,6 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    // final Color backgroundColor = overlapsContent
-    //     ? Theme.of(context).colorScheme.surfaceDim.withAlpha(100)
-    //     : Colors.transparent;
-
     final double blurAmount = overlapsContent ? 5.0 : 0.0;
     return ClipRect(
       child: BackdropFilter(
@@ -213,18 +152,13 @@ class GenreStickyDelegate extends SliverPersistentHeaderDelegate {
             itemCount: genres.length,
             itemBuilder: (context, index) => Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: AnimatedSize(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
-                alignment: Alignment.centerLeft,
-                child: ChoiceChip(
-                  label: Text(genres[index], style: TextStyle(color: Colors.white, fontSize: 13)),
-                  selected: index == selectedIndex,
-                  onSelected: (_) => onChanged(index),
-                  backgroundColor: Colors.white.withAlpha(25),
-                  elevation: 0,
-                  side: BorderSide(color: Colors.transparent),
-                ),
+              child: ChoiceChip(
+                label: Text(genres[index], style: const TextStyle(color: Colors.white, fontSize: 13)),
+                selected: index == selectedIndex,
+                onSelected: (_) => onChanged(index),
+                backgroundColor: Colors.white.withAlpha(25),
+                elevation: 0,
+                side: BorderSide.none,
               ),
             ),
           ),

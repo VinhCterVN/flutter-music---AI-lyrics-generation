@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,10 +11,10 @@ import '../element/artist_card.dart';
 import '../element/button/large_lyrics_button.dart';
 import 'playing_screen/album_artwork.dart';
 import 'playing_screen/playback_controls.dart';
+import 'playing_screen/playing_app_bar.dart';
 import 'playing_screen/progress_bar.dart';
 import 'playing_screen/sticky_mini_player.dart';
 import 'playing_screen/track_info.dart';
-import '../../../utils/widgets.dart';
 
 class PlayingScreen extends ConsumerStatefulWidget {
   final ScrollController scrollController;
@@ -29,7 +28,7 @@ class PlayingScreen extends ConsumerStatefulWidget {
 class _PlayingScreenState extends ConsumerState<PlayingScreen>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool _isUserSeeking = false;
-  bool _floatingShow = false;
+  final ValueNotifier<bool> _floatingShow = ValueNotifier(false);
   double _sliderProgress = 0.0;
 
   late AnimationController _pulseController;
@@ -38,13 +37,25 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this)
-      ..repeat(reverse: true);
+    _pulseController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this)..value = 1.0;
 
     _pulseAnimation = Tween<double>(
       begin: 1.0,
       end: 0.98,
     ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.fastOutSlowIn));
+
+    ref.listenManual<AsyncValue<bool>>(isPlayingProvider, (_, next) {
+      final isPlaying = next.value ?? false;
+      if (isPlaying) {
+        if (!_pulseController.isAnimating) {
+          _pulseController.repeat(reverse: true);
+        }
+      } else {
+        _pulseController
+          ..stop()
+          ..value = 1.0;
+      }
+    }, fireImmediately: true);
   }
 
   @override
@@ -52,6 +63,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
 
   @override
   void dispose() {
+    _floatingShow.dispose();
     _pulseController.dispose();
     super.dispose();
   }
@@ -83,16 +95,20 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
         return Scaffold(
           body: Stack(
             children: [
-              _buildBackgroundImage(currentTrack.images.firstOrNull),
-              _buildBlurOverlay(),
-              _buildGradientOverlay(),
+              // _buildBackgroundImage(currentTrack.images.firstOrNull),
+              // _buildBlurOverlay(),
+              // _buildGradientOverlay(),
               _buildMainContent(currentTrack, screenHeight),
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                left: 12,
-                right: 12,
-                bottom: _floatingShow ? 16 : -100,
+              ValueListenableBuilder<bool>(
+                valueListenable: _floatingShow,
+                builder: (context, show, child) => AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  left: 12,
+                  right: 12,
+                  bottom: show ? 16 : -100,
+                  child: child!,
+                ),
                 child: StickyMiniPlayer(track: currentTrack),
               ),
             ],
@@ -160,37 +176,10 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     return Positioned.fill(
       child: CustomScrollView(
         controller: widget.scrollController,
+        cacheExtent: 3000.0,
         slivers: <Widget>[
           // App Bar
-          SliverAppBar(
-            toolbarHeight: kToolbarHeight + 10,
-            leading: Padding(
-              padding: const EdgeInsets.only(top: 10),
-              child: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.keyboard_arrow_down)),
-            ),
-            actions: [
-              Padding(
-                padding: const EdgeInsets.only(top: 10),
-                child: IconButton(
-                  onPressed: () => showTrackOptions(currentTrack, context),
-                  icon: const Icon(Icons.more_vert_rounded),
-                ),
-              ),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              title: const Text(
-                'Playing View',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontFamily: "SpotifyMixUI",
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              centerTitle: true,
-            ),
-            backgroundColor: Colors.transparent,
-          ),
+          PlayingAppBar(track: currentTrack),
           // Player Content
           SliverToBoxAdapter(
             child: Container(
@@ -219,7 +208,9 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                   PlaybackControls(
                     onVisibilityChanged: (info) {
                       if (!mounted) return;
-                      setState(() => _floatingShow = info);
+                      if (_floatingShow.value != info) {
+                        _floatingShow.value = info;
+                      }
                     },
                   ),
                 ],

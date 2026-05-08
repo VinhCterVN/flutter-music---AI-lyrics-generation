@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -46,10 +45,7 @@ class HomeDiscoverySections extends ConsumerWidget {
                 ],
                 if (secondaryTracks.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  _SectionHeader(
-                    eyebrow: 'Suggestion',
-                    title: 'More artists you might like',
-                  ),
+                  _SectionHeader(eyebrow: 'Suggestion', title: 'More artists you might like'),
                   const SizedBox(height: 12),
                   _ArtistTrackCarousel(tracks: secondaryTracks, forceOrderByHistory: false),
                 ],
@@ -199,11 +195,8 @@ class _ArtistTrackPage extends ConsumerWidget {
     final artistImageAsync = group.artistType == ArtistType.SpotifyArtist
         ? ref.watch(spotifyArtistImageProvider(group.artistId))
         : const AsyncValue<String?>.data(null);
-    final backgroundImageUrl = artistImageAsync.maybeWhen(
-      data: (value) => value,
-      orElse: () => null,
-    ) ??
-        group.fallbackImageUrl;
+    final backgroundImageUrl =
+        artistImageAsync.maybeWhen(data: (value) => value, orElse: () => null) ?? group.fallbackImageUrl;
     final gradient = [
       Theme.of(context).colorScheme.primaryContainer,
       Theme.of(context).colorScheme.secondaryContainer,
@@ -352,63 +345,60 @@ class _TrackRow extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(16),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.black.withAlpha(85),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.white.withAlpha(14)),
-              boxShadow: [BoxShadow(color: Colors.black.withAlpha(28), blurRadius: 14, offset: const Offset(0, 6))],
-            ),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: SizedBox(
-                    width: 52,
-                    height: 52,
-                    child: track.images.isNotEmpty
-                        ? CachedNetworkImage(imageUrl: track.images.first, fit: BoxFit.cover)
-                        : Container(color: scheme.surfaceContainerHighest, child: const Icon(Icons.music_note_rounded)),
-                  ),
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: Colors.black.withAlpha(65),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withAlpha(14)),
+            boxShadow: [BoxShadow(color: Colors.black.withAlpha(28), blurRadius: 14, offset: const Offset(0, 6))],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: track.images.isNotEmpty
+                      ? CachedNetworkImage(imageUrl: track.images.first, fit: BoxFit.cover)
+                      : Container(color: scheme.surfaceContainerHighest, child: const Icon(Icons.music_note_rounded)),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        track.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'SpotifyMixUI',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          color: Colors.white,
-                        ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      track.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'SpotifyMixUI',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        track.artistName ?? track.artistId,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 12, color: Colors.white.withAlpha(190)),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      track.artistName ?? track.artistId,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 12, color: Colors.white.withAlpha(190)),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Icon(Icons.play_arrow_rounded, color: Colors.white.withAlpha(220)),
-              ],
-            ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.play_arrow_rounded, color: Colors.white.withAlpha(220)),
+            ],
           ),
         ),
       ),
