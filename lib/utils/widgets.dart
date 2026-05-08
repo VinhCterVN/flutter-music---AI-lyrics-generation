@@ -4,7 +4,7 @@ import 'package:flutter_ai_music/ui/component/element/avatar.dart';
 import 'package:flutter_ai_music/ui/component/element/dashed_circle_painter.dart';
 import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 
-Widget avatarWithUploadingBorder({required BuildContext context, required String photoUrl, required bool isUploading}) {
+Widget avatarWithUploadingBorder({required String photoUrl, required bool isUploading}) {
   return SizedBox(
     width: 72,
     height: 72,

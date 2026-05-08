@@ -12,13 +12,7 @@ class AvatarContent extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(50),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 6, offset: const Offset(0, 3))],
       ),
       child: GestureDetector(
         onTap: () {
@@ -26,10 +20,7 @@ class AvatarContent extends StatelessWidget {
             PageRouteBuilder(
               opaque: false,
               barrierColor: Colors.black54,
-              pageBuilder: (_, __, ___) => FullscreenImagePage(
-                imageUrl: photoUrl,
-                tag: "avatar_drawer",
-              ),
+              pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: photoUrl, tag: "avatar_drawer"),
             ),
           );
         },
@@ -39,12 +30,8 @@ class AvatarContent extends StatelessWidget {
             child: CachedNetworkImage(
               imageUrl: photoUrl,
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => Icon(
-                Icons.account_circle,
-                size: 50,
-                color:
-                    Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              errorWidget: (_, __, ___) =>
+                  Icon(Icons.account_circle, size: 50, color: Theme.of(context).colorScheme.onSurfaceVariant),
             ),
           ),
         ),

@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/ui/component/element/playing_gradient_color.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
@@ -98,6 +99,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
               // _buildBackgroundImage(currentTrack.images.firstOrNull),
               // _buildBlurOverlay(),
               // _buildGradientOverlay(),
+              const PlayingGradientColor(),
               _buildMainContent(currentTrack, screenHeight),
               ValueListenableBuilder<bool>(
                 valueListenable: _floatingShow,
@@ -223,7 +225,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
           ),
           // Lyrics Button
           SliverToBoxAdapter(
-            child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: LargeLyricsButton()),
+            child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: const LargeLyricsButton()),
           ),
         ],
       ),

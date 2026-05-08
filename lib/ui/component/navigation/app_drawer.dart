@@ -88,7 +88,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
                 clipBehavior: Clip.hardEdge,
                 children: [
                   ClipOval(
-                    child: avatarWithUploadingBorder(context: context, photoUrl: photoUrl, isUploading: _isUploading),
+                    child: avatarWithUploadingBorder(photoUrl: photoUrl, isUploading: _isUploading),
                   ),
                   Align(
                     alignment: Alignment.bottomRight.add(const Alignment(0, -0.32)),
