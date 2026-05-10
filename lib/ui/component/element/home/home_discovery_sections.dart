@@ -24,7 +24,7 @@ class HomeDiscoverySections extends ConsumerWidget {
       data: (data) {
         final hasHistory = data.topListenedTracks.isNotEmpty;
         final primaryTracks = hasHistory ? data.topListenedTracks : data.suggestedTracks;
-        final secondaryTracks = hasHistory ? data.suggestedTracks : <Track>[];
+        // final secondaryTracks = hasHistory ? data.suggestedTracks : <Track>[];
 
         return SliverToBoxAdapter(
           child: Padding(
@@ -43,12 +43,12 @@ class HomeDiscoverySections extends ConsumerWidget {
                   const SizedBox(height: 12),
                   _ArtistTrackCarousel(tracks: primaryTracks, forceOrderByHistory: hasHistory),
                 ],
-                if (secondaryTracks.isNotEmpty) ...[
-                  const SizedBox(height: 20),
-                  _SectionHeader(eyebrow: 'Suggestion', title: 'More artists you might like'),
-                  const SizedBox(height: 12),
-                  _ArtistTrackCarousel(tracks: secondaryTracks, forceOrderByHistory: false),
-                ],
+                // if (secondaryTracks.isNotEmpty) ...[
+                //   const SizedBox(height: 20),
+                //   _SectionHeader(eyebrow: 'Suggestion', title: 'More artists you might like'),
+                //   const SizedBox(height: 12),
+                //   _ArtistTrackCarousel(tracks: secondaryTracks, forceOrderByHistory: false),
+                // ],
               ],
             ),
           ),

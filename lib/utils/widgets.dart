@@ -4,21 +4,33 @@ import 'package:flutter_ai_music/ui/component/element/avatar.dart';
 import 'package:flutter_ai_music/ui/component/element/dashed_circle_painter.dart';
 import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 
-Widget avatarWithUploadingBorder({required String photoUrl, required bool isUploading}) {
-  return SizedBox(
-    width: 72,
-    height: 72,
-    child: CustomPaint(
-      painter: isUploading ? DashedCirclePainter(color: Colors.yellow, strokeWidth: 3) : null,
-      child: Padding(
-        padding: EdgeInsets.all(isUploading ? 2 : 0),
-        child: AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          child: AvatarContent(photoUrl: photoUrl),
+class AvatarWithUploadingBorder extends StatelessWidget {
+  const AvatarWithUploadingBorder({
+    super.key,
+    required this.photoUrl,
+    required this.isUploading,
+  });
+
+  final String photoUrl;
+  final bool isUploading;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 72,
+      height: 72,
+      child: CustomPaint(
+        painter: isUploading ? DashedCirclePainter(color: Colors.yellow, strokeWidth: 3) : null,
+        child: Padding(
+          padding: EdgeInsets.all(isUploading ? 2 : 0),
+          child: AnimatedSize(
+            duration: const Duration(milliseconds: 300),
+            child: AvatarContent(photoUrl: photoUrl),
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }
 
 void showTrackOptions(Track track, BuildContext context) {

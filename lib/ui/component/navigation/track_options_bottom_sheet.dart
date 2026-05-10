@@ -39,7 +39,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
               decoration: BoxDecoration(color: Colors.grey.shade600, borderRadius: BorderRadius.circular(2)),
             ),
 
-            _buildTrackHeader(context),
+            _TrackHeader(track: track),
 
             const SizedBox(height: 16),
             Divider(height: 1, color: Colors.grey.shade800),
@@ -151,60 +151,6 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildTrackHeader(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 20),
-    child: Row(
-      children: [
-        // Album Art
-        Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [BoxShadow(color: Colors.black.withAlpha(60), blurRadius: 12, offset: const Offset(0, 4))],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CachedNetworkImage(
-              imageUrl: track.images.first,
-              fit: BoxFit.cover,
-              errorWidget: (context, url, error) => Container(
-                color: Colors.grey[900],
-                child: const Icon(Icons.music_note, size: 32, color: Colors.white54),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        // Track Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                track.name,
-                style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.bold),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                track.artistName ?? track.artistType.name,
-                style: TextStyle(
-                  fontFamily: "SpotifyMixUI",
-                  fontSize: 14,
-                  color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-
   void _shareTrack(BuildContext context) {
     Navigator.pop(context);
     final shareText = 'Check out "${track.name}" by ${track.artistName ?? "Unknown Artist"}! 🎵';
@@ -272,6 +218,67 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
   void _placeholder(BuildContext context, String feature) {
     Navigator.pop(context);
     Fluttertoast.showToast(msg: '$feature feature is not implemented yet.', toastLength: Toast.LENGTH_SHORT);
+  }
+}
+
+class _TrackHeader extends StatelessWidget {
+  const _TrackHeader({required this.track});
+
+  final Track track;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha(60), blurRadius: 12, offset: const Offset(0, 4))],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: track.images.first,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[900],
+                  child: const Icon(Icons.music_note, size: 32, color: Colors.white54),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  track.name,
+                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.bold),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  track.artistName ?? track.artistType.name,
+                  style: TextStyle(
+                    fontFamily: "SpotifyMixUI",
+                    fontSize: 14,
+                    color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

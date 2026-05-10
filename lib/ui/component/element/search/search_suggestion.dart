@@ -35,7 +35,7 @@ class SearchSuggestion extends ConsumerWidget {
           const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
           if (isQueryEmpty && trending.isNotEmpty) ...[
-            _buildHeader("Trending searches:"),
+            const _SearchSuggestionHeader(title: "Trending searches:"),
             SliverList.builder(
               itemCount: trending.length,
               itemBuilder: (context, index) => ListTile(
@@ -55,7 +55,7 @@ class SearchSuggestion extends ConsumerWidget {
           ],
 
           if (histories.isNotEmpty) ...[
-            _buildHeader("Histories:"),
+            const _SearchSuggestionHeader(title: "Histories:"),
             SliverList.builder(
               itemCount: histories.length,
               itemBuilder: (context, index) {
@@ -94,16 +94,21 @@ class SearchSuggestion extends ConsumerWidget {
       ),
     );
   }
+}
 
-  Widget _buildHeader(String title) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-        child: Text(
-          title,
-          style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 18),
-        ),
+class _SearchSuggestionHeader extends StatelessWidget {
+  const _SearchSuggestionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) => SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Text(
+        title,
+        style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 18),
       ),
-    );
-  }
+    ),
+  );
 }

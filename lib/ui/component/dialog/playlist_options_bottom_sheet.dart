@@ -63,9 +63,9 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
                         ? CachedNetworkImage(
                             imageUrl: photoUrl!,
                             fit: BoxFit.cover,
-                            errorWidget: (_, __, ___) => _placeholderArt(),
+                            errorWidget: (_, __, ___) => const _PlaceholderArt(),
                           )
-                        : _placeholderArt(),
+                        : const _PlaceholderArt(),
                   ),
                 ),
                 Expanded(
@@ -159,7 +159,12 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
   }
 
   // ── Rename dialog ─────────────────────────────────────────────────────────
-  Future<void> _showRenameDialog(BuildContext context, WidgetRef ref, ColorScheme scheme, PlaylistService service) async {
+  Future<void> _showRenameDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme scheme,
+    PlaylistService service,
+  ) async {
     final controller = TextEditingController(text: playlist.name);
     final formKey = GlobalKey<FormState>();
 
@@ -222,8 +227,12 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
     }
   }
 
-  // ── Delete dialog ─────────────────────────────────────────────────────────
-  Future<void> _showDeleteDialog(BuildContext context, WidgetRef ref,ColorScheme scheme, PlaylistService service) async {
+  Future<void> _showDeleteDialog(
+    BuildContext context,
+    WidgetRef ref,
+    ColorScheme scheme,
+    PlaylistService service,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -263,11 +272,6 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
       }
     }
   }
-
-  Widget _placeholderArt() => Container(
-    color: Colors.grey.shade800,
-    child: const Icon(Icons.music_note, color: Colors.white38),
-  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -305,4 +309,14 @@ class _Option extends StatelessWidget {
       ),
     );
   }
+}
+
+class _PlaceholderArt extends StatelessWidget {
+  const _PlaceholderArt();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: Colors.grey.shade800,
+    child: const Icon(Icons.music_note, color: Colors.white38),
+  );
 }

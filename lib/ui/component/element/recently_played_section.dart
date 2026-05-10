@@ -41,9 +41,9 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
     }
 
     return recentTracksAsync.when(
-      loading: () => _buildContent(context),
+      loading: () => _RecentlyPlayedContent(listKey: _listKey, visibleTracks: _visibleTracks, onTrackTap: _playTrack),
       error: (_, __) => const SizedBox.shrink(),
-      data: (_) => _buildContent(context),
+      data: (_) => _RecentlyPlayedContent(listKey: _listKey, visibleTracks: _visibleTracks, onTrackTap: _playTrack),
     );
   }
 
@@ -68,7 +68,7 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final removedTrack = _visibleTracks.removeAt(index);
         _listKey.currentState?.removeItem(
           index,
-          (context, animation) => _buildAnimatedItem(removedTrack, animation),
+          (context, animation) => _AnimatedRecentTrackItem(track: removedTrack, animation: animation),
           duration: _animationDuration,
         );
       }
@@ -90,7 +90,7 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final movedTrack = _visibleTracks.removeAt(currentIndex);
         _listKey.currentState?.removeItem(
           currentIndex,
-          (context, animation) => _buildAnimatedItem(movedTrack, animation),
+          (context, animation) => _AnimatedRecentTrackItem(track: movedTrack, animation: animation),
           duration: _animationDuration,
         );
 
@@ -100,8 +100,29 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
     }
   }
 
-  Widget _buildContent(BuildContext context) {
-    if (_visibleTracks.isEmpty) return const SizedBox.shrink();
+  void _playTrack(Track track) {
+    try {
+      AudioHelper.playTrackFromList(
+        ref,
+        allTracks: _visibleTracks,
+        selectedIndex: _visibleTracks.indexWhere((item) => item.id == track.id),
+      );
+    } catch (e) {
+      Fluttertoast.showToast(msg: 'Error playing track: $e');
+    }
+  }
+}
+
+class _RecentlyPlayedContent extends StatelessWidget {
+  const _RecentlyPlayedContent({required this.listKey, required this.visibleTracks, required this.onTrackTap});
+
+  final GlobalKey<AnimatedListState> listKey;
+  final List<Track> visibleTracks;
+  final ValueChanged<Track> onTrackTap;
+
+  @override
+  Widget build(BuildContext context) {
+    if (visibleTracks.isEmpty) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -130,16 +151,16 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
           SizedBox(
             height: 200,
             child: AnimatedList(
-              key: _listKey,
+              key: listKey,
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.fromLTRB(16, 12, 4, 0),
-              initialItemCount: _visibleTracks.length,
+              initialItemCount: visibleTracks.length,
               itemBuilder: (context, index, animation) {
-                final track = _visibleTracks[index];
-                return _buildAnimatedItem(
-                  track,
-                  animation,
-                  onTap: () => _playTrack(track),
+                final track = visibleTracks[index];
+                return _AnimatedRecentTrackItem(
+                  track: track,
+                  animation: animation,
+                  onTap: () => onTrackTap(track),
                   onLongPress: () => showTrackOptions(track, context),
                 );
               },
@@ -149,13 +170,18 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
       ),
     );
   }
+}
 
-  Widget _buildAnimatedItem(
-    Track track,
-    Animation<double> animation, {
-    VoidCallback? onTap,
-    VoidCallback? onLongPress,
-  }) {
+class _AnimatedRecentTrackItem extends StatelessWidget {
+  const _AnimatedRecentTrackItem({required this.track, required this.animation, this.onTap, this.onLongPress});
+
+  final Track track;
+  final Animation<double> animation;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
     final curvedAnimation = CurvedAnimation(
       parent: animation,
       curve: Curves.easeOutCubic,
@@ -181,18 +207,6 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         ),
       ),
     );
-  }
-
-  void _playTrack(Track track) {
-    try {
-      AudioHelper.playTrackFromList(
-        ref,
-        allTracks: _visibleTracks,
-        selectedIndex: _visibleTracks.indexWhere((item) => item.id == track.id),
-      );
-    } catch (e) {
-      Fluttertoast.showToast(msg: 'Error playing track: $e');
-    }
   }
 }
 

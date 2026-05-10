@@ -1,6 +1,3 @@
-import 'dart:ui';
-
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/ui/component/element/playing_gradient_color.dart';
@@ -30,7 +27,11 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     with TickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   bool _isUserSeeking = false;
   final ValueNotifier<bool> _floatingShow = ValueNotifier(false);
+  final GlobalKey _scrollViewportKey = GlobalKey();
+  final GlobalKey _playbackControlsKey = GlobalKey();
   double _sliderProgress = 0.0;
+  double? _miniPlayerRevealOffset;
+  bool _visibilitySyncScheduled = false;
 
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -48,25 +49,71 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     ref.listenManual<AsyncValue<bool>>(isPlayingProvider, (_, next) {
       final isPlaying = next.value ?? false;
       if (isPlaying) {
-        if (!_pulseController.isAnimating) {
-          _pulseController.repeat(reverse: true);
-        }
+        if (!_pulseController.isAnimating) _pulseController.repeat(reverse: true);
+
       } else {
-        _pulseController
-          ..stop()
-          ..value = 1.0;
+        _pulseController..stop()..value = 1.0;
       }
     }, fireImmediately: true);
+    widget.scrollController.addListener(_handleScrollChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleMiniPlayerVisibilitySync());
   }
 
   @override
   bool get wantKeepAlive => true;
 
   @override
+  void didUpdateWidget(covariant PlayingScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.scrollController == widget.scrollController) return;
+    oldWidget.scrollController.removeListener(_handleScrollChanged);
+    widget.scrollController.addListener(_handleScrollChanged);
+    _miniPlayerRevealOffset = null;
+    _scheduleMiniPlayerVisibilitySync();
+  }
+
+  @override
   void dispose() {
+    widget.scrollController.removeListener(_handleScrollChanged);
     _floatingShow.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  void _handleScrollChanged() => _updateMiniPlayerVisibility();
+
+  void _scheduleMiniPlayerVisibilitySync() {
+    if (!mounted || _visibilitySyncScheduled) return;
+    _visibilitySyncScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _visibilitySyncScheduled = false;
+      if (!mounted) return;
+      _syncMiniPlayerRevealOffset();
+      _updateMiniPlayerVisibility();
+    });
+  }
+
+  void _syncMiniPlayerRevealOffset() {
+    if (!widget.scrollController.hasClients) return;
+
+    final viewportBox = _scrollViewportKey.currentContext?.findRenderObject() as RenderBox?;
+    final controlsBox = _playbackControlsKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null || controlsBox == null || !viewportBox.hasSize || !controlsBox.hasSize) return;
+
+    final controlsTop = controlsBox.localToGlobal(Offset.zero, ancestor: viewportBox).dy;
+    final controlsBottom = controlsTop + controlsBox.size.height;
+    _miniPlayerRevealOffset = widget.scrollController.offset + controlsBottom;
+  }
+
+  void _updateMiniPlayerVisibility() {
+    if (!mounted || !widget.scrollController.hasClients || _miniPlayerRevealOffset == null) {
+      if (_floatingShow.value) _floatingShow.value = false;
+      return;
+    }
+    final shouldShow = widget.scrollController.offset >= _miniPlayerRevealOffset!;
+    if (_floatingShow.value != shouldShow) {
+      _floatingShow.value = shouldShow;
+    }
   }
 
   @override
@@ -92,13 +139,10 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
             ),
           );
         }
-
+        _scheduleMiniPlayerVisibilitySync();
         return Scaffold(
           body: Stack(
             children: [
-              // _buildBackgroundImage(currentTrack.images.firstOrNull),
-              // _buildBlurOverlay(),
-              // _buildGradientOverlay(),
               const PlayingGradientColor(),
               _buildMainContent(currentTrack, screenHeight),
               ValueListenableBuilder<bool>(
@@ -132,102 +176,65 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     );
   }
 
-  Widget _buildBackgroundImage(String? imageUrl) {
-    return Positioned.fill(
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 500),
-        child: SizedBox.expand(
-          key: ValueKey(imageUrl),
-          child: imageUrl == null ? SizedBox.shrink() : CachedNetworkImage(imageUrl: imageUrl, fit: BoxFit.cover),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildBlurOverlay() {
-    return Positioned.fill(
-      child: ListenableBuilder(
-        listenable: widget.scrollController,
-        builder: (context, child) {
-          final offset = widget.scrollController.hasClients ? widget.scrollController.offset : 0.0;
-          final blurAmount = (5 + (offset / 300 * 20)).clamp(5.0, 30.0);
-          return BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: blurAmount, sigmaY: blurAmount),
-            child: Container(color: Colors.black.withAlpha(55)),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildGradientOverlay() {
-    return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.transparent, Colors.black.withAlpha(255)],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildMainContent(Track currentTrack, double screenHeight) {
     return Positioned.fill(
-      child: CustomScrollView(
-        controller: widget.scrollController,
-        cacheExtent: 3000.0,
-        slivers: <Widget>[
-          // App Bar
-          PlayingAppBar(track: currentTrack),
-          // Player Content
-          SliverToBoxAdapter(
-            child: Container(
-              height: screenHeight,
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AlbumArtwork(imageUrl: currentTrack.images.firstOrNull, pulseAnimation: _pulseAnimation),
-                  const SizedBox(height: 50),
-                  TrackInfo(track: currentTrack),
-                  const SizedBox(height: 16),
-                  ProgressBar(
-                    isUserSeeking: _isUserSeeking,
-                    sliderProgress: _sliderProgress,
-                    onChanged: (value) => setState(() {
-                      _sliderProgress = value;
-                      _isUserSeeking = true;
-                    }),
-                    onChangeEnd: (value) async {
-                      setState(() => _isUserSeeking = false);
-                      await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
-                    },
+      child: NotificationListener<ScrollMetricsNotification>(
+        onNotification: (notification) {
+          _scheduleMiniPlayerVisibilitySync();
+          return false;
+        },
+        child: SizedBox.expand(
+          key: _scrollViewportKey,
+          child: CustomScrollView(
+            controller: widget.scrollController,
+            cacheExtent: 3000.0,
+            slivers: <Widget>[
+              // App Bar
+              PlayingAppBar(track: currentTrack),
+              // Player Content
+              SliverToBoxAdapter(
+                child: Container(
+                  height: screenHeight,
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AlbumArtwork(imageUrl: currentTrack.images.firstOrNull, pulseAnimation: _pulseAnimation),
+                      const SizedBox(height: 50),
+                      TrackInfo(track: currentTrack),
+                      const SizedBox(height: 16),
+                      ProgressBar(
+                        isUserSeeking: _isUserSeeking,
+                        sliderProgress: _sliderProgress,
+                        onChanged: (value) => setState(() {
+                          _sliderProgress = value;
+                          _isUserSeeking = true;
+                        }),
+                        onChangeEnd: (value) async {
+                          setState(() => _isUserSeeking = false);
+                          await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      PlaybackControls(key: _playbackControlsKey),
+                    ],
                   ),
-                  const SizedBox(height: 8),
-                  PlaybackControls(
-                    onVisibilityChanged: (info) {
-                      if (!mounted) return;
-                      if (_floatingShow.value != info) {
-                        _floatingShow.value = info;
-                      }
-                    },
-                  ),
-                ],
+                ),
               ),
-            ),
+              // Artist Card
+              SliverToBoxAdapter(
+                child: ArtistCard(
+                  borderRadius: BorderRadius.circular(20),
+                  imageBorderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              // Lyrics Button
+              SliverToBoxAdapter(
+                child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: const LargeLyricsButton()),
+              ),
+            ],
           ),
-          // Artist Card
-          SliverToBoxAdapter(
-            child: ArtistCard(borderRadius: BorderRadius.circular(20), imageBorderRadius: BorderRadius.circular(12)),
-          ),
-          // Lyrics Button
-          SliverToBoxAdapter(
-            child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: const LargeLyricsButton()),
-          ),
-        ],
+        ),
       ),
     );
   }

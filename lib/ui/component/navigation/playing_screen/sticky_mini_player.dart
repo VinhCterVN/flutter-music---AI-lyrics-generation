@@ -6,26 +6,15 @@ import 'package:flutter_ai_music/data/enums/constraints.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../data/models/track.dart';
-import '../../../../provider/artist_provider.dart';
 import '../../../../provider/audio_provider.dart';
 
-class StickyMiniPlayer extends ConsumerWidget {
+class StickyMiniPlayer extends StatelessWidget {
   final Track track;
 
   const StickyMiniPlayer({super.key, required this.track});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
-    final isBuffering = ref.watch(isBufferingProvider).value ?? false;
-    final playerController = ref.watch(playerControllerProvider);
-    final currentArtist = ref.watch(currentArtistProvider).value;
-    final progress = ref.watch(progressProvider).value;
-
-    final progressValue = progress != null && progress.duration != null && progress.duration!.inMilliseconds > 0
-        ? progress.position.inMilliseconds / progress.duration!.inMilliseconds
-        : 0.0;
-
+  Widget build(BuildContext context) {
     return SafeArea(
       bottom: true,
       child: ClipRRect(
@@ -46,7 +35,6 @@ class StickyMiniPlayer extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(12, 12, 8, 8),
                   child: Row(
                     children: [
-                      // Album Art
                       Container(
                         width: 48,
                         height: 48,
@@ -69,7 +57,6 @@ class StickyMiniPlayer extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-                      // Track Info
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,83 +73,127 @@ class StickyMiniPlayer extends ConsumerWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             const SizedBox(height: 2),
-                            Text(
-                              currentArtist?.name ?? 'Unknown Artist',
-                              style: TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 12,
-                                color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            _MiniPlayerArtistName(track: track),
                           ],
                         ),
                       ),
-                      // Play/Pause Button
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                          shape: BoxShape.circle,
-                        ),
-                        child: isBuffering
-                            ? Padding(
-                                padding: const EdgeInsets.all(10.0),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).scaffoldBackgroundColor),
-                                ),
-                              )
-                            : IconButton(
-                                icon: Icon(
-                                  isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                                  color: Theme.of(context).scaffoldBackgroundColor,
-                                ),
-                                iconSize: 26,
-                                padding: EdgeInsets.zero,
-                                onPressed: () {
-                                  if (isPlaying) {
-                                    playerController.pause();
-                                  } else {
-                                    playerController.play();
-                                  }
-                                },
-                              ),
-                      ),
+                      const _MiniPlayerPlayButton(),
                       const SizedBox(width: 4),
-                      // Skip Next Button
-                      IconButton(
-                        icon: const Icon(Icons.skip_next_rounded),
-                        iconSize: 32,
-                        onPressed: () => playerController.skipNext(),
-                      ),
+                      const _MiniPlayerSkipNextButton(),
                     ],
                   ),
                 ),
-                // Progress Bar
-                Container(
-                  height: 3,
-                  margin: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(2),
-                    color: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(40),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: progressValue.clamp(0.0, 1.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(2),
-                        color: Theme.of(context).textTheme.bodyLarge?.color,
-                      ),
-                    ),
-                  ),
-                ),
+                const _MiniPlayerProgressBar(),
                 const SizedBox(height: 8),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniPlayerArtistName extends ConsumerWidget {
+  final Track track;
+
+  const _MiniPlayerArtistName({required this.track});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentTrack = ref.watch(currentTrackProvider).value;
+    final artistName = currentTrack?.id == track.id ? currentTrack?.artistName : track.artistName;
+
+    return Text(
+      artistName ?? 'Unknown Artist',
+      style: TextStyle(
+        fontFamily: "SpotifyMixUI",
+        fontSize: 12,
+        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+      ),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+    );
+  }
+}
+
+class _MiniPlayerPlayButton extends ConsumerWidget {
+  const _MiniPlayerPlayButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isPlaying = ref.watch(isPlayingProvider).value ?? false;
+    final isBuffering = ref.watch(isBufferingProvider).value ?? false;
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge?.color, shape: BoxShape.circle),
+      child: isBuffering
+          ? Padding(
+              padding: const EdgeInsets.all(10.0),
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).scaffoldBackgroundColor),
+              ),
+            )
+          : IconButton(
+              icon: Icon(
+                isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: Theme.of(context).scaffoldBackgroundColor,
+              ),
+              iconSize: 26,
+              padding: EdgeInsets.zero,
+              onPressed: () {
+                final playerController = ref.read(playerControllerProvider);
+                if (isPlaying) {
+                  playerController.pause();
+                } else {
+                  playerController.play();
+                }
+              },
+            ),
+    );
+  }
+}
+
+class _MiniPlayerSkipNextButton extends ConsumerWidget {
+  const _MiniPlayerSkipNextButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return IconButton(
+      icon: const Icon(Icons.skip_next_rounded),
+      iconSize: 32,
+      onPressed: () => ref.read(playerControllerProvider).skipNext(),
+    );
+  }
+}
+
+class _MiniPlayerProgressBar extends ConsumerWidget {
+  const _MiniPlayerProgressBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final progress = ref.watch(progressProvider).value;
+    final progressValue = progress != null && progress.duration != null && progress.duration!.inMilliseconds > 0
+        ? progress.position.inMilliseconds / progress.duration!.inMilliseconds
+        : 0.0;
+
+    return Container(
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(2),
+        color: Theme.of(context).textTheme.bodyLarge?.color?.withAlpha(40),
+      ),
+      child: FractionallySizedBox(
+        alignment: Alignment.centerLeft,
+        widthFactor: progressValue.clamp(0.0, 1.0),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(2),
+            color: Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
       ),
