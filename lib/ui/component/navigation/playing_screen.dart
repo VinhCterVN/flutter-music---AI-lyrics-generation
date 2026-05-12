@@ -8,6 +8,7 @@ import '../../../provider/audio_provider.dart';
 import '../element/artist_card.dart';
 import '../element/button/large_lyrics_button.dart';
 import 'playing_screen/album_artwork.dart';
+import 'playing_screen/audio_waveform_section.dart';
 import 'playing_screen/playback_controls.dart';
 import 'playing_screen/playing_app_bar.dart';
 import 'playing_screen/progress_bar.dart';
@@ -50,7 +51,6 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
       final isPlaying = next.value ?? false;
       if (isPlaying) {
         if (!_pulseController.isAnimating) _pulseController.repeat(reverse: true);
-
       } else {
         _pulseController..stop()..value = 1.0;
       }
@@ -228,6 +228,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                   imageBorderRadius: BorderRadius.circular(12),
                 ),
               ),
+              SliverToBoxAdapter(child: AudioWaveformSection(track: currentTrack)),
               // Lyrics Button
               SliverToBoxAdapter(
                 child: Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 120), child: const LargeLyricsButton()),

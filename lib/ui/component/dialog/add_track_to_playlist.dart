@@ -353,7 +353,7 @@ class _AddToPlaylistScreenState extends ConsumerState<AddToPlaylistScreen> {
                                   curve: Curves.easeOutBack,
                                   builder: (context, value, child) {
                                     return Transform.translate(
-                                      offset: Offset((1 - value) * (index.isEven ? -30 : 30), 0),
+                                      offset: Offset((1 - value) * 30, 0),
                                       child: Opacity(
                                         opacity: value.clamp(0.0, 1.0),
                                         child: Transform.scale(scale: 0.95 + (0.05 * value), child: child),

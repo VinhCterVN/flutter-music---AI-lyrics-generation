@@ -226,91 +226,79 @@ class _NowPlayingBarState extends ConsumerState<NowPlayingBar> with SingleTicker
                               // Controls
                               AnimatedSize(
                                 duration: const Duration(milliseconds: 300),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  spacing: 4,
-                                  children: [
-                                    GestureDetector(
-                                      onTap: () {
-                                        if (currentIndex == null) return;
-                                        ref.read(playlistServiceProvider).toggleTrackToFavourite(currentTrack.id);
-                                        ref.read(queueProvider.notifier).toggleFavoriteAtIndex(currentIndex);
-                                        Fluttertoast.showToast(
-                                          msg: currentTrack.isFavorite
-                                              ? 'Removed from favorites'
-                                              : 'Added to favorites',
-                                        );
-                                      },
-                                      onLongPress: () {
-                                        showGeneralDialog(
-                                          context: context,
-                                          barrierDismissible: true,
-                                          barrierLabel: "Dialog",
-                                          barrierColor: Colors.black54,
-                                          transitionDuration: const Duration(milliseconds: 50),
-                                          pageBuilder: (context, animation, secondaryAnimation) => Dialog(
-                                            backgroundColor: Colors.transparent,
-                                            insetPadding: const EdgeInsets.all(16),
-                                            child: AddToPlaylistScreen(
-                                              trackId: currentTrack.id,
-                                              trackName: currentTrack.name,
-                                            ),
-                                          ),
-                                        );
-                                        // showGeneralDialog(
-                                        //   context: context,
-                                        //   barrierDismissible: true,
-                                        //   barrierLabel: "Dialog",
-                                        //   barrierColor: Colors.black54,
-                                        //   transitionDuration: const Duration(milliseconds: 50),
-                                        //   pageBuilder: (context, animation, secondaryAnimation) => Center(
-                                        //     child: Dialog(
-                                        //       child: Padding(
-                                        //         padding: const EdgeInsets.all(20),
-                                        //         child: Text("Custom animated dialog"),
-                                        //       ),
-                                        //     ),
-                                        //   ),
-                                        // );
-                                      },
-                                      child: isFavourite
-                                          ? FaIcon(
-                                              FontAwesomeIcons.solidHeart,
-                                              size: 20,
-                                              color: Theme.of(context).colorScheme.primary,
-                                        semanticLabel: "Favourite",
-                                            )
-                                          : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
-                                    ),
-                                    SizedBox(width: 4),
-                                    isBuffering
-                                        ? SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(
-                                                Theme.of(context).colorScheme.primaryFixedDim,
+                                curve: Curves.easeInOut,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    spacing: 4,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () {
+                                          if (currentIndex == null) return;
+                                          ref.read(playlistServiceProvider).toggleTrackToFavourite(currentTrack.id);
+                                          ref.read(queueProvider.notifier).toggleFavoriteAtIndex(currentIndex);
+                                          Fluttertoast.showToast(
+                                            msg: currentTrack.isFavorite
+                                                ? 'Removed from favorites'
+                                                : 'Added to favorites',
+                                          );
+                                        },
+                                        onLongPress: () {
+                                          showGeneralDialog(
+                                            context: context,
+                                            barrierDismissible: true,
+                                            barrierLabel: "Dialog",
+                                            barrierColor: Colors.black54,
+                                            transitionDuration: const Duration(milliseconds: 50),
+                                            pageBuilder: (context, animation, secondaryAnimation) => Dialog(
+                                              backgroundColor: Colors.transparent,
+                                              insetPadding: const EdgeInsets.all(16),
+                                              child: AddToPlaylistScreen(
+                                                trackId: currentTrack.id,
+                                                trackName: currentTrack.name,
                                               ),
                                             ),
-                                          )
-                                        : GestureDetector(
-                                            onTap: () {
-                                              final controller = ref.read(playerControllerProvider);
-                                              if (isPlaying) {
-                                                controller.pause();
-                                              } else {
-                                                controller.play();
-                                              }
-                                            },
-                                            child: FaIcon(
-                                              isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
-                                              size: 20,
-                                              shadows: [Shadow(blurRadius: 4, color: Colors.black54.withAlpha(100))],
+                                          );
+                                        },
+                                        child: isFavourite
+                                            ? FaIcon(
+                                                FontAwesomeIcons.solidHeart,
+                                                size: 22,
+                                                color: Theme.of(context).colorScheme.primary,
+                                                semanticLabel: "Favourite",
+                                              )
+                                            : HugeIcon(icon: HugeIcons.strokeRoundedHeartAdd, size: 22),
+                                      ),
+                                      SizedBox(width: 4),
+                                      isBuffering
+                                          ? SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(
+                                                  Theme.of(context).colorScheme.primaryFixedDim,
+                                                ),
+                                              ),
+                                            )
+                                          : GestureDetector(
+                                              onTap: () {
+                                                final controller = ref.read(playerControllerProvider);
+                                                if (isPlaying) {
+                                                  controller.pause();
+                                                } else {
+                                                  controller.play();
+                                                }
+                                              },
+                                              child: FaIcon(
+                                                isPlaying ? FontAwesomeIcons.pause : FontAwesomeIcons.play,
+                                                size: 22,
+                                                shadows: [Shadow(blurRadius: 4, color: Colors.black54.withAlpha(100))],
+                                              ),
                                             ),
-                                          ),
-                                    SizedBox(width: 4),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ],

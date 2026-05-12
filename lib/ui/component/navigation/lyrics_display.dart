@@ -24,7 +24,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   static const double _lyricHorizontalPadding = 20;
   static const double _activeLyricFontSize = 24;
   static const double _inactiveLyricFontSize = 20;
-  static const Duration _lyricAnimationDuration = Duration(milliseconds: 300);
+  static const Duration _lyricAnimationDuration = Duration(milliseconds: 500);
   static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
   static const TextStyle _lyricTextStyle = TextStyle(
     fontFamily: "SpotifyMixUI",
@@ -196,7 +196,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
 
       _scrollController.animateTo(
         targetOffset.clamp(_scrollController.position.minScrollExtent, _scrollController.position.maxScrollExtent),
-        duration: const Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
       );
     });
@@ -233,7 +233,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                       child: ListView.builder(
                         controller: _scrollController,
                         padding: const EdgeInsets.symmetric(horizontal: _lyricHorizontalPadding, vertical: 40),
-                        cacheExtent: 1000.0,
+                        cacheExtent: constraints.maxHeight * 1.5,
                         addAutomaticKeepAlives: false,
                         itemCount: lyrics.length,
                         itemBuilder: (context, index) {
@@ -256,19 +256,14 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                                 padding: EdgeInsets.symmetric(vertical: isActive ? 16 : 6),
                                 child: Align(
                                   alignment: Alignment.centerLeft,
-                                  child: AnimatedContainer(
+                                  child: AnimatedDefaultTextStyle(
                                     duration: _lyricAnimationDuration,
                                     curve: Curves.easeInOut,
-                                    width: lyricMaxWidth * (isActive ? 1 : _inactiveLyricWidthFactor),
-                                    child: AnimatedDefaultTextStyle(
-                                      duration: _lyricAnimationDuration,
-                                      curve: Curves.easeInOut,
-                                      style: _lyricTextStyle.copyWith(
-                                        color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
-                                        fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
-                                      ),
-                                      child: child!,
+                                    style: _lyricTextStyle.copyWith(
+                                      color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
+                                      fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
                                     ),
+                                    child: child!,
                                   ),
                                 ),
                               );
