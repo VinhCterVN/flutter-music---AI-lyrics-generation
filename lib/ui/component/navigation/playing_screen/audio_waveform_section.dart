@@ -17,8 +17,7 @@ class AudioWaveformSection extends ConsumerStatefulWidget {
   const AudioWaveformSection({super.key, required this.track});
 
   @override
-  ConsumerState<AudioWaveformSection> createState() =>
-      _AudioWaveformSectionState();
+  ConsumerState<AudioWaveformSection> createState() => _AudioWaveformSectionState();
 }
 
 class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
@@ -45,8 +44,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
   @override
   void didUpdateWidget(covariant AudioWaveformSection oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.track.id == widget.track.id &&
-        oldWidget.track.uri == widget.track.uri) {
+    if (oldWidget.track.id == widget.track.id && oldWidget.track.uri == widget.track.uri) {
       return;
     }
     _loadWaveform();
@@ -64,9 +62,8 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
     await _waveformSubscription?.cancel();
     _waveformSubscription = null;
 
-    if (!mounted) {
-      return;
-    }
+    if (!mounted) return;
+
     setState(() {
       _waveform = null;
       _error = null;
@@ -126,49 +123,27 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
 
   Future<File> _resolveAudioFile(Track track) async {
     final uri = Uri.tryParse(track.uri);
-    if (uri == null || uri.scheme.isEmpty) {
-      return File(track.uri);
-    }
-
-    if (uri.scheme == 'http' || uri.scheme == 'https') {
-      return DefaultCacheManager().getSingleFile(track.uri);
-    }
-
-    if (uri.scheme == 'file') {
-      return File.fromUri(uri);
-    }
-
-    throw UnsupportedError(
-      'Waveform extraction needs a downloadable or file-based audio source.',
-    );
+    if (uri == null || uri.scheme.isEmpty) return File(track.uri);
+    if (uri.scheme == 'http' || uri.scheme == 'https') return DefaultCacheManager().getSingleFile(track.uri);
+    if (uri.scheme == 'file') return File.fromUri(uri);
+    throw UnsupportedError('Waveform extraction needs a downloadable or file-based audio source.');
   }
 
   Future<File> _waveFileFor(Track track) async {
     final tempDir = await getTemporaryDirectory();
     final waveDir = Directory(p.join(tempDir.path, 'waveforms'));
-    if (!await waveDir.exists()) {
-      await waveDir.create(recursive: true);
-    }
+    if (!await waveDir.exists()) await waveDir.create(recursive: true);
     final uriHash = track.uri.hashCode.abs();
     return File(p.join(waveDir.path, 'track_${track.id}_$uriHash.wave'));
   }
 
   void _syncScrollToPosition(Duration position, Duration duration) {
-    if (_isUserScrolling ||
-        !_scrollController.hasClients ||
-        duration == Duration.zero) {
-      return;
-    }
+    if (_isUserScrolling || !_scrollController.hasClients || duration == Duration.zero) return;
 
     final target = _offsetForPosition(position, duration);
-    final clampedTarget = target.clamp(
-      0.0,
-      _scrollController.position.maxScrollExtent,
-    );
+    final clampedTarget = target.clamp(0.0, _scrollController.position.maxScrollExtent);
     final delta = (_scrollController.offset - clampedTarget).abs();
-    if (delta < 1) {
-      return;
-    }
+    if (delta < 1) return;
 
     final syncToken = ++_scrollSyncToken;
     _isSyncingScroll = true;
@@ -185,11 +160,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
 
     unawaited(
       _scrollController
-          .animateTo(
-            clampedTarget,
-            duration: const Duration(milliseconds: 260),
-            curve: Curves.linear,
-          )
+          .animateTo(clampedTarget, duration: const Duration(milliseconds: 260), curve: Curves.linear)
           .whenComplete(() {
             if (mounted && syncToken == _scrollSyncToken) {
               _isSyncingScroll = false;
@@ -200,19 +171,12 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
 
   double _offsetForPosition(Duration position, Duration duration) {
     final seconds = position.inMilliseconds / Duration.millisecondsPerSecond;
-    return seconds.clamp(
-          0.0,
-          duration.inMilliseconds / Duration.millisecondsPerSecond,
-        ) *
-        _pixelsPerSecond;
+    return seconds.clamp(0.0, duration.inMilliseconds / Duration.millisecondsPerSecond) * _pixelsPerSecond;
   }
 
   Duration _positionForOffset(double offset, Duration duration) {
-    final milliseconds =
-        (offset / _pixelsPerSecond * Duration.millisecondsPerSecond).round();
-    return Duration(
-      milliseconds: milliseconds.clamp(0, duration.inMilliseconds),
-    );
+    final milliseconds = (offset / _pixelsPerSecond * Duration.millisecondsPerSecond).round();
+    return Duration(milliseconds: milliseconds.clamp(0, duration.inMilliseconds));
   }
 
   Future<void> _seekToScrollPosition(Duration duration) async {
@@ -242,8 +206,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
       }
     });
 
-    final textColor =
-        Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white;
+    final textColor = Theme.of(context).textTheme.bodyLarge?.color ?? Colors.white;
     final mutedTextColor = textColor.withAlpha((0.62 * 255).toInt());
 
     return Container(
@@ -262,20 +225,12 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
             children: [
               Text(
                 'Waveform',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(color: textColor, fontSize: 15, fontWeight: FontWeight.w700),
               ),
               const Spacer(),
               Text(
                 '${_formatDuration(position)} / ${_formatDuration(duration)}',
-                style: TextStyle(
-                  color: mutedTextColor,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: mutedTextColor, fontSize: 12, fontWeight: FontWeight.w600),
               ),
             ],
           ),
@@ -285,9 +240,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
               builder: (context, constraints) {
                 final contentWidth = math.max(
                   constraints.maxWidth,
-                  duration.inMilliseconds /
-                      Duration.millisecondsPerSecond *
-                      _pixelsPerSecond,
+                  duration.inMilliseconds / Duration.millisecondsPerSecond * _pixelsPerSecond,
                 );
                 final sidePadding = constraints.maxWidth / 2;
 
@@ -299,12 +252,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                       shaderCallback: (bounds) => const LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
-                        colors: [
-                          Colors.transparent,
-                          Colors.white,
-                          Colors.white,
-                          Colors.transparent,
-                        ],
+                        colors: [Colors.transparent, Colors.white, Colors.white, Colors.transparent],
                         stops: [0, 0.08, 0.92, 1],
                       ).createShader(bounds),
                       child: NotificationListener<ScrollNotification>(
@@ -322,16 +270,11 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                             setState(() => _isUserScrolling = true);
                           } else if (_isSyncingScroll) {
                             return false;
-                          } else if (notification is ScrollUpdateNotification &&
-                              _isUserScrolling) {
+                          } else if (notification is ScrollUpdateNotification && _isUserScrolling) {
                             setState(() {
-                              _previewPosition = _positionForOffset(
-                                _scrollController.offset,
-                                duration,
-                              );
+                              _previewPosition = _positionForOffset(_scrollController.offset, duration);
                             });
-                          } else if (notification is ScrollEndNotification &&
-                              _isUserScrolling) {
+                          } else if (notification is ScrollEndNotification && _isUserScrolling) {
                             unawaited(
                               _seekToScrollPosition(duration).whenComplete(() {
                                 if (mounted) {
@@ -350,13 +293,9 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                           scrollDirection: Axis.horizontal,
                           physics: duration == Duration.zero
                               ? const NeverScrollableScrollPhysics()
-                              : const BouncingScrollPhysics(
-                                  parent: AlwaysScrollableScrollPhysics(),
-                                ),
+                              : const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           child: Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: sidePadding,
-                            ),
+                            padding: EdgeInsets.symmetric(horizontal: sidePadding),
                             child: SizedBox(
                               width: contentWidth,
                               height: constraints.maxHeight,
@@ -366,13 +305,8 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                                   duration: duration,
                                   position: position,
                                   seed: widget.track.id,
-                                  waveColor: Colors.white.withAlpha(
-                                    (0.32 * 255).toInt(),
-                                  ),
-                                  playedColor: Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withAlpha((0.92 * 255).toInt()),
+                                  waveColor: Colors.white.withAlpha((0.32 * 255).toInt()),
+                                  playedColor: Theme.of(context).colorScheme.primary.withAlpha((0.92 * 255).toInt()),
                                 ),
                               ),
                             ),
@@ -389,9 +323,7 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                           borderRadius: BorderRadius.circular(99),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withAlpha(
-                                (0.35 * 255).toInt(),
-                              ),
+                              color: Colors.black.withAlpha((0.35 * 255).toInt()),
                               blurRadius: 10,
                               offset: const Offset(0, 3),
                             ),
@@ -408,14 +340,8 @@ class _AudioWaveformSectionState extends ConsumerState<AudioWaveformSection> {
                           borderRadius: BorderRadius.circular(99),
                           child: LinearProgressIndicator(
                             minHeight: 2,
-                            value: _error == null
-                                ? _extractionProgress
-                                      .clamp(0.02, 1.0)
-                                      .toDouble()
-                                : null,
-                            backgroundColor: Colors.white.withAlpha(
-                              (0.08 * 255).toInt(),
-                            ),
+                            value: _error == null ? _extractionProgress.clamp(0.02, 1.0).toDouble() : null,
+                            backgroundColor: Colors.white.withAlpha((0.08 * 255).toInt()),
                             color: _error == null
                                 ? Theme.of(context).colorScheme.primary
                                 : Colors.white.withAlpha((0.24 * 255).toInt()),
@@ -466,14 +392,11 @@ class _WaveformPainter extends CustomPainter {
       ..color = playedColor;
     final activeX = duration == Duration.zero
         ? 0.0
-        : (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0) *
-              size.width;
+        : (position.inMilliseconds / duration.inMilliseconds).clamp(0.0, 1.0) * size.width;
 
     const step = 7.0;
     for (var x = 0.0; x <= size.width; x += step) {
-      final normalizedHeight = waveform == null
-          ? _syntheticHeight(x)
-          : _waveformHeight(x, size.width);
+      final normalizedHeight = waveform == null ? _syntheticHeight(x) : _waveformHeight(x, size.width);
       final barHeight = math.max(8.0, normalizedHeight * size.height * 0.92);
       final centerY = size.height / 2;
       canvas.drawLine(
@@ -490,9 +413,7 @@ class _WaveformPainter extends CustomPainter {
       return 0;
     }
 
-    final position = Duration(
-      milliseconds: (x / width * duration.inMilliseconds).round(),
-    );
+    final position = Duration(milliseconds: (x / width * duration.inMilliseconds).round());
     final sampleIndex = source.positionToPixel(position).round();
     final minSample = source.getPixelMin(sampleIndex);
     final maxSample = source.getPixelMax(sampleIndex);

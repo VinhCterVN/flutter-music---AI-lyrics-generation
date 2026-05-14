@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/home/animated_home_section.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +13,8 @@ class RecentlyPlayedSection extends ConsumerStatefulWidget {
   const RecentlyPlayedSection({super.key});
 
   @override
-  ConsumerState<RecentlyPlayedSection> createState() => _RecentlyPlayedSectionState();
+  ConsumerState<RecentlyPlayedSection> createState() =>
+      _RecentlyPlayedSectionState();
 }
 
 class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
@@ -27,23 +29,48 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
   Widget build(BuildContext context) {
     final recentTracksAsync = ref.watch(recentTracksProvider(_limit));
 
-    ref.listen<AsyncValue<List<Track>>>(recentTracksProvider(_limit), (_, next) {
+    ref.listen<AsyncValue<List<Track>>>(recentTracksProvider(_limit), (
+      _,
+      next,
+    ) {
       next.whenData(_syncVisibleTracks);
     });
 
     recentTracksAsync.whenData((tracks) {
       if (_initialized) return;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _syncVisibleTracks(tracks));
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _syncVisibleTracks(tracks),
+      );
     });
 
     if (!_initialized && recentTracksAsync.isLoading) {
-      return const SizedBox.shrink();
+      return const AnimatedHomeSection(
+        child: _RecentlyPlayedSkeleton(
+          key: ValueKey('recently-played-loading'),
+        ),
+      );
     }
 
     return recentTracksAsync.when(
-      loading: () => _RecentlyPlayedContent(listKey: _listKey, visibleTracks: _visibleTracks, onTrackTap: _playTrack),
-      error: (_, __) => const SizedBox.shrink(),
-      data: (_) => _RecentlyPlayedContent(listKey: _listKey, visibleTracks: _visibleTracks, onTrackTap: _playTrack),
+      loading: () => AnimatedHomeSection(
+        child: _RecentlyPlayedContent(
+          key: ValueKey('recently-played-${_visibleTracks.length}'),
+          listKey: _listKey,
+          visibleTracks: _visibleTracks,
+          onTrackTap: _playTrack,
+        ),
+      ),
+      error: (_, __) => const AnimatedHomeSection(
+        child: SizedBox.shrink(key: ValueKey('recently-played-error')),
+      ),
+      data: (_) => AnimatedHomeSection(
+        child: _RecentlyPlayedContent(
+          key: ValueKey('recently-played-${_visibleTracks.length}'),
+          listKey: _listKey,
+          visibleTracks: _visibleTracks,
+          onTrackTap: _playTrack,
+        ),
+      ),
     );
   }
 
@@ -68,7 +95,10 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final removedTrack = _visibleTracks.removeAt(index);
         _listKey.currentState?.removeItem(
           index,
-          (context, animation) => _AnimatedRecentTrackItem(track: removedTrack, animation: animation),
+          (context, animation) => _AnimatedRecentTrackItem(
+            track: removedTrack,
+            animation: animation,
+          ),
           duration: _animationDuration,
         );
       }
@@ -76,11 +106,16 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
 
     for (var targetIndex = 0; targetIndex < nextTracks.length; targetIndex++) {
       final nextTrack = nextTracks[targetIndex];
-      final currentIndex = _visibleTracks.indexWhere((track) => track.id == nextTrack.id);
+      final currentIndex = _visibleTracks.indexWhere(
+        (track) => track.id == nextTrack.id,
+      );
 
       if (currentIndex == -1) {
         _visibleTracks.insert(targetIndex, nextTrack);
-        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
+        _listKey.currentState?.insertItem(
+          targetIndex,
+          duration: _animationDuration,
+        );
         continue;
       }
 
@@ -90,12 +125,16 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final movedTrack = _visibleTracks.removeAt(currentIndex);
         _listKey.currentState?.removeItem(
           currentIndex,
-          (context, animation) => _AnimatedRecentTrackItem(track: movedTrack, animation: animation),
+          (context, animation) =>
+              _AnimatedRecentTrackItem(track: movedTrack, animation: animation),
           duration: _animationDuration,
         );
 
         _visibleTracks.insert(targetIndex, movedTrack);
-        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
+        _listKey.currentState?.insertItem(
+          targetIndex,
+          duration: _animationDuration,
+        );
       }
     }
   }
@@ -114,7 +153,12 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
 }
 
 class _RecentlyPlayedContent extends StatelessWidget {
-  const _RecentlyPlayedContent({required this.listKey, required this.visibleTracks, required this.onTrackTap});
+  const _RecentlyPlayedContent({
+    super.key,
+    required this.listKey,
+    required this.visibleTracks,
+    required this.onTrackTap,
+  });
 
   final GlobalKey<AnimatedListState> listKey;
   final List<Track> visibleTracks;
@@ -136,13 +180,21 @@ class _RecentlyPlayedContent extends StatelessWidget {
               children: [
                 const Text(
                   "Recently Played",
-                  style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.w800),
+                  style: TextStyle(
+                    fontFamily: "SpotifyMixUI",
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 TextButton(
                   onPressed: () => context.push('/recent-tracks'),
                   child: const Text(
                     "See All",
-                    style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontFamily: "SpotifyMixUI",
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ],
@@ -172,8 +224,72 @@ class _RecentlyPlayedContent extends StatelessWidget {
   }
 }
 
+class _RecentlyPlayedSkeleton extends StatelessWidget {
+  const _RecentlyPlayedSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 12, 0),
+            child: HomeSectionSkeletonBox(
+              width: 160,
+              height: 20,
+              borderRadius: 8,
+            ),
+          ),
+          SizedBox(
+            height: 200,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.fromLTRB(16, 12, 4, 0),
+              physics: const NeverScrollableScrollPhysics(),
+              itemBuilder: (context, index) => const SizedBox(
+                width: 140,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    HomeSectionSkeletonBox(
+                      width: 140,
+                      height: 140,
+                      borderRadius: 8,
+                    ),
+                    SizedBox(height: 8),
+                    HomeSectionSkeletonBox(
+                      width: 120,
+                      height: 14,
+                      borderRadius: 7,
+                    ),
+                    SizedBox(height: 8),
+                    HomeSectionSkeletonBox(
+                      width: 92,
+                      height: 12,
+                      borderRadius: 6,
+                    ),
+                  ],
+                ),
+              ),
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemCount: 3,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _AnimatedRecentTrackItem extends StatelessWidget {
-  const _AnimatedRecentTrackItem({required this.track, required this.animation, this.onTap, this.onLongPress});
+  const _AnimatedRecentTrackItem({
+    required this.track,
+    required this.animation,
+    this.onTap,
+    this.onLongPress,
+  });
 
   final Track track;
   final Animation<double> animation;
@@ -194,7 +310,10 @@ class _AnimatedRecentTrackItem extends StatelessWidget {
       child: FadeTransition(
         opacity: curvedAnimation,
         child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0.16, 0), end: Offset.zero).animate(curvedAnimation),
+          position: Tween<Offset>(
+            begin: const Offset(0.16, 0),
+            end: Offset.zero,
+          ).animate(curvedAnimation),
           child: Padding(
             padding: const EdgeInsets.only(right: 12),
             child: _RecentTrackCard(
@@ -215,7 +334,12 @@ class _RecentTrackCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  const _RecentTrackCard({super.key, required this.track, required this.onTap, required this.onLongPress});
+  const _RecentTrackCard({
+    super.key,
+    required this.track,
+    required this.onTap,
+    required this.onLongPress,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -234,7 +358,8 @@ class _RecentTrackCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: track.images.isNotEmpty ? track.images.first : '',
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: Colors.grey.shade800),
+                  placeholder: (_, __) =>
+                      Container(color: Colors.grey.shade800),
                   errorWidget: (_, __, ___) => Container(
                     color: Colors.grey.shade800,
                     child: const Icon(Icons.music_note, color: Colors.white54),
@@ -245,7 +370,11 @@ class _RecentTrackCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               track.name,
-              style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                fontFamily: "SpotifyMixUI",
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

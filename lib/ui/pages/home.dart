@@ -1,19 +1,15 @@
-import 'dart:async';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_ai_music/data/enums/ui_state.dart';
-import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
+import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/home/home_discovery_sections.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
-import 'package:flutter_ai_music/utils/mock_tracks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:lottie/lottie.dart';
 
 import '../component/element/recent_tracks.dart';
 import '../component/element/recently_played_section.dart';
@@ -26,12 +22,13 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  static const _recentlyPlayedLimit = 10;
+  static const _recentTracksLimit = 20;
+
   late ScrollController _controller;
-  List<Track> tracks = [];
   late final List<Widget> _dynamicHomeSections;
   int selectedGenreIndex = -1;
   int _selectedHeaderChipIndex = 0;
-  UIState _state = UIState.loading;
 
   @override
   void initState() {
@@ -39,15 +36,6 @@ class _HomePageState extends ConsumerState<HomePage> {
     _controller = ScrollController();
     _dynamicHomeSections = [const HomeDiscoverySections(), const SliverToBoxAdapter(child: RecentTracksSection())]
       ..shuffle();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      Timer(const Duration(milliseconds: 2000), () {
-        if (!mounted) return;
-        setState(() {
-          tracks = mockTracks;
-          _state = UIState.ready;
-        });
-      });
-    });
   }
 
   @override
@@ -59,12 +47,13 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.sizeOf(context);
 
     return RefreshIndicator(
-      onRefresh: () async {},
+      onRefresh: _refreshHome,
       child: CustomScrollView(
         controller: _controller,
-        cacheExtent: 1000.0,
+        cacheExtent: size.height * 2,
         slivers: [
           SliverAppBar(
             pinned: true,
@@ -174,22 +163,20 @@ class _HomePageState extends ConsumerState<HomePage> {
             leading: SizedBox.shrink(),
             leadingWidth: 0.0,
           ),
-          if (_state == UIState.loading)
-            SliverToBoxAdapter(
-              child: SizedBox(
-                width: double.infinity,
-                child: Lottie.asset("assets/animations/impress.json", repeat: false),
-              ),
-            )
-          else ...[
-            const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
-            const SliverToBoxAdapter(child: RecentlyPlayedSection()),
-            ..._dynamicHomeSections,
-          ],
+          const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
+          const SliverToBoxAdapter(child: RecentlyPlayedSection()),
+          ..._dynamicHomeSections,
           SliverToBoxAdapter(child: SizedBox(height: 200)),
         ],
       ),
     );
+  }
+
+  Future<void> _refreshHome() async {
+    ref.invalidate(homeDiscoveryProvider);
+    ref.invalidate(recentTracksProvider(_recentlyPlayedLimit));
+    ref.invalidate(recentTracksProvider(_recentTracksLimit));
+    await ref.read(homeDiscoveryProvider.future);
   }
 
   Widget _buildMorphingSearchBar(ThemeData theme, double progress, double maxWidth) {

@@ -9,9 +9,29 @@ import '../../../../data/models/track.dart';
 import '../../../../provider/audio_provider.dart';
 
 class StickyMiniPlayer extends StatelessWidget {
+  static const double horizontalInset = 12;
+  static const double visibleBottomInset = 16;
+  static const double _artworkSize = 48;
+  static const double _rowTopPadding = 12;
+  static const double _rowBottomPadding = 8;
+  static const double _progressBarHeight = 3;
+  static const double _bottomPadding = 8;
+  static const double contentHeight =
+      _rowTopPadding +
+      _artworkSize +
+      _rowBottomPadding +
+      _progressBarHeight +
+      _bottomPadding;
+
   final Track track;
 
   const StickyMiniPlayer({super.key, required this.track});
+
+  static double reservedBottomSpace(BuildContext context) {
+    return visibleBottomInset +
+        contentHeight +
+        MediaQuery.viewPaddingOf(context).bottom;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +46,13 @@ class StickyMiniPlayer extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface.withAlpha(200),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: Colors.white.withAlpha(30), width: 1),
-              boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 20, offset: const Offset(0, 4))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(50),
+                  blurRadius: 20,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -41,7 +67,11 @@ class StickyMiniPlayer extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 8, offset: const Offset(0, 2)),
+                            BoxShadow(
+                              color: Colors.black.withAlpha(40),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
                           ],
                         ),
                         child: ClipRRect(
@@ -49,10 +79,15 @@ class StickyMiniPlayer extends StatelessWidget {
                           child: CachedNetworkImage(
                             imageUrl: track.images.firstOrNull ?? url,
                             fit: BoxFit.cover,
-                            errorWidget: (context, error, stackTrace) => Container(
-                              color: Colors.grey[900],
-                              child: const Icon(Icons.music_note, size: 24, color: Colors.white54),
-                            ),
+                            errorWidget: (context, error, stackTrace) =>
+                                Container(
+                                  color: Colors.grey[900],
+                                  child: const Icon(
+                                    Icons.music_note,
+                                    size: 24,
+                                    color: Colors.white54,
+                                  ),
+                                ),
                           ),
                         ),
                       ),
@@ -102,14 +137,18 @@ class _MiniPlayerArtistName extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final currentTrack = ref.watch(currentTrackProvider).value;
-    final artistName = currentTrack?.id == track.id ? currentTrack?.artistName : track.artistName;
+    final artistName = currentTrack?.id == track.id
+        ? currentTrack?.artistName
+        : track.artistName;
 
     return Text(
       artistName ?? 'Unknown Artist',
       style: TextStyle(
         fontFamily: "SpotifyMixUI",
         fontSize: 12,
-        color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
+        color: Theme.of(
+          context,
+        ).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
       ),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
@@ -128,13 +167,18 @@ class _MiniPlayerPlayButton extends ConsumerWidget {
     return Container(
       width: 44,
       height: 44,
-      decoration: BoxDecoration(color: Theme.of(context).textTheme.bodyLarge?.color, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: Theme.of(context).textTheme.bodyLarge?.color,
+        shape: BoxShape.circle,
+      ),
       child: isBuffering
           ? Padding(
               padding: const EdgeInsets.all(10.0),
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).scaffoldBackgroundColor),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  Theme.of(context).scaffoldBackgroundColor,
+                ),
               ),
             )
           : IconButton(
@@ -176,7 +220,10 @@ class _MiniPlayerProgressBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final progress = ref.watch(progressProvider).value;
-    final progressValue = progress != null && progress.duration != null && progress.duration!.inMilliseconds > 0
+    final progressValue =
+        progress != null &&
+            progress.duration != null &&
+            progress.duration!.inMilliseconds > 0
         ? progress.position.inMilliseconds / progress.duration!.inMilliseconds
         : 0.0;
 

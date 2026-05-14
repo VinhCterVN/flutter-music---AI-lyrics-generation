@@ -25,7 +25,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   static const double _activeLyricFontSize = 24;
   static const double _inactiveLyricFontSize = 20;
   static const Duration _lyricAnimationDuration = Duration(milliseconds: 500);
-  static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
+  // static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
   static const TextStyle _lyricTextStyle = TextStyle(
     fontFamily: "SpotifyMixUI",
     fontWeight: FontWeight.bold,

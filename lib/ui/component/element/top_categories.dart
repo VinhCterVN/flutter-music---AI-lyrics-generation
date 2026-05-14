@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/home/animated_home_section.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -20,34 +21,84 @@ class TopCategories extends ConsumerWidget {
     return StreamBuilder<List<Playlist>>(
       stream: playlistService.streamPlaylists(limit: 10),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-          return const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator()));
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
+          return const SliverToBoxAdapter(
+            child: AnimatedHomeSection(
+              child: _TopCategoriesSkeleton(
+                key: ValueKey('top-categories-loading'),
+              ),
+            ),
+          );
         }
 
         final playlists = snapshot.data ?? [];
 
-        // Total count = 1 (Liked Songs) + real playlists
-        final itemCount = 1 + playlists.length;
-
-        return SliverGrid(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 8,
-            crossAxisSpacing: 8,
-            mainAxisExtent: 48,
-          ),
-          delegate: SliverChildBuilderDelegate(
-            (context, index) {
-              if (index == 0) return const _LikedSongsCard();
-              return _QuickPlayCard(
-                key: Key(playlists[index - 1].id),
-                playlist: playlists[index - 1],
-              );
-            },
-            childCount: itemCount,
+        return SliverToBoxAdapter(
+          child: AnimatedHomeSection(
+            child: _TopCategoriesGrid(
+              key: ValueKey('top-categories-${playlists.length}'),
+              playlists: playlists,
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+class _TopCategoriesGrid extends StatelessWidget {
+  const _TopCategoriesGrid({super.key, required this.playlists});
+
+  final List<Playlist> playlists;
+
+  @override
+  Widget build(BuildContext context) {
+    final itemCount = 1 + playlists.length;
+
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        mainAxisExtent: 48,
+      ),
+      itemBuilder: (context, index) {
+        if (index == 0) return const _LikedSongsCard();
+        return _QuickPlayCard(
+          key: Key(playlists[index - 1].id),
+          playlist: playlists[index - 1],
+        );
+      },
+      itemCount: itemCount,
+    );
+  }
+}
+
+class _TopCategoriesSkeleton extends StatelessWidget {
+  const _TopCategoriesSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      padding: EdgeInsets.zero,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        mainAxisSpacing: 8,
+        crossAxisSpacing: 8,
+        mainAxisExtent: 48,
+      ),
+      itemBuilder: (context, index) => const HomeSectionSkeletonBox(
+        width: double.infinity,
+        height: 48,
+        borderRadius: 4,
+      ),
+      itemCount: 4,
     );
   }
 }
@@ -73,10 +124,14 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
   Future<void> _loadPhotoUrl() async {
     if (_photoUrl != null) return;
     if (widget.playlist.trackIds.isEmpty) {
-      setState(() => _photoUrl = "https://i.pravatar.cc/300?u=${widget.playlist.id}");
+      setState(
+        () => _photoUrl = "https://i.pravatar.cc/300?u=${widget.playlist.id}",
+      );
       return;
     }
-    final track = await ref.read(trackServiceProvider).getTracksByIds([widget.playlist.trackIds.first.toString()]);
+    final track = await ref.read(trackServiceProvider).getTracksByIds([
+      widget.playlist.trackIds.first.toString(),
+    ]);
     if (!mounted) return;
     setState(() => _photoUrl = track.first.images.first);
   }
@@ -87,8 +142,12 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
         Fluttertoast.showToast(msg: 'Playlist is empty');
         return;
       }
-      final trackIdStrings = playlist.trackIds.map((id) => id.toString()).toList();
-      final tracks = await ref.read(trackServiceProvider).getTracksByIds(trackIdStrings);
+      final trackIdStrings = playlist.trackIds
+          .map((id) => id.toString())
+          .toList();
+      final tracks = await ref
+          .read(trackServiceProvider)
+          .getTracksByIds(trackIdStrings);
       if (tracks.isEmpty) {
         Fluttertoast.showToast(msg: 'No tracks found in playlist');
         return;
@@ -115,7 +174,13 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
         decoration: BoxDecoration(
           color: Colors.white70.withAlpha(30),
           borderRadius: BorderRadius.circular(4),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(50),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -129,15 +194,24 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
                   child: _photoUrl == null
                       ? Container(
                           color: Colors.grey.shade800,
-                          child: Center(child: const Icon(Icons.music_note, color: Colors.white54)),
+                          child: Center(
+                            child: const Icon(
+                              Icons.music_note,
+                              color: Colors.white54,
+                            ),
+                          ),
                         )
                       : CachedNetworkImage(
                           imageUrl: _photoUrl!,
                           fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(color: Colors.grey.shade800),
+                          placeholder: (_, __) =>
+                              Container(color: Colors.grey.shade800),
                           errorWidget: (_, __, ___) => Container(
                             color: Colors.grey.shade800,
-                            child: const Icon(Icons.music_note, color: Colors.white54),
+                            child: const Icon(
+                              Icons.music_note,
+                              color: Colors.white54,
+                            ),
                           ),
                         ),
                 ),
@@ -170,7 +244,8 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
 class _LikedSongsCard extends StatelessWidget {
   const _LikedSongsCard();
 
-  static const _thumbUrl = 'https://misc.scdn.co/liked-songs/liked-songs-640.jpg';
+  static const _thumbUrl =
+      'https://misc.scdn.co/liked-songs/liked-songs-640.jpg';
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +258,13 @@ class _LikedSongsCard extends StatelessWidget {
             colors: [Color(0xFF4C2B8A), Color(0xFF2D1B5E)],
           ),
           borderRadius: BorderRadius.circular(4),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(60), blurRadius: 4, offset: const Offset(0, 2))],
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(60),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
@@ -195,8 +276,10 @@ class _LikedSongsCard extends StatelessWidget {
                 child: CachedNetworkImage(
                   imageUrl: _thumbUrl,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: const Color(0xFF4C2B8A)),
-                  errorWidget: (_, __, ___) => const Icon(Icons.favorite, color: Colors.pinkAccent),
+                  placeholder: (_, __) =>
+                      Container(color: const Color(0xFF4C2B8A)),
+                  errorWidget: (_, __, ___) =>
+                      const Icon(Icons.favorite, color: Colors.pinkAccent),
                 ),
               ),
             ),
