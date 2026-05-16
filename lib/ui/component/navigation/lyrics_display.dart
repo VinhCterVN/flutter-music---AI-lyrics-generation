@@ -1,8 +1,7 @@
 import 'dart:developer';
-import 'dart:ui';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/layout/animated_ambient_color_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lottie/lottie.dart';
 
@@ -16,6 +15,15 @@ class LyricsDisplayWidget extends ConsumerStatefulWidget {
 
   const LyricsDisplayWidget({super.key, required this.track});
 
+  static const double activeLyricFontSize = 24;
+  static const double inactiveLyricFontSize = 20;
+  static const TextStyle lyricTextStyle = TextStyle(
+    fontFamily: "SpotifyMixUI",
+    fontWeight: FontWeight.bold,
+    letterSpacing: -0.25,
+    height: 1.3,
+  );
+
   @override
   ConsumerState<LyricsDisplayWidget> createState() => _LyricsDisplayWidgetState();
 }
@@ -23,8 +31,10 @@ class LyricsDisplayWidget extends ConsumerStatefulWidget {
 class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   static const double _lyricHorizontalPadding = 20;
   static const double _activeLyricFontSize = 24;
-  static const double _inactiveLyricFontSize = 20;
-  static const Duration _lyricAnimationDuration = Duration(milliseconds: 500);
+
+  // static const double _inactiveLyricFontSize = 20;
+  // static const Duration _lyricAnimationDuration = Duration(milliseconds: 500);
+
   // static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
   static const TextStyle _lyricTextStyle = TextStyle(
     fontFamily: "SpotifyMixUI",
@@ -63,26 +73,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
         return Scaffold(
           body: Stack(
             children: [
-              Positioned.fill(
-                child: CachedNetworkImage(imageUrl: track.images.first, fit: BoxFit.cover),
-              ),
-              Positioned.fill(
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaY: 15, sigmaX: 15),
-                  child: Container(color: Colors.black.withAlpha(55)),
-                ),
-              ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.black.withAlpha(45), Colors.black.withAlpha(55)],
-                    ),
-                  ),
-                ),
-              ),
+              const _LyricsAmbientGradientBackground(),
               SafeArea(
                 child: lyricsAsync.when(
                   data: (lyrics) {
@@ -244,31 +235,11 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                             maxWidth: lyricMaxWidth,
                           );
 
-                          return ValueListenableBuilder<int>(
-                            valueListenable: _currentLineIndexNotifier,
-                            builder: (context, currentLineIndex, child) {
-                              final isActive = index == currentLineIndex;
-
-                              return AnimatedPadding(
-                                key: _lineKeys[index],
-                                duration: _lyricAnimationDuration,
-                                curve: Curves.easeInOut,
-                                padding: EdgeInsets.symmetric(vertical: isActive ? 16 : 6),
-                                child: Align(
-                                  alignment: Alignment.centerLeft,
-                                  child: AnimatedDefaultTextStyle(
-                                    duration: _lyricAnimationDuration,
-                                    curve: Curves.easeInOut,
-                                    style: _lyricTextStyle.copyWith(
-                                      color: isActive ? Colors.white : Colors.white54.withAlpha((0.5 * 255).round()),
-                                      fontSize: isActive ? _activeLyricFontSize : _inactiveLyricFontSize,
-                                    ),
-                                    child: child!,
-                                  ),
-                                ),
-                              );
-                            },
-                            child: Text(wrappedText, textAlign: TextAlign.left),
+                          return _LyricLineItem(
+                            lineKey: _lineKeys[index]!,
+                            text: wrappedText,
+                            activeIndexNotifier: _currentLineIndexNotifier,
+                            index: index,
                           );
                         },
                       ),
@@ -426,6 +397,94 @@ String _formatDuration(Duration duration) {
   return '$minutes:$seconds';
 }
 
+class _LyricLineItem extends StatefulWidget {
+  const _LyricLineItem({
+    required this.lineKey,
+    required this.text,
+    required this.activeIndexNotifier,
+    required this.index,
+  });
+
+  final GlobalKey lineKey;
+  final String text;
+  final ValueNotifier<int> activeIndexNotifier;
+  final int index;
+
+  @override
+  State<_LyricLineItem> createState() => _LyricLineItemState();
+}
+
+class _LyricLineItemState extends State<_LyricLineItem> {
+  static const Duration _duration = Duration(milliseconds: 500);
+  static const double _inactiveScale =
+      LyricsDisplayWidget.inactiveLyricFontSize / LyricsDisplayWidget.activeLyricFontSize;
+
+  late bool _isActive;
+
+  @override
+  void initState() {
+    super.initState();
+    _isActive = widget.activeIndexNotifier.value == widget.index;
+    widget.activeIndexNotifier.addListener(_onActiveIndexChanged);
+  }
+
+  @override
+  void didUpdateWidget(_LyricLineItem old) {
+    super.didUpdateWidget(old);
+    if (old.activeIndexNotifier != widget.activeIndexNotifier) {
+      old.activeIndexNotifier.removeListener(_onActiveIndexChanged);
+      widget.activeIndexNotifier.addListener(_onActiveIndexChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.activeIndexNotifier.removeListener(_onActiveIndexChanged);
+    super.dispose();
+  }
+
+  void _onActiveIndexChanged() {
+    final shouldBeActive = widget.activeIndexNotifier.value == widget.index;
+    if (shouldBeActive != _isActive) {
+      setState(() => _isActive = shouldBeActive);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedPadding(
+        key: widget.lineKey,
+        duration: _duration,
+        curve: Curves.easeInOut,
+        padding: EdgeInsets.symmetric(vertical: _isActive ? 16 : 2),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: AnimatedScale(
+            scale: _isActive ? 1.0 : _inactiveScale,
+            alignment: Alignment.centerLeft,
+            duration: _duration,
+            curve: Curves.easeInOut,
+            child: AnimatedOpacity(
+              opacity: _isActive ? 1.0 : 0.5,
+              duration: _duration,
+              curve: Curves.easeInOut,
+              child: Text(
+                widget.text,
+                style: LyricsDisplayWidget.lyricTextStyle.copyWith(
+                  fontSize: LyricsDisplayWidget.activeLyricFontSize,
+                  color: Colors.white,
+                ),
+                textAlign: TextAlign.left,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LyricsProgressListener extends ConsumerWidget {
   final List<LyricsLine> lyrics;
   final void Function(Duration position, List<LyricsLine> lyrics) onProgress;
@@ -535,6 +594,32 @@ class _LyricsBottomControls extends ConsumerWidget {
           const SizedBox(height: 20),
         ],
       ),
+    );
+  }
+}
+
+class _LyricsAmbientGradientBackground extends StatelessWidget {
+  const _LyricsAmbientGradientBackground();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedAmbientColorBuilder(
+      builder: (color) {
+        final topColor = Color.lerp(color, Colors.black, 0.35)!;
+        final bottomColor = Color.lerp(color, Colors.black, 0.25)!;
+
+        return Positioned.fill(
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [topColor, bottomColor],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
