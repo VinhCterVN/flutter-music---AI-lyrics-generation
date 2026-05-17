@@ -71,16 +71,9 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
             SliverAppBar(
               pinned: true,
               backgroundColor: scheme.onPrimaryFixed,
-              title: const Text(
-                'Local Library',
-                style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w800, fontSize: 22),
-              ),
+              title: const Text('Local Library', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22)),
               actions: [
-                IconButton(
-                  tooltip: 'Refresh',
-                  icon: const Icon(Icons.refresh_rounded),
-                  onPressed: _loadFolders,
-                ),
+                IconButton(tooltip: 'Refresh', icon: const Icon(Icons.refresh_rounded), onPressed: _loadFolders),
               ],
             ),
 
@@ -90,11 +83,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Text(
                   '${_folders.length} folder${_folders.length == 1 ? '' : 's'}',
-                  style: TextStyle(
-                    fontFamily: 'SpotifyMixUI',
-                    fontSize: 13,
-                    color: Colors.white.withAlpha(130),
-                  ),
+                  style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(130)),
                 ),
               ),
             ),
@@ -104,10 +93,7 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
-                  (context, index) => _FolderTile(
-                    folder: _folders[index],
-                    onTap: () => _openFolder(_folders[index]),
-                  ),
+                  (context, index) => _FolderTile(folder: _folders[index], onTap: () => _openFolder(_folders[index])),
                   childCount: _folders.length,
                 ),
               ),
@@ -121,95 +107,65 @@ class _LibraryPageState extends ConsumerState<LibraryPage> {
   void _openFolder(LocalFolder folder) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => LocalFolderSongsPage(
-          folderPath: folder.path,
-          folderName: folder.name,
-        ),
+        builder: (_) => LocalFolderSongsPage(folderPath: folder.path, folderName: folder.name),
       ),
     );
   }
 
   Widget _buildEmpty() => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.folder_off_rounded, size: 72, color: Colors.grey.shade600),
-              const SizedBox(height: 20),
-              Text(
-                'No audio files found',
-                style: TextStyle(
-                  fontFamily: 'SpotifyMixUI',
-                  fontSize: 18,
-                  color: Colors.grey.shade400,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Add music files to your device storage',
-                style: TextStyle(
-                  fontFamily: 'SpotifyMixUI',
-                  fontSize: 13,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 24),
-              OutlinedButton.icon(
-                onPressed: _loadFolders,
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Refresh'),
-              ),
-            ],
+    backgroundColor: Colors.transparent,
+    body: Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.folder_off_rounded, size: 72, color: Colors.grey.shade600),
+          const SizedBox(height: 20),
+          Text('No audio files found', style: TextStyle(fontSize: 18, color: Colors.grey.shade400)),
+          const SizedBox(height: 8),
+          Text('Add music files to your device storage', style: TextStyle(fontSize: 13, color: Colors.grey.shade600)),
+          const SizedBox(height: 24),
+          OutlinedButton.icon(
+            onPressed: _loadFolders,
+            icon: const Icon(Icons.refresh_rounded),
+            label: const Text('Refresh'),
           ),
-        ),
-      );
+        ],
+      ),
+    ),
+  );
 
   Widget _buildPermissionDenied() => Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 36),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.folder_off_rounded, size: 72, color: Colors.grey.shade600),
-                const SizedBox(height: 20),
-                const Text(
-                  'Storage permission required',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'SpotifyMixUI',
-                    fontWeight: FontWeight.w700,
-                    fontSize: 20,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Flussic needs access to your audio files to show your local library.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'SpotifyMixUI',
-                    fontSize: 14,
-                    color: Colors.white.withAlpha(140),
-                    height: 1.6,
-                  ),
-                ),
-                const SizedBox(height: 28),
-                FilledButton.icon(
-                  onPressed: _init,
-                  icon: const Icon(Icons.lock_open_rounded),
-                  label: const Text(
-                    'Grant Permission',
-                    style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ],
+    backgroundColor: Colors.transparent,
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.folder_off_rounded, size: 72, color: Colors.grey.shade600),
+            const SizedBox(height: 20),
+            const Text(
+              'Storage permission required',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.white),
             ),
-          ),
+            const SizedBox(height: 10),
+            Text(
+              'Flussic needs access to your audio files to show your local library.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Colors.white.withAlpha(140), height: 1.6),
+            ),
+            const SizedBox(height: 28),
+            FilledButton.icon(
+              onPressed: _init,
+              icon: const Icon(Icons.lock_open_rounded),
+              label: const Text('Grant Permission', style: TextStyle(fontWeight: FontWeight.w700)),
+            ),
+          ],
         ),
-      );
+      ),
+    ),
+  );
 }
 
 // ─── Folder tile ─────────────────────────────────────────────────────────────
@@ -237,11 +193,7 @@ class _FolderTile extends StatelessWidget {
                 color: Theme.of(context).colorScheme.primaryContainer.withAlpha(60),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(
-                Icons.folder_rounded,
-                size: 30,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+              child: Icon(Icons.folder_rounded, size: 30, color: Theme.of(context).colorScheme.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -252,20 +204,12 @@ class _FolderTile extends StatelessWidget {
                     folder.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 3),
                   Text(
                     '${folder.songCount} song${folder.songCount == 1 ? '' : 's'}',
-                    style: TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 13,
-                      color: Colors.white.withAlpha(140),
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(140)),
                   ),
                 ],
               ),

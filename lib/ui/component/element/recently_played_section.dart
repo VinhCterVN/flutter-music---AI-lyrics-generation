@@ -13,8 +13,7 @@ class RecentlyPlayedSection extends ConsumerStatefulWidget {
   const RecentlyPlayedSection({super.key});
 
   @override
-  ConsumerState<RecentlyPlayedSection> createState() =>
-      _RecentlyPlayedSectionState();
+  ConsumerState<RecentlyPlayedSection> createState() => _RecentlyPlayedSectionState();
 }
 
 class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
@@ -29,26 +28,17 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
   Widget build(BuildContext context) {
     final recentTracksAsync = ref.watch(recentTracksProvider(_limit));
 
-    ref.listen<AsyncValue<List<Track>>>(recentTracksProvider(_limit), (
-      _,
-      next,
-    ) {
+    ref.listen<AsyncValue<List<Track>>>(recentTracksProvider(_limit), (_, next) {
       next.whenData(_syncVisibleTracks);
     });
 
     recentTracksAsync.whenData((tracks) {
       if (_initialized) return;
-      WidgetsBinding.instance.addPostFrameCallback(
-        (_) => _syncVisibleTracks(tracks),
-      );
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncVisibleTracks(tracks));
     });
 
     if (!_initialized && recentTracksAsync.isLoading) {
-      return const AnimatedHomeSection(
-        child: _RecentlyPlayedSkeleton(
-          key: ValueKey('recently-played-loading'),
-        ),
-      );
+      return const AnimatedHomeSection(child: _RecentlyPlayedSkeleton(key: ValueKey('recently-played-loading')));
     }
 
     return recentTracksAsync.when(
@@ -60,9 +50,7 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
           onTrackTap: _playTrack,
         ),
       ),
-      error: (_, __) => const AnimatedHomeSection(
-        child: SizedBox.shrink(key: ValueKey('recently-played-error')),
-      ),
+      error: (_, __) => const AnimatedHomeSection(child: SizedBox.shrink(key: ValueKey('recently-played-error'))),
       data: (_) => AnimatedHomeSection(
         child: _RecentlyPlayedContent(
           key: ValueKey('recently-played-${_visibleTracks.length}'),
@@ -95,10 +83,7 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final removedTrack = _visibleTracks.removeAt(index);
         _listKey.currentState?.removeItem(
           index,
-          (context, animation) => _AnimatedRecentTrackItem(
-            track: removedTrack,
-            animation: animation,
-          ),
+          (context, animation) => _AnimatedRecentTrackItem(track: removedTrack, animation: animation),
           duration: _animationDuration,
         );
       }
@@ -106,16 +91,11 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
 
     for (var targetIndex = 0; targetIndex < nextTracks.length; targetIndex++) {
       final nextTrack = nextTracks[targetIndex];
-      final currentIndex = _visibleTracks.indexWhere(
-        (track) => track.id == nextTrack.id,
-      );
+      final currentIndex = _visibleTracks.indexWhere((track) => track.id == nextTrack.id);
 
       if (currentIndex == -1) {
         _visibleTracks.insert(targetIndex, nextTrack);
-        _listKey.currentState?.insertItem(
-          targetIndex,
-          duration: _animationDuration,
-        );
+        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
         continue;
       }
 
@@ -125,16 +105,12 @@ class _RecentlyPlayedSectionState extends ConsumerState<RecentlyPlayedSection> {
         final movedTrack = _visibleTracks.removeAt(currentIndex);
         _listKey.currentState?.removeItem(
           currentIndex,
-          (context, animation) =>
-              _AnimatedRecentTrackItem(track: movedTrack, animation: animation),
+          (context, animation) => _AnimatedRecentTrackItem(track: movedTrack, animation: animation),
           duration: _animationDuration,
         );
 
         _visibleTracks.insert(targetIndex, movedTrack);
-        _listKey.currentState?.insertItem(
-          targetIndex,
-          duration: _animationDuration,
-        );
+        _listKey.currentState?.insertItem(targetIndex, duration: _animationDuration);
       }
     }
   }
@@ -178,24 +154,10 @@ class _RecentlyPlayedContent extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  "Recently Played",
-                  style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
+                const Text("Recently Played", style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
                 TextButton(
                   onPressed: () => context.push('/recent-tracks'),
-                  child: const Text(
-                    "See All",
-                    style: TextStyle(
-                      fontFamily: "SpotifyMixUI",
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                  child: const Text("See All", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -213,7 +175,7 @@ class _RecentlyPlayedContent extends StatelessWidget {
                   track: track,
                   animation: animation,
                   onTap: () => onTrackTap(track),
-                  onLongPress: () => showTrackOptions(track, context),
+                  onLongPress: () => showTrackOptions(context, track),
                 );
               },
             ),
@@ -236,11 +198,7 @@ class _RecentlyPlayedSkeleton extends StatelessWidget {
         children: [
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 8, 12, 0),
-            child: HomeSectionSkeletonBox(
-              width: 160,
-              height: 20,
-              borderRadius: 8,
-            ),
+            child: HomeSectionSkeletonBox(width: 160, height: 20, borderRadius: 8),
           ),
           SizedBox(
             height: 200,
@@ -253,23 +211,11 @@ class _RecentlyPlayedSkeleton extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    HomeSectionSkeletonBox(
-                      width: 140,
-                      height: 140,
-                      borderRadius: 8,
-                    ),
+                    HomeSectionSkeletonBox(width: 140, height: 140, borderRadius: 8),
                     SizedBox(height: 8),
-                    HomeSectionSkeletonBox(
-                      width: 120,
-                      height: 14,
-                      borderRadius: 7,
-                    ),
+                    HomeSectionSkeletonBox(width: 120, height: 14, borderRadius: 7),
                     SizedBox(height: 8),
-                    HomeSectionSkeletonBox(
-                      width: 92,
-                      height: 12,
-                      borderRadius: 6,
-                    ),
+                    HomeSectionSkeletonBox(width: 92, height: 12, borderRadius: 6),
                   ],
                 ),
               ),
@@ -284,12 +230,7 @@ class _RecentlyPlayedSkeleton extends StatelessWidget {
 }
 
 class _AnimatedRecentTrackItem extends StatelessWidget {
-  const _AnimatedRecentTrackItem({
-    required this.track,
-    required this.animation,
-    this.onTap,
-    this.onLongPress,
-  });
+  const _AnimatedRecentTrackItem({required this.track, required this.animation, this.onTap, this.onLongPress});
 
   final Track track;
   final Animation<double> animation;
@@ -310,10 +251,7 @@ class _AnimatedRecentTrackItem extends StatelessWidget {
       child: FadeTransition(
         opacity: curvedAnimation,
         child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0.16, 0),
-            end: Offset.zero,
-          ).animate(curvedAnimation),
+          position: Tween<Offset>(begin: const Offset(0.16, 0), end: Offset.zero).animate(curvedAnimation),
           child: Padding(
             padding: const EdgeInsets.only(right: 12),
             child: _RecentTrackCard(
@@ -334,12 +272,7 @@ class _RecentTrackCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
-  const _RecentTrackCard({
-    super.key,
-    required this.track,
-    required this.onTap,
-    required this.onLongPress,
-  });
+  const _RecentTrackCard({super.key, required this.track, required this.onTap, required this.onLongPress});
 
   @override
   Widget build(BuildContext context) {
@@ -356,10 +289,9 @@ class _RecentTrackCard extends StatelessWidget {
               child: AspectRatio(
                 aspectRatio: 1,
                 child: CachedNetworkImage(
-                  imageUrl: track.images.isNotEmpty ? track.images.first : '',
+                  imageUrl: track.images.first,
                   fit: BoxFit.cover,
-                  placeholder: (_, __) =>
-                      Container(color: Colors.grey.shade800),
+                  placeholder: (_, __) => Container(color: Colors.grey.shade800),
                   errorWidget: (_, __, ___) => Container(
                     color: Colors.grey.shade800,
                     child: const Icon(Icons.music_note, color: Colors.white54),
@@ -370,22 +302,14 @@ class _RecentTrackCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               track.name,
-              style: const TextStyle(
-                fontFamily: "SpotifyMixUI",
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 2),
             Text(
               track.artistName ?? "Unknown Artist",
-              style: TextStyle(
-                fontFamily: "SpotifyMixUI",
-                fontSize: 12,
-                color: Colors.white.withAlpha((0.6 * 255).toInt()),
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.white.withAlpha((0.6 * 255).toInt())),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

@@ -38,12 +38,7 @@ class _DeleteSearchLogDialogState extends ConsumerState<DeleteSearchLogDialog> {
           // Title
           Text(
             'Delete search?',
-            style: TextStyle(
-              fontFamily: 'SpotifyMixUI',
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: colorScheme.onSurface,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: colorScheme.onSurface),
           ),
           const SizedBox(height: 8),
 

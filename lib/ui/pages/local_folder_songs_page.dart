@@ -18,9 +18,7 @@ Track _songModelToTrack(SongModel song) {
     artistId: '',
     uri: song.uri ?? 'file://${song.data}',
     images: [],
-    createdAt: DateTime.fromMillisecondsSinceEpoch(
-      song.dateAdded != null ? song.dateAdded! * 1000 : 0,
-    ),
+    createdAt: DateTime.fromMillisecondsSinceEpoch(song.dateAdded != null ? song.dateAdded! * 1000 : 0),
     artistName: song.artist != null && song.artist != '<unknown>' ? song.artist : 'Unknown Artist',
     artistType: ArtistType.NestArtist,
   );
@@ -30,11 +28,7 @@ class LocalFolderSongsPage extends ConsumerStatefulWidget {
   final String folderPath;
   final String folderName;
 
-  const LocalFolderSongsPage({
-    super.key,
-    required this.folderPath,
-    required this.folderName,
-  });
+  const LocalFolderSongsPage({super.key, required this.folderPath, required this.folderName});
 
   @override
   ConsumerState<LocalFolderSongsPage> createState() => _LocalFolderSongsPageState();
@@ -80,23 +74,9 @@ class _LocalFolderSongsPageState extends ConsumerState<LocalFolderSongsPage> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              widget.folderName,
-              style: const TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            Text(widget.folderName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
             if (!_loading)
-              Text(
-                '${_songs.length} songs',
-                style: TextStyle(
-                  fontFamily: 'SpotifyMixUI',
-                  fontSize: 12,
-                  color: Colors.white.withAlpha(140),
-                ),
-              ),
+              Text('${_songs.length} songs', style: TextStyle(fontSize: 12, color: Colors.white.withAlpha(140))),
           ],
         ),
         actions: [
@@ -116,39 +96,28 @@ class _LocalFolderSongsPageState extends ConsumerState<LocalFolderSongsPage> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _songs.isEmpty
-              ? _buildEmpty()
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  itemCount: _songs.length,
-                  itemBuilder: (context, index) {
-                    final song = _songs[index];
-                    return _LocalSongTile(
-                      song: song,
-                      query: LocalAudioService.instance.query,
-                      onTap: () => _play(index),
-                    );
-                  },
-                ),
+          ? _buildEmpty()
+          : ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              itemCount: _songs.length,
+              itemBuilder: (context, index) {
+                final song = _songs[index];
+                return _LocalSongTile(song: song, query: LocalAudioService.instance.query, onTap: () => _play(index));
+              },
+            ),
     );
   }
 
   Widget _buildEmpty() => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.music_off_rounded, size: 64, color: Colors.grey.shade600),
-            const SizedBox(height: 16),
-            Text(
-              'No audio files in this folder',
-              style: TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontSize: 16,
-                color: Colors.grey.shade400,
-              ),
-            ),
-          ],
-        ),
-      );
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(Icons.music_off_rounded, size: 64, color: Colors.grey.shade600),
+        const SizedBox(height: 16),
+        Text('No audio files in this folder', style: TextStyle(fontSize: 16, color: Colors.grey.shade400)),
+      ],
+    ),
+  );
 }
 
 // ─── Local song tile ────────────────────────────────────────────────────────
@@ -158,11 +127,7 @@ class _LocalSongTile extends StatelessWidget {
   final OnAudioQuery query;
   final VoidCallback onTap;
 
-  const _LocalSongTile({
-    required this.song,
-    required this.query,
-    required this.onTap,
-  });
+  const _LocalSongTile({required this.song, required this.query, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -199,38 +164,20 @@ class _LocalSongTile extends StatelessWidget {
                     song.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: -0.15,
-                    ),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, letterSpacing: -0.15),
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    song.artist != null && song.artist != '<unknown>'
-                        ? song.artist!
-                        : 'Unknown Artist',
+                    song.artist != null && song.artist != '<unknown>' ? song.artist! : 'Unknown Artist',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 13,
-                      color: Colors.white.withAlpha(160),
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(160)),
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 8),
-            Text(
-              _formatDuration(song.duration),
-              style: TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontSize: 12,
-                color: Colors.white.withAlpha(100),
-              ),
-            ),
+            Text(_formatDuration(song.duration), style: TextStyle(fontSize: 12, color: Colors.white.withAlpha(100))),
           ],
         ),
       ),

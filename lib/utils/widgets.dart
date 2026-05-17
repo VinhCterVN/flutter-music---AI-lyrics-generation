@@ -5,11 +5,7 @@ import 'package:flutter_ai_music/ui/component/element/dashed_circle_painter.dart
 import 'package:flutter_ai_music/ui/component/navigation/track_options_bottom_sheet.dart';
 
 class AvatarWithUploadingBorder extends StatelessWidget {
-  const AvatarWithUploadingBorder({
-    super.key,
-    required this.photoUrl,
-    required this.isUploading,
-  });
+  const AvatarWithUploadingBorder({super.key, required this.photoUrl, required this.isUploading});
 
   final String photoUrl;
   final bool isUploading;
@@ -33,7 +29,7 @@ class AvatarWithUploadingBorder extends StatelessWidget {
   }
 }
 
-void showTrackOptions(Track track, BuildContext context) {
+void showTrackOptions(BuildContext context, Track track) {
   showModalBottomSheet(
     context: context,
     isDismissible: true,
@@ -41,6 +37,7 @@ void showTrackOptions(Track track, BuildContext context) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) => DraggableScrollableSheet(
+      expand: false,
       snap: true,
       snapSizes: [0.5, 0.75],
       initialChildSize: 0.5,

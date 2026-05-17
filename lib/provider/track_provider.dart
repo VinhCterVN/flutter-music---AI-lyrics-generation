@@ -30,10 +30,11 @@ final homeDiscoveryProvider = FutureProvider.autoDispose<HomeDiscoveryData>((ref
     trackService.getSuggestedTracks(limit: 24),
   ]);
 
-  return HomeDiscoveryData(
-    topListenedTracks: results[0],
-    suggestedTracks: results[1],
-  );
+  return HomeDiscoveryData(topListenedTracks: results[0], suggestedTracks: results[1]);
+});
+
+final featuredTracksProvider = FutureProvider.autoDispose.family<List<Track>, int>((ref, limit) {
+  return ref.read(trackServiceProvider).getFeaturedTracks(limit: limit);
 });
 
 final recentTracksProvider = StreamProvider.autoDispose.family<List<Track>, int>((ref, limit) {

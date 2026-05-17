@@ -17,30 +17,19 @@ class PlayingAppBar extends StatelessWidget {
       toolbarHeight: kToolbarHeight + 18,
       leading: Padding(
         padding: const EdgeInsets.only(top: 10),
-        child: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.keyboard_arrow_down),
-        ),
+        child: IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.keyboard_arrow_down)),
       ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(top: 10),
           child: IconButton(
-            onPressed: () => showTrackOptions(track, context),
+            onPressed: () => showTrackOptions(context, track),
             icon: const Icon(Icons.more_vert_rounded),
           ),
         ),
       ],
       flexibleSpace: const FlexibleSpaceBar(
-        title: Text(
-          'Playing View',
-          style: TextStyle(
-            fontSize: 22,
-            fontFamily: "SpotifyMixUI",
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-        ),
+        title: Text('Playing View', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
         centerTitle: true,
       ),
       backgroundColor: Colors.transparent,

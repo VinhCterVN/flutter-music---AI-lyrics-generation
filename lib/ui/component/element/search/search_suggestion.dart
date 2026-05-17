@@ -105,10 +105,7 @@ class _SearchSuggestionHeader extends StatelessWidget {
   Widget build(BuildContext context) => SliverToBoxAdapter(
     child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      child: Text(
-        title,
-        style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 18),
-      ),
+      child: Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
     ),
   );
 }

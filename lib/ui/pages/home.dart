@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/featured_tracks_section.dart';
 import 'package:flutter_ai_music/ui/component/element/home/home_discovery_sections.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,7 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  static const _featuredTracksLimit = 12;
   static const _recentlyPlayedLimit = 10;
   static const _recentTracksLimit = 20;
 
@@ -123,11 +125,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                                       const SizedBox(width: 10),
                                       const Text(
                                         'Flussic',
-                                        style: TextStyle(
-                                          fontFamily: "SpotifyMixUI",
-                                          fontSize: 26,
-                                          fontWeight: FontWeight.w900,
-                                        ),
+                                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
                                       ),
                                     ],
                                   ),
@@ -164,6 +162,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             leadingWidth: 0.0,
           ),
           const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
+          const SliverToBoxAdapter(child: FeaturedTracksSection()),
           const SliverToBoxAdapter(child: RecentlyPlayedSection()),
           ..._dynamicHomeSections,
           SliverToBoxAdapter(child: SizedBox(height: 200)),
@@ -174,6 +173,7 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Future<void> _refreshHome() async {
     ref.invalidate(homeDiscoveryProvider);
+    ref.invalidate(featuredTracksProvider(_featuredTracksLimit));
     ref.invalidate(recentTracksProvider(_recentlyPlayedLimit));
     ref.invalidate(recentTracksProvider(_recentTracksLimit));
     await ref.read(homeDiscoveryProvider.future);

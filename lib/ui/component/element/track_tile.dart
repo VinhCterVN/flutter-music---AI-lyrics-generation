@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/theme/theme.dart';
 import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -10,12 +11,7 @@ class TrackTile extends StatefulWidget {
   final VoidCallback onTap;
   final int? currentTrackId;
 
-  const TrackTile({
-    super.key,
-    required this.track,
-    required this.onTap,
-    required this.currentTrackId,
-  });
+  const TrackTile({super.key, required this.track, required this.onTap, required this.currentTrackId});
 
   @override
   State<TrackTile> createState() => _TrackTileState();
@@ -29,12 +25,8 @@ class _TrackTileState extends State<TrackTile> {
         visualDensity: VisualDensity(vertical: -3),
         minVerticalPadding: 0,
         leading: CircleAvatar(child: Icon(Icons.music_note_outlined)),
-        title: Text(
-          "Unknown Track",
-          maxLines: 1,
-          style: TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text("Unknown Artist", style: TextStyle(fontFamily: "SpotifyMixUI")),
+        title: Text("Unknown Track", maxLines: 1, style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text("Unknown Artist", style: TextStyle(fontFamily: appFontFamily)),
       );
     }
     return ListTile(
@@ -59,23 +51,18 @@ class _TrackTileState extends State<TrackTile> {
         widget.track!.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontFamily: "SpotifyMixUI",
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          letterSpacing: (-0.15),
-        ),
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, letterSpacing: (-0.15)),
       ),
       titleAlignment: ListTileTitleAlignment.center,
       subtitle: Text(
         widget.track!.artistName ?? widget.track!.artistType.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
+        style: TextStyle(fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
       ),
       trailing: widget.currentTrackId == widget.track!.id ? HugeIcon(icon: HugeIcons.strokeRoundedWave) : null,
       onTap: widget.onTap,
-      onLongPress: () => showTrackOptions(widget.track!, context),
+      onLongPress: () => showTrackOptions(context, widget.track!),
     );
   }
 }

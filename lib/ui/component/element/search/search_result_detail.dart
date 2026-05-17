@@ -91,10 +91,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
             SliverToBoxAdapter(
               child: const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 4),
-                child: Text(
-                  "Top result",
-                  style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w800),
-                ),
+                child: Text("Top result", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               ),
             ),
             SliverToBoxAdapter(
@@ -108,10 +105,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
               SliverToBoxAdapter(
                 child: const Padding(
                   padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Text(
-                    "Songs",
-                    style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w800),
-                  ),
+                  child: Text("Songs", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
                 ),
               ),
               SliverToBoxAdapter(
@@ -142,11 +136,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
                             const SizedBox(height: 8),
                             Text(
                               _tracks[index + 1].name,
-                              style: const TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -163,10 +153,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
             SliverToBoxAdapter(
               child: const Padding(
                 padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: Text(
-                  "Playlists",
-                  style: TextStyle(fontFamily: "SpotifyMixUI", fontSize: 22, fontWeight: FontWeight.w800),
-                ),
+                child: Text("Playlists", style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
               ),
             ),
             SliverToBoxAdapter(
@@ -219,11 +206,7 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
                             const SizedBox(height: 8),
                             Text(
                               playlist.name,
-                              style: const TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -231,7 +214,6 @@ class _SearchResultDetailState extends ConsumerState<SearchResultDetail> {
                             Text(
                               '${playlist.trackIds.length} tracks',
                               style: TextStyle(
-                                fontFamily: "SpotifyMixUI",
                                 fontSize: 12,
                                 color: Theme.of(context).colorScheme.onSurface.withAlpha((0.6 * 255).round()),
                               ),

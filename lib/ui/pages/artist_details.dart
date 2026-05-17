@@ -70,12 +70,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                           artist.name,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontFamily: 'SpotifyMixUI',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                          ),
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
                         ),
                       ),
                       expandedTitleScale: 1,
@@ -120,7 +115,6 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                                   child: Text(
                                     artist.artistType == ArtistType.SpotifyArtist ? 'Spotify Artist' : 'Nest Artist',
                                     style: const TextStyle(
-                                      fontFamily: 'SpotifyMixUI',
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                       color: Colors.white,
@@ -131,7 +125,6 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                                 Text(
                                   artist.name,
                                   style: const TextStyle(
-                                    fontFamily: 'SpotifyMixUI',
                                     fontSize: 30,
                                     fontWeight: FontWeight.w900,
                                     color: Colors.white,
@@ -142,11 +135,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                                   description,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontFamily: 'SpotifyMixUI',
-                                    fontSize: 13,
-                                    color: Colors.white.withAlpha(210),
-                                  ),
+                                  style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(210)),
                                 ),
                               ],
                             ),
@@ -171,7 +160,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                       ),
                       child: Text(
                         followState ? 'Following' : 'Follow',
-                        style: const TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -203,9 +192,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                       const SizedBox(height: 18),
                       Text(
                         'About',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleMedium?.copyWith(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       const SizedBox(height: 8),
                       Text(summaryText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.45)),
@@ -236,9 +223,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
                     children: [
                       Text(
                         'Tracks',
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleMedium?.copyWith(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w800),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       if (tracks.isNotEmpty)
                         Text(
@@ -326,10 +311,7 @@ class InfoPill extends StatelessWidget {
         children: [
           HugeIcon(icon: icon, size: 18),
           const SizedBox(width: 8),
-          Text(
-            label,
-            style: const TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 12, fontWeight: FontWeight.w700),
-          ),
+          Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -366,10 +348,7 @@ class _ArtistHeroFallback extends StatelessWidget {
               size: 64,
             ),
             const SizedBox(height: 12),
-            Text(
-              artist.name,
-              style: const TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 22, fontWeight: FontWeight.w800),
-            ),
+            Text(artist.name, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
           ],
         ),
       ),

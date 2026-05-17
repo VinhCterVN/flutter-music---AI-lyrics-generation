@@ -1,4 +1,5 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 class DashedCirclePainter extends CustomPainter {
@@ -7,12 +8,7 @@ class DashedCirclePainter extends CustomPainter {
   final double dashLength;
   final double gapLength;
 
-  DashedCirclePainter({
-    required this.color,
-    this.strokeWidth = 3,
-    this.dashLength = 6,
-    this.gapLength = 4,
-  });
+  DashedCirclePainter({required this.color, this.strokeWidth = 3, this.dashLength = 6, this.gapLength = 4});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -26,21 +22,14 @@ class DashedCirclePainter extends CustomPainter {
     final center = Offset(radius, radius);
 
     final circumference = 2 * pi * radius;
-    final dashCount =
-        (circumference / (dashLength + gapLength)).floor();
+    final dashCount = (circumference / (dashLength + gapLength)).floor();
 
     final dashAngle = (2 * pi) / dashCount;
     final sweepAngle = dashAngle * (dashLength / (dashLength + gapLength));
 
     for (int i = 0; i < dashCount; i++) {
       final startAngle = i * dashAngle;
-      canvas.drawArc(
-        Rect.fromCircle(center: center, radius: radius),
-        startAngle,
-        sweepAngle,
-        false,
-        paint,
-      );
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius), startAngle, sweepAngle, false, paint);
     }
   }
 

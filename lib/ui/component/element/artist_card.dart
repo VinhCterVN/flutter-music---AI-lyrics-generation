@@ -169,7 +169,7 @@ class _ArtistCardState extends ConsumerState<ArtistCard> {
                     children: [
                       Text(
                         currentArtist?.name ?? 'Unknown',
-                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.w900),
                       ),
                       const SizedBox(width: 6),
                       Icon(Icons.verified, color: Colors.blue[400], size: 20),

@@ -41,14 +41,12 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    )..value = 1.0;
+    _pulseController = AnimationController(duration: const Duration(milliseconds: 1500), vsync: this)..value = 1.0;
 
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 0.98).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.fastOutSlowIn),
-    );
+    _pulseAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.98,
+    ).animate(CurvedAnimation(parent: _pulseController, curve: Curves.fastOutSlowIn));
 
     ref.listenManual<AsyncValue<bool>>(isPlayingProvider, (_, next) {
       final isPlaying = next.value ?? false;
@@ -63,9 +61,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
       }
     }, fireImmediately: true);
     widget.scrollController.addListener(_handleScrollChanged);
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _scheduleMiniPlayerVisibilitySync(),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scheduleMiniPlayerVisibilitySync());
   }
 
   @override
@@ -105,35 +101,25 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
   void _syncMiniPlayerRevealOffset() {
     if (!widget.scrollController.hasClients) return;
 
-    final viewportBox =
-        _scrollViewportKey.currentContext?.findRenderObject() as RenderBox?;
-    final controlsBox =
-        _playbackControlsKey.currentContext?.findRenderObject() as RenderBox?;
-    if (viewportBox == null ||
-        controlsBox == null ||
-        !viewportBox.hasSize ||
-        !controlsBox.hasSize) {
+    final viewportBox = _scrollViewportKey.currentContext?.findRenderObject() as RenderBox?;
+    final controlsBox = _playbackControlsKey.currentContext?.findRenderObject() as RenderBox?;
+    if (viewportBox == null || controlsBox == null || !viewportBox.hasSize || !controlsBox.hasSize) {
       return;
     }
 
-    final controlsTop = controlsBox
-        .localToGlobal(Offset.zero, ancestor: viewportBox)
-        .dy;
+    final controlsTop = controlsBox.localToGlobal(Offset.zero, ancestor: viewportBox).dy;
     final controlsBottom = controlsTop + controlsBox.size.height;
     _miniPlayerRevealOffset = widget.scrollController.offset + controlsBottom;
   }
 
   void _updateMiniPlayerVisibility() {
-    if (!mounted ||
-        !widget.scrollController.hasClients ||
-        _miniPlayerRevealOffset == null) {
+    if (!mounted || !widget.scrollController.hasClients || _miniPlayerRevealOffset == null) {
       if (_floatingShow.value) {
         _floatingShow.value = false;
       }
       return;
     }
-    final shouldShow =
-        widget.scrollController.offset >= _miniPlayerRevealOffset!;
+    final shouldShow = widget.scrollController.offset >= _miniPlayerRevealOffset!;
     if (_floatingShow.value != shouldShow) {
       _floatingShow.value = shouldShow;
     }
@@ -145,8 +131,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     final currentTrackAsync = ref.watch(currentTrackProvider);
 
     final padding = MediaQuery.of(context).padding;
-    final screenHeight =
-        MediaQuery.of(context).size.height - padding.top - padding.bottom - 100;
+    final screenHeight = MediaQuery.of(context).size.height - padding.top - padding.bottom - 100;
 
     return currentTrackAsync.when(
       data: (currentTrack) {
@@ -156,11 +141,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Lottie.asset(
-                    "assets/animations/impress.json",
-                    width: 300,
-                    repeat: false,
-                  ),
+                  Lottie.asset("assets/animations/impress.json", width: 300, repeat: false),
                   Text("Select any Track to start listening"),
                 ],
               ),
@@ -168,18 +149,12 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
           );
         }
         _scheduleMiniPlayerVisibilitySync();
-        final miniPlayerBottomSpace = StickyMiniPlayer.reservedBottomSpace(
-          context,
-        );
+        final miniPlayerBottomSpace = StickyMiniPlayer.reservedBottomSpace(context);
         return Scaffold(
           body: Stack(
             children: [
               const PlayingGradientColor(),
-              _buildMainContent(
-                currentTrack,
-                screenHeight,
-                miniPlayerBottomSpace,
-              ),
+              _buildMainContent(currentTrack, screenHeight, miniPlayerBottomSpace),
               ValueListenableBuilder<bool>(
                 valueListenable: _floatingShow,
                 builder: (context, show, child) => AnimatedPositioned(
@@ -187,9 +162,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                   curve: Curves.easeOutCubic,
                   left: StickyMiniPlayer.horizontalInset,
                   right: StickyMiniPlayer.horizontalInset,
-                  bottom: show
-                      ? StickyMiniPlayer.visibleBottomInset
-                      : -miniPlayerBottomSpace,
+                  bottom: show ? StickyMiniPlayer.visibleBottomInset : -miniPlayerBottomSpace,
                   child: child!,
                 ),
                 child: StickyMiniPlayer(track: currentTrack),
@@ -198,18 +171,13 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stack) => Scaffold(
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Lottie.asset(
-                "assets/animations/Error 404.json",
-                width: 300,
-                repeat: false,
-              ),
+              Lottie.asset("assets/animations/Error 404.json", width: 300, repeat: false),
               Text("Error happened"),
             ],
           ),
@@ -218,11 +186,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
     );
   }
 
-  Widget _buildMainContent(
-    Track currentTrack,
-    double screenHeight,
-    double miniPlayerBottomSpace,
-  ) {
+  Widget _buildMainContent(Track currentTrack, double screenHeight, double miniPlayerBottomSpace) {
     return Positioned.fill(
       child: NotificationListener<ScrollMetricsNotification>(
         onNotification: (notification) {
@@ -245,10 +209,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      AlbumArtwork(
-                        imageUrl: currentTrack.images.firstOrNull,
-                        pulseAnimation: _pulseAnimation,
-                      ),
+                      AlbumArtwork(imageUrl: currentTrack.images.firstOrNull, pulseAnimation: _pulseAnimation),
                       const SizedBox(height: 50),
                       TrackInfo(track: currentTrack),
                       const SizedBox(height: 16),
@@ -261,9 +222,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                         }),
                         onChangeEnd: (value) async {
                           setState(() => _isUserSeeking = false);
-                          await ref
-                              .read(audioPlayerProvider)
-                              .seek(Duration(milliseconds: value.toInt()));
+                          await ref.read(audioPlayerProvider).seek(Duration(milliseconds: value.toInt()));
                         },
                       ),
                       const SizedBox(height: 8),
@@ -279,9 +238,7 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                   imageBorderRadius: BorderRadius.circular(12),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: AudioWaveformSection(track: currentTrack),
-              ),
+              SliverToBoxAdapter(child: AudioWaveformSection(track: currentTrack)),
               // Lyrics Button
               SliverToBoxAdapter(
                 child: Padding(

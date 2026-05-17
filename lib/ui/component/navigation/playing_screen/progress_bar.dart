@@ -61,7 +61,6 @@ class ProgressBar extends ConsumerWidget {
               Text(
                 _formatDuration(progress.position),
                 style: TextStyle(
-                  fontFamily: "SpotifyMixUI",
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),
@@ -69,7 +68,6 @@ class ProgressBar extends ConsumerWidget {
               Text(
                 _formatDuration(progress.duration ?? Duration.zero),
                 style: TextStyle(
-                  fontFamily: "SpotifyMixUI",
                   fontSize: 12,
                   color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                 ),

@@ -136,7 +136,6 @@ class _TrackCardDemoState extends ConsumerState<TrackCardDemo> with SingleTicker
                                     child: Text(
                                       artistName,
                                       style: TextStyle(
-                                        fontFamily: "SpotifyMixUI",
                                         color: Theme.of(context).colorScheme.onSurface.withAlpha((0.9 * 255).toInt()),
                                         fontSize: 13,
                                         fontWeight: FontWeight.w600,
@@ -183,7 +182,6 @@ class _TrackCardDemoState extends ConsumerState<TrackCardDemo> with SingleTicker
                             child: Text(
                               widget.track.name,
                               style: TextStyle(
-                                fontFamily: "SpotifyMixUI",
                                 fontSize: 17,
                                 color: Colors.white.withAlpha(200),
                                 fontWeight: FontWeight.w800,

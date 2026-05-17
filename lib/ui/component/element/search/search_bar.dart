@@ -59,9 +59,9 @@ class _MySearchBarState extends ConsumerState<MySearchBar> {
       decoration: BoxDecoration(color: Colors.transparent),
       child: Theme(
         data: Theme.of(context).copyWith(
-          textTheme: Theme.of(context).textTheme.copyWith(
-            bodyLarge: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w500, fontSize: 16),
-          ),
+          textTheme: Theme.of(
+            context,
+          ).textTheme.copyWith(bodyLarge: const TextStyle(fontWeight: FontWeight.w500, fontSize: 16)),
         ),
         child: SearchAnchor(
           searchController: _searchController,

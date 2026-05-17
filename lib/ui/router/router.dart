@@ -19,22 +19,29 @@ import '../layout/app_layout.dart';
 import '../pages/home.dart';
 import '../pages/recent_tracks_list.dart';
 
-GoRouter createRouter(WidgetRef ref) {
+final appRouterProvider = Provider<GoRouter>((ref) {
+  return createRouter(ref);
+});
+
+final _rootNavigatorKey = GlobalKey<NavigatorState>();
+
+GoRouter createRouter(Ref ref) {
+  final authState = ref.watch(authStateProvider);
+
   return GoRouter(
-    initialLocation: '/login',
-    navigatorKey: GlobalKey<NavigatorState>(),
+    initialLocation: '/',
+    navigatorKey: _rootNavigatorKey,
     redirect: (context, state) {
-      final user = ref.watch(currentUserProvider);
       final path = state.uri.path;
-
-      log("User: $user");
-
       final isAuthRoute = path == '/login' || path == '/register';
-      if (user == null) {
-        return isAuthRoute ? null : '/login';
-      } else {
-        return isAuthRoute ? '/home' : null;
-      }
+
+      if (authState.isLoading) return null;
+      if (authState.hasError) return isAuthRoute ? null : '/login';
+
+      final user = authState.value;
+      if (user == null) return isAuthRoute ? null : '/login';
+      log("User: $user");
+      return isAuthRoute || path == '/' ? '/home' : null;
     },
     routes: [
       StatefulShellRoute.indexedStack(

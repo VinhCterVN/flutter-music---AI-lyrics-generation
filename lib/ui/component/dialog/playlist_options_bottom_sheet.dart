@@ -76,17 +76,12 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
                         playlist.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'SpotifyMixUI',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white),
                       ),
                       const SizedBox(height: 2),
                       Text(
                         '${playlist.trackIds.length} songs',
-                        style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 13, color: Colors.white.withAlpha(130)),
+                        style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(130)),
                       ),
                     ],
                   ),
@@ -175,14 +170,14 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Rename playlist',
-          style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
         ),
         content: Form(
           key: formKey,
           child: TextFormField(
             controller: controller,
             autofocus: true,
-            style: const TextStyle(fontFamily: 'SpotifyMixUI', color: Colors.white),
+            style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: 'Playlist name',
               hintStyle: TextStyle(color: Colors.white.withAlpha(80)),
@@ -207,10 +202,7 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
             onPressed: () {
               if (formKey.currentState!.validate()) Navigator.pop(ctx, true);
             },
-            child: const Text(
-              'Save',
-              style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
-            ),
+            child: const Text('Save', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -240,11 +232,11 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Delete playlist?',
-          style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700, color: Colors.white),
+          style: TextStyle(fontWeight: FontWeight.w700, color: Colors.white),
         ),
         content: Text(
           'This will permanently delete "${playlist.name}". This action cannot be undone.',
-          style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 14, color: Colors.white.withAlpha(160)),
+          style: TextStyle(fontSize: 14, color: Colors.white.withAlpha(160)),
         ),
         actions: [
           TextButton(
@@ -254,10 +246,7 @@ class _PlaylistOptionsSheet extends ConsumerWidget {
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Colors.redAccent, foregroundColor: Colors.white),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Delete',
-              style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
-            ),
+            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -297,12 +286,7 @@ class _Option extends StatelessWidget {
             Icon(icon, color: effectiveColor, size: 22),
             Text(
               label,
-              style: TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: effectiveColor,
-              ),
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: effectiveColor),
             ),
           ],
         ),

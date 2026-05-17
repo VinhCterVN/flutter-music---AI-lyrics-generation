@@ -58,12 +58,7 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
                     children: [
                       Text(
                         currentTrack.name,
-                        style: const TextStyle(
-                          fontFamily: "SpotifyMixUI",
-                          color: Colors.green,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(color: Colors.green, fontSize: 18, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -139,7 +134,6 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
                                   Text(
                                     tag["title"] as String? ?? 'Unknown',
                                     style: const TextStyle(
-                                      fontFamily: "SpotifyMixUI",
                                       color: Colors.white,
                                       fontSize: 16,
                                       fontWeight: FontWeight.w700,

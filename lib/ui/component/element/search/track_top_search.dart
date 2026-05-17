@@ -66,11 +66,7 @@ class _TrackTopSearchState extends State<TrackTopSearch> {
                         spreadRadius: hasColor ? 48 : 0,
                         offset: hasColor ? const Offset(0, 0) : const Offset(0, 2),
                       ),
-                      BoxShadow(
-                        color: Colors.black.withAlpha(50),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      )
+                      BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4, offset: const Offset(0, 2)),
                     ],
                   ),
                   child: CachedNetworkImage(imageUrl: widget.track.images.first),
@@ -81,7 +77,7 @@ class _TrackTopSearchState extends State<TrackTopSearch> {
                         height: 40,
                         child: Marquee(
                           text: widget.track.name,
-                          style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 32, fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                           scrollAxis: Axis.horizontal,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           blankSpace: 30.0,
@@ -96,7 +92,7 @@ class _TrackTopSearchState extends State<TrackTopSearch> {
                       )
                     : Text(
                         widget.track.name,
-                        style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 32, fontWeight: FontWeight.bold),
+                        style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         textAlign: TextAlign.center,
@@ -104,7 +100,6 @@ class _TrackTopSearchState extends State<TrackTopSearch> {
                 Text(
                   widget.track.artistName ?? widget.track.artistType.name,
                   style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: Theme.of(context).colorScheme.onSurfaceVariant.withAlpha(155),

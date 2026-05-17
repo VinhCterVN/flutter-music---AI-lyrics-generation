@@ -276,11 +276,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                   _playlist.name,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: "SpotifyMixUI",
-                                    fontWeight: FontWeight.w800,
-                                    fontSize: 28,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28),
                                 ),
                               ),
                             ),
@@ -296,7 +292,6 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                     "${_playlist.type.name.capitalize()} • ${formatDateTime(_playlist.createdAt)}",
                                     textAlign: TextAlign.left,
                                     style: TextStyle(
-                                      fontFamily: "SpotifyMixUI",
                                       fontSize: 14,
                                       color: Colors.white.withAlpha((0.7 * 255).toInt()),
                                       letterSpacing: (-0.25),
@@ -381,7 +376,6 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
-                                  fontFamily: "SpotifyMixUI",
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                   letterSpacing: (-0.15),
@@ -389,11 +383,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                               ),
                               subtitle: Text(
                                 track.artistName ?? "Unknown Artist",
-                                style: TextStyle(
-                                  fontFamily: "SpotifyMixUI",
-                                  fontSize: 14,
-                                  color: Colors.white.withAlpha((0.7 * 255).toInt()),
-                                ),
+                                style: TextStyle(fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
                               ),
                               trailing: ReorderableDragStartListener(
                                 index: index,
@@ -433,7 +423,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                       child: Text(
                         _playlist.name,
                         textAlign: TextAlign.center,
-                        style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 20),
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
                       ),
                     ),
                   ),
@@ -479,23 +469,13 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                 const Text(
                   'Playlist Not Found',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'SpotifyMixUI',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 22,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: Colors.white),
                 ),
                 const SizedBox(height: 12),
                 Text(
                   _errorMessage,
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontFamily: 'SpotifyMixUI',
-                    fontSize: 14,
-                    color: Colors.white.withAlpha(120),
-                    height: 1.5,
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.white.withAlpha(120), height: 1.5),
                 ),
                 const SizedBox(height: 36),
                 OutlinedButton.icon(
@@ -506,7 +486,7 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                     foregroundColor: Colors.white,
                     side: const BorderSide(color: Colors.white30),
                     padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
-                    textStyle: const TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w600, fontSize: 15),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(50)),
                   ),
                 ),
@@ -612,10 +592,7 @@ class HeaderContent extends StatelessWidget {
             onVisibilityChanged: onVisibilityChanged,
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text(
-                playlist.name,
-                style: const TextStyle(fontFamily: "SpotifyMixUI", fontWeight: FontWeight.w800, fontSize: 28),
-              ),
+              child: Text(playlist.name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28)),
             ),
           ),
           PlaylistAuthor(userId: playlist.userId, playlist: playlist),
@@ -630,7 +607,6 @@ class HeaderContent extends StatelessWidget {
                   "${playlist.type.name.capitalize()} • ${formatDateTime(playlist.createdAt)}",
                   textAlign: TextAlign.left,
                   style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
                     fontSize: 14,
                     color: Colors.white.withAlpha((0.7 * 255).toInt()),
                     letterSpacing: (-0.25),

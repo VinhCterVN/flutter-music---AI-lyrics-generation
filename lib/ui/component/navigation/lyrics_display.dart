@@ -17,12 +17,7 @@ class LyricsDisplayWidget extends ConsumerStatefulWidget {
 
   static const double activeLyricFontSize = 24;
   static const double inactiveLyricFontSize = 20;
-  static const TextStyle lyricTextStyle = TextStyle(
-    fontFamily: "SpotifyMixUI",
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.25,
-    height: 1.3,
-  );
+  static const TextStyle lyricTextStyle = TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.25, height: 1.3);
 
   @override
   ConsumerState<LyricsDisplayWidget> createState() => _LyricsDisplayWidgetState();
@@ -36,12 +31,7 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
   // static const Duration _lyricAnimationDuration = Duration(milliseconds: 500);
 
   // static const double _inactiveLyricWidthFactor = _inactiveLyricFontSize / _activeLyricFontSize;
-  static const TextStyle _lyricTextStyle = TextStyle(
-    fontFamily: "SpotifyMixUI",
-    fontWeight: FontWeight.bold,
-    letterSpacing: -0.25,
-    height: 1.3,
-  );
+  static const TextStyle _lyricTextStyle = TextStyle(fontWeight: FontWeight.bold, letterSpacing: -0.25, height: 1.3);
 
   final ScrollController _scrollController = ScrollController();
   final Map<int, GlobalKey> _lineKeys = {};
@@ -326,7 +316,6 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                   Text(
                     track.name,
                     style: const TextStyle(
-                      fontFamily: "SpotifyMixUI",
                       color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
@@ -337,7 +326,6 @@ class _LyricsDisplayWidgetState extends ConsumerState<LyricsDisplayWidget> {
                   Text(
                     track.artistName ?? track.artistType.name,
                     style: TextStyle(
-                      fontFamily: "SpotifyMixUI",
                       letterSpacing: (-0.2),
                       color: Colors.white.withAlpha((0.8 * 255).round()),
                       fontSize: 14,

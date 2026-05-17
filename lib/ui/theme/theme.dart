@@ -339,10 +339,7 @@ class MaterialTheme {
     useMaterial3: true,
     brightness: colorScheme.brightness,
     colorScheme: colorScheme,
-    textTheme: textTheme.apply(
-      bodyColor: colorScheme.onSurface,
-      displayColor: colorScheme.onSurface,
-    ),
+    textTheme: textTheme.apply(bodyColor: colorScheme.onSurface, displayColor: colorScheme.onSurface),
     scaffoldBackgroundColor: colorScheme.surface,
     canvasColor: colorScheme.surface,
   );
@@ -384,3 +381,7 @@ class ColorFamily {
   final Color colorContainer;
   final Color onColorContainer;
 }
+
+const appFontFamily = "SpotifyMixUI";
+
+final appTextStyle = const TextStyle(fontWeight: FontWeight.w700, fontSize: 14, letterSpacing: -0.5);

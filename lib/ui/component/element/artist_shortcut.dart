@@ -18,7 +18,6 @@ class _ArtistShortcutState extends State<ArtistShortcut> {
       child: Text(
         widget.artistName ?? "Unknown",
         style: TextStyle(
-          fontFamily: "SpotifyMixUI",
           fontSize: 14,
           color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
         ),

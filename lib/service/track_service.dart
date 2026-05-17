@@ -40,14 +40,20 @@ class TrackService {
     final trimmedList = hasNextPage ? list.sublist(0, pageSize) : list;
     final tracksWithArtist = trimmedList.map((e) async {
       final isSpotifyArtist = e['artist_type'] == 'SpotifyArtist';
-      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '') : null;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '')
+          : null;
 
       return Track.fromJson(e).copyWith(artistName: artist?.name);
     }).toList();
 
     final trackList = await Future.wait(tracksWithArtist);
     TrackDatabase.instance.insertTracks(trackList);
-    return TrackPage(data: trackList, total: trackList.length, hasNextPage: hasNextPage);
+    return TrackPage(
+      data: trackList,
+      total: trackList.length,
+      hasNextPage: hasNextPage,
+    );
   }
 
   Future<List<Track>> getTracksByIds(List<String> ids) async {
@@ -63,14 +69,19 @@ class TrackService {
         .inFilter('id', ids);
     final trackWithArtist = (response as List).map((e) async {
       final isSpotifyArtist = e['artist_type'] == 'SpotifyArtist';
-      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '') : null;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '')
+          : null;
 
       return Track.fromJson(e).copyWith(artistName: artist?.name);
     }).toList();
     return await Future.wait(trackWithArtist);
   }
 
-  Future<List<Track>> getTracksByArtistId({required String artistId, required ArtistType artistType}) async {
+  Future<List<Track>> getTracksByArtistId({
+    required String artistId,
+    required ArtistType artistType,
+  }) async {
     if (artistId.isEmpty) return [];
 
     final response = await _supabase
@@ -86,7 +97,9 @@ class TrackService {
 
     final trackWithArtist = (response as List).map((e) async {
       final isSpotifyArtist = e['artist_type'] == ArtistType.SpotifyArtist.name;
-      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '') : null;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '')
+          : null;
 
       return Track.fromJson(e).copyWith(artistName: artist?.name);
     }).toList();
@@ -134,7 +147,9 @@ class TrackService {
     final topTracks = sorted.take(limit).toList();
     final trackWithArtist = topTracks.map((track) async {
       final isSpotifyArtist = track.artistType == ArtistType.SpotifyArtist;
-      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(track.artistId) : null;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(track.artistId)
+          : null;
       return track.copyWith(artistName: artist?.name);
     }).toList();
 
@@ -145,6 +160,27 @@ class TrackService {
     final tracks = await getTrackPage(page: 0, pageSize: limit * 2);
     final shuffled = List<Track>.from(tracks.data)..shuffle();
     return shuffled.take(limit).toList();
+  }
+
+  Future<List<Track>> getFeaturedTracks({int limit = 12}) async {
+    final response = await _supabase
+        .rpc('get_featured_track', params: {'limit_count': limit})
+        .select("""
+            id, name, uri, artist_id, artist_type, genres, created_at, updated_at,
+            images (url),
+            favourites!left (id)
+              """);
+
+    final trackWithArtist = (response as List).map((e) async {
+      final isSpotifyArtist = e['artist_type'] == ArtistType.SpotifyArtist.name;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(e['artist_id'] ?? '')
+          : null;
+
+      return Track.fromJson(e).copyWith(artistName: artist?.name);
+    }).toList();
+
+    return await Future.wait(trackWithArtist);
   }
 
   Future<List<Track>> searchTracks(String query) async {
@@ -160,7 +196,10 @@ class TrackService {
       return (response as List).map((e) => Track.fromJson(e)).toList();
     }
 
-    final response = await _supabase.rpc('search_tracks_fuzzy', params: {'search_query': query});
+    final response = await _supabase.rpc(
+      'search_tracks_fuzzy',
+      params: {'search_query': query},
+    );
     final result = (response as List).map((e) => Track.fromJson(e)).toList();
     return result;
   }
@@ -187,12 +226,18 @@ class TrackService {
     final trackWithArtist = (response as List).map((e) async {
       final trackData = e['track'];
       final isSpotifyArtist = trackData['artist_type'] == 'SpotifyArtist';
-      final artist = isSpotifyArtist ? await SpotifyService.getSpotifyArtist(trackData['artist_id'] ?? '') : null;
+      final artist = isSpotifyArtist
+          ? await SpotifyService.getSpotifyArtist(trackData['artist_id'] ?? '')
+          : null;
 
       return Track.fromJson(trackData).copyWith(artistName: artist?.name);
     }).toList();
     final trackList = await Future.wait(trackWithArtist);
-    return TrackPage(data: trackList, total: trackList.length, hasNextPage: trackList.length == pageSize);
+    return TrackPage(
+      data: trackList,
+      total: trackList.length,
+      hasNextPage: trackList.length == pageSize,
+    );
   }
 
   /// Stream recent tracks with real-time updates from Supabase.
@@ -219,12 +264,17 @@ class TrackService {
           if (distinctRows.isEmpty) return <Track>[];
 
           // Fetch full track details for the distinct track_ids
-          final orderedTrackIds = distinctRows.map((r) => r['track_id'].toString()).toList();
+          final orderedTrackIds = distinctRows
+              .map((r) => r['track_id'].toString())
+              .toList();
           final tracks = await getTracksByIds(orderedTrackIds);
 
           // Reorder tracks to match the order of orderedTrackIds (most recent first)
           final trackMap = {for (final t in tracks) t.id.toString(): t};
-          return orderedTrackIds.map((id) => trackMap[id]).whereType<Track>().toList();
+          return orderedTrackIds
+              .map((id) => trackMap[id])
+              .whereType<Track>()
+              .toList();
         });
   }
 }

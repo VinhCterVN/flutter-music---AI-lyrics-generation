@@ -44,8 +44,7 @@ class TrackOptionsBottomSheet extends ConsumerWidget {
             const SizedBox(height: 16),
             Divider(height: 1, color: Colors.grey.shade800),
 
-            // Options List
-            Flexible(
+            Expanded(
               child: CustomScrollView(
                 controller: scrollController,
                 slivers: [
@@ -258,7 +257,7 @@ class _TrackHeader extends StatelessWidget {
               children: [
                 Text(
                   track.name,
-                  style: const TextStyle(fontFamily: "SpotifyMixUI", fontSize: 18, fontWeight: FontWeight.bold),
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -266,7 +265,6 @@ class _TrackHeader extends StatelessWidget {
                 Text(
                   track.artistName ?? track.artistType.name,
                   style: TextStyle(
-                    fontFamily: "SpotifyMixUI",
                     fontSize: 14,
                     color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.7 * 255).toInt()),
                   ),
@@ -310,10 +308,7 @@ class _SleepTimerDialogState extends State<_SleepTimerDialog> {
     return AlertDialog(
       backgroundColor: scheme.surfaceDim,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: const Text(
-        'Set sleep timer',
-        style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
-      ),
+      title: const Text('Set sleep timer', style: TextStyle(fontWeight: FontWeight.w700)),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -321,10 +316,7 @@ class _SleepTimerDialogState extends State<_SleepTimerDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Stop playback after',
-                style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 13, color: textColor),
-              ),
+              Text('Stop playback after', style: TextStyle(fontSize: 13, color: textColor)),
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
@@ -386,10 +378,7 @@ class _SleepTimerDialogState extends State<_SleepTimerDialog> {
             final minutes = int.parse(_controller.text.trim());
             Navigator.pop(context, Duration(minutes: minutes));
           },
-          child: const Text(
-            'Set Timer',
-            style: TextStyle(fontFamily: 'SpotifyMixUI', fontWeight: FontWeight.w700),
-          ),
+          child: const Text('Set Timer', style: TextStyle(fontWeight: FontWeight.w700)),
         ),
       ],
     );
@@ -417,19 +406,14 @@ class OptionTile extends StatelessWidget {
         leading: HugeIcon(icon: icon, size: 28, color: Theme.of(context).colorScheme.onSurface),
         title: Text(
           title,
-          style: const TextStyle(
-            fontFamily: "SpotifyMixUI",
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            letterSpacing: (-0.25),
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, letterSpacing: (-0.25)),
         ),
         // visualDensity: const VisualDensity(vertical: -2),
         // minVerticalPadding: 0,
         // subtitle: Text(
         //   subtitle,
         //   style: TextStyle(
-        //     fontFamily: "SpotifyMixUI",
+        //
         //     fontSize: 12,
         //     color: Theme.of(context).textTheme.bodyMedium?.color?.withAlpha((0.6 * 255).toInt()),
         //   ),

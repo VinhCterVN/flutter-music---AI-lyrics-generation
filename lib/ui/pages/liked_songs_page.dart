@@ -160,12 +160,7 @@ class _LikedSongsPageState extends ConsumerState<LikedSongsPage> {
                               padding: EdgeInsets.symmetric(vertical: 16),
                               child: Text(
                                 'Liked Songs',
-                                style: TextStyle(
-                                  fontFamily: 'SpotifyMixUI',
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 28,
-                                  color: Colors.white,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 28, color: Colors.white),
                               ),
                             ),
                           ),
@@ -180,7 +175,6 @@ class _LikedSongsPageState extends ConsumerState<LikedSongsPage> {
                                 Text(
                                   'Your favourites • ${_tracks.length} songs',
                                   style: TextStyle(
-                                    fontFamily: 'SpotifyMixUI',
                                     fontSize: 13,
                                     color: Colors.white.withAlpha(180),
                                     letterSpacing: -0.2,
@@ -245,12 +239,7 @@ class _LikedSongsPageState extends ConsumerState<LikedSongsPage> {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
                     child: Text(
                       '${_tracks.length} songs',
-                      style: TextStyle(
-                        fontFamily: 'SpotifyMixUI',
-                        fontSize: 13,
-                        color: Colors.white.withAlpha(130),
-                        letterSpacing: 0.2,
-                      ),
+                      style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(130), letterSpacing: 0.2),
                     ),
                   ),
                 ),
@@ -294,12 +283,7 @@ class _LikedSongsPageState extends ConsumerState<LikedSongsPage> {
                   child: const Center(
                     child: Text(
                       'Liked Songs',
-                      style: TextStyle(
-                        fontFamily: 'SpotifyMixUI',
-                        fontWeight: FontWeight.w800,
-                        fontSize: 20,
-                        color: Colors.white,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20, color: Colors.white),
                     ),
                   ),
                 ),
@@ -344,23 +328,13 @@ class _LikedSongsPageState extends ConsumerState<LikedSongsPage> {
             const SizedBox(height: 20),
             const Text(
               'No liked songs yet',
-              style: TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontWeight: FontWeight.w700,
-                fontSize: 20,
-                color: Colors.white,
-              ),
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20, color: Colors.white),
             ),
             const SizedBox(height: 10),
             Text(
               'Songs you like will appear here.\nTap the ♥ on any track to save it.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'SpotifyMixUI',
-                fontSize: 14,
-                color: Colors.white.withAlpha(120),
-                height: 1.6,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.white.withAlpha(120), height: 1.6),
             ),
           ],
         ),
@@ -407,13 +381,7 @@ class _LikedTrackTile extends StatelessWidget {
         track.name,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontFamily: 'SpotifyMixUI',
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: Colors.white,
-          letterSpacing: -0.15,
-        ),
+        style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white, letterSpacing: -0.15),
       ),
       subtitle: Row(
         spacing: 6,
@@ -425,7 +393,7 @@ class _LikedTrackTile extends StatelessWidget {
               track.artistName ?? 'Unknown Artist',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 13, color: Colors.white.withAlpha(160)),
+              style: TextStyle(fontSize: 13, color: Colors.white.withAlpha(160)),
             ),
           ),
         ],

@@ -43,12 +43,7 @@ class _PlaylistAuthorState extends ConsumerState<PlaylistAuthor> {
           ),
           Text(
             "Loading...  •  ${widget.playlist.trackIds.length} songs",
-            style: TextStyle(
-              fontFamily: "SpotifyMixUI",
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              letterSpacing: (-0.5),
-            ),
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: (-0.5)),
           ),
         ],
       );
@@ -74,12 +69,7 @@ class _PlaylistAuthorState extends ConsumerState<PlaylistAuthor> {
 
         Text(
           "${_author!.displayName.isNotEmpty ? _author!.displayName : "Author"}  •  ${widget.playlist.trackIds.length} songs",
-          style: TextStyle(
-            fontFamily: "SpotifyMixUI",
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            letterSpacing: (-0.5),
-          ),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: (-0.5)),
         ),
       ],
     );

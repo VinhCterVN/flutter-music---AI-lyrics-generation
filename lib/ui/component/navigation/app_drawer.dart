@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
+import 'package:flutter_ai_music/ui/theme/theme.dart';
 import 'package:flutter_ai_music/utils/debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -123,7 +124,7 @@ class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateM
           ),
           ListTile(
             leading: const HugeIcon(icon: HugeIconsStrokeRounded.logout02),
-            title: const Text('Logout', style: TextStyle(fontFamily: "SpotifyMixUI")),
+            title: const Text('Logout', style: TextStyle(fontFamily: appFontFamily)),
             onTap: () => ref.read(authenticationServiceProvider).signOut(),
           ),
         ],

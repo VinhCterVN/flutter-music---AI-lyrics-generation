@@ -234,11 +234,7 @@ class _AddToPlaylistScreenState extends ConsumerState<AddToPlaylistScreen> {
                             },
                             child: Text(
                               "Create Playlist",
-                              style: const TextStyle(
-                                fontFamily: "SpotifyMixUI",
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
                             ),
                           )
                         : SizedBox.shrink(),

@@ -77,8 +77,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
 
       final authController = ref.read(authenticationServiceProvider);
       final message = (_isLogin)
-          ? authController.signIn(email: _emailController.text.trim(), password: _passwordController.text)
-          : authController.signUp(
+          ? await authController.signIn(email: _emailController.text.trim(), password: _passwordController.text)
+          : await authController.signUp(
               name: _nameController.text.trim(),
               email: _emailController.text.trim(),
               password: _passwordController.text,
@@ -86,7 +86,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
 
       if (!context.mounted) return;
       setState(() => _isLoading = false);
-      Fluttertoast.showToast(msg: await message ?? "An error occurred", toastLength: Toast.LENGTH_LONG);
+      Fluttertoast.showToast(msg: message ?? "An error occurred", toastLength: Toast.LENGTH_LONG);
     }
   }
 
@@ -123,7 +123,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                           child: const Text(
                             'MusicAI',
                             style: TextStyle(
-                              fontFamily: "SpotifyMixUI",
                               fontWeight: FontWeight.w700,
                               fontSize: 42,
                               color: Colors.white,
@@ -138,11 +137,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                           child: Text(
                             _isLogin ? 'Welcome back 🎵' : 'Exploring musics with AI ✨',
                             key: ValueKey(_isLogin),
-                            style: TextStyle(
-                              fontFamily: "SpotifyMixUI",
-                              fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.8),
-                            ),
+                            style: TextStyle(fontSize: 16, color: Colors.white.withValues(alpha: 0.8)),
                           ),
                         ),
                         const SizedBox(height: 40),
@@ -183,6 +178,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
   }
 
   Widget _buildFormCard(Color primaryColor, Color primaryLighter) {
+    final width = MediaQuery.of(context).size.width;
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -194,6 +190,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
         border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1.5),
         boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10))],
       ),
+      width: math.min(width, 500),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Padding(
@@ -287,10 +284,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
                     child: TextButton(
                       onPressed: () {},
                       style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                      child: Text(
-                        'Forgot Password?',
-                        style: TextStyle(fontFamily: "SpotifyMixUI", color: primaryColor, fontSize: 14),
-                      ),
+                      child: Text('Forgot Password?', style: TextStyle(color: primaryColor, fontSize: 14)),
                     ),
                   ),
                 ],
@@ -327,10 +321,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
       onFieldSubmitted: onFieldSubmitted,
       obscureText: obscureText,
       validator: validator,
-      style: const TextStyle(fontFamily: "SpotifyMixUI", color: Colors.white, fontSize: 16),
+      style: const TextStyle(color: Colors.white, fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(fontFamily: "SpotifyMixUI", color: Colors.white.withValues(alpha: 0.7)),
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.7)),
         prefixIcon: Icon(icon, color: primaryColor),
         suffixIcon: suffixIcon,
         filled: true,
@@ -352,7 +346,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Color(0xFFFF6B6B), width: 2),
         ),
-        errorStyle: const TextStyle(fontFamily: "SpotifyMixUI", color: Color(0xFFFF6B6B)),
+        errorStyle: const TextStyle(color: Color(0xFFFF6B6B)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       ),
     );
@@ -385,7 +379,6 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
             : Text(
                 _isLogin ? 'Login' : 'Register',
                 style: const TextStyle(
-                  fontFamily: "SpotifyMixUI",
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                   color: Colors.white,
@@ -402,18 +395,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
       children: [
         Text(
           _isLogin ? 'Need an account?' : 'Already have an account?',
-          style: TextStyle(fontFamily: "SpotifyMixUI", color: Colors.white.withValues(alpha: 0.8), fontSize: 15),
+          style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 15),
         ),
         TextButton(
           onPressed: _toggleAuthMode,
           child: Text(
             _isLogin ? 'Register Now' : 'Login Here',
-            style: TextStyle(
-              fontFamily: "SpotifyMixUI",
-              color: primaryColor,
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-            ),
+            style: TextStyle(color: primaryColor, fontWeight: FontWeight.w600, fontSize: 15),
           ),
         ),
       ],
@@ -437,7 +425,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with TickerProviderStat
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
                 'Or continue with',
-                style: TextStyle(fontFamily: "SpotifyMixUI", color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
+                style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 14),
               ),
             ),
             Expanded(
@@ -558,12 +546,7 @@ class _SocialButton extends StatelessWidget {
                 const SizedBox(width: 10),
                 Text(
                   label,
-                  style: const TextStyle(
-                    fontFamily: "SpotifyMixUI",
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ],
             ),

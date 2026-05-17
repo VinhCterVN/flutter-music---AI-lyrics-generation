@@ -24,10 +24,7 @@ class TracksListPage extends ConsumerWidget {
           icon: const HugeIcon(icon: HugeIconsStrokeRounded.arrowLeft01),
           onPressed: context.pop,
         ),
-        title: const Text(
-          'Recently Played',
-          style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 16, fontWeight: FontWeight.w800),
-        ),
+        title: const Text('Recently Played', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
         centerTitle: true,
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -47,10 +44,7 @@ class TracksListPage extends ConsumerWidget {
                 children: [
                   Icon(Icons.history_rounded, size: 64, color: Colors.grey.shade600),
                   const SizedBox(height: 16),
-                  Text(
-                    'No recently played tracks',
-                    style: TextStyle(fontFamily: 'SpotifyMixUI', fontSize: 18, color: Colors.grey.shade400),
-                  ),
+                  Text('No recently played tracks', style: TextStyle(fontSize: 18, color: Colors.grey.shade400)),
                 ],
               ),
             );
@@ -64,7 +58,7 @@ class TracksListPage extends ConsumerWidget {
               return _RecentTrackListTile(
                 track: track,
                 onTap: () => AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: index),
-                onLongPress: () => showTrackOptions(track, context),
+                onLongPress: () => showTrackOptions(context, track),
               );
             },
           );
@@ -114,23 +108,14 @@ class _RecentTrackListTile extends StatelessWidget {
                 children: [
                   Text(
                     track.name,
-                    style: const TextStyle(
-                      fontFamily: "SpotifyMixUI",
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: (-0.15),
-                    ),
+                    style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, letterSpacing: (-0.15)),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     track.artistName ?? 'Unknown Artist',
-                    style: TextStyle(
-                      fontFamily: 'SpotifyMixUI',
-                      fontSize: 14,
-                      color: Colors.white.withAlpha((0.6 * 255).toInt()),
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.white.withAlpha((0.6 * 255).toInt())),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

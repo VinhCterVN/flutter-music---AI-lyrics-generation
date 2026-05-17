@@ -1,6 +1,5 @@
 import 'package:flutter_ai_music/service/user_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../service/auth_service.dart';
@@ -11,11 +10,13 @@ final authenticationServiceProvider = Provider<AuthenticationService>((ref) {
   return AuthenticationService(ref.watch(supabaseClientProvider));
 });
 
-final authStateProvider = StreamProvider<User?>((ref) {
-  return ref.watch(authenticationServiceProvider).authStateChanges;
+final authStateProvider = StreamProvider<User?>((ref) async* {
+  final authService = ref.watch(authenticationServiceProvider);
+  yield authService.currentUser;
+  yield* authService.authStateChanges;
 });
 
-final currentUserProvider = StateProvider<User?>((ref) {
+final currentUserProvider = Provider<User?>((ref) {
   return ref.watch(authStateProvider).value;
 });
 
