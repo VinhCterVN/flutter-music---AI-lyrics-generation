@@ -12,6 +12,7 @@ import 'package:flutter_ai_music/ui/pages/playlist_details.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
+import 'package:flutter_ai_music/ui/pages/profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -155,7 +156,7 @@ GoRouter createRouter(Ref ref) {
             routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],
+            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const SettingsPage())],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/library', name: 'LibraryPage', builder: (context, state) => const LibraryPage())],
@@ -163,6 +164,16 @@ GoRouter createRouter(Ref ref) {
         ],
       ),
       GoRoute(name: 'LoginPage', path: '/login', builder: (context, state) => const AuthScreen()),
+      GoRoute(
+        name: 'ProfilePage',
+        path: '/profile',
+        builder: (context, state) => const ProfilePage(),
+      ),
+      GoRoute(
+        name: 'SettingsPage',
+        path: '/settings',
+        builder: (context, state) => const SettingsPage(),
+      ),
       GoRoute(
         path: '/search_detail',
         pageBuilder: (context, state) {

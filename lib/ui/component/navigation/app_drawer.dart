@@ -1,133 +1,313 @@
-import 'package:file_picker/file_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
-import 'package:flutter_ai_music/service/api_service.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
-import 'package:flutter_ai_music/utils/debouncer.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../utils/widgets.dart';
-
-class AppDrawer extends ConsumerStatefulWidget {
+class AppDrawer extends ConsumerWidget {
   const AppDrawer({super.key});
 
   @override
-  ConsumerState<AppDrawer> createState() => _AppDrawerState();
-}
-
-class _AppDrawerState extends ConsumerState<AppDrawer> with TickerProviderStateMixin {
-  final _debouncer = Debouncer(delay: const Duration(milliseconds: 300));
-  late AnimationController _controller;
-  bool _isUploading = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      lowerBound: 0.95,
-      upperBound: 1.0,
-      duration: const Duration(milliseconds: 120),
-    )..value = 1.0;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _handlePickAvatar() async => _debouncer.call(() async {
-    if (_isUploading) {
-      Fluttertoast.showToast(msg: 'Upload in progress. Please wait.');
-      return;
-    }
-    setState(() => _isUploading = true);
-    final file = await FilePicker.platform.pickFiles(type: FileType.image, allowMultiple: false);
-    if (file == null || file.files.isEmpty) {
-      Fluttertoast.showToast(msg: 'No file selected.');
-      setState(() => _isUploading = false);
-      return;
-    }
-    final url = await ApiService.instance.uploadToCloudinary(file.files.first);
-    if (url == null) {
-      Fluttertoast.showToast(msg: 'Failed to upload avatar. Please try again.');
-      return;
-    }
-    final supabase = ref.read(supabaseClientProvider);
-    final response = await supabase.auth.updateUser(UserAttributes(data: {'photoUrl': url}));
-    await ref.read(authenticationServiceProvider).saveUserData(response.user);
-
-    if (response.user == null) {
-      Fluttertoast.showToast(msg: 'Failed to update avatar. Please try again.');
-      setState(() => _isUploading = false);
-      return;
-    }
-    setState(() => _isUploading = false);
-    Fluttertoast.showToast(msg: 'Avatar updated successfully');
-  });
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
+    final email = user?.email ?? 'Please log in';
+    final displayName = user?.userMetadata?["displayName"] ?? user?.userMetadata?["name"] ?? 'Guest';
     final photoUrl = user?.userMetadata?["photoUrl"] ?? 'https://www.gravatar.com/avatar/placeholder?d=mp&s=200';
+
+    final scheme = Theme.of(context).colorScheme;
+
     return Drawer(
       key: const Key('app_drawer'),
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: <Widget>[
-          UserAccountsDrawerHeader(
-            accountName: Text(user?.userMetadata?["name"] ?? 'Guest'),
-            accountEmail: Text(user?.email ?? 'Please log in'),
-            currentAccountPicture: CircleAvatar(
-              child: Stack(
-                clipBehavior: Clip.hardEdge,
-                children: [
-                  ClipOval(
-                    child: AvatarWithUploadingBorder(photoUrl: photoUrl, isUploading: _isUploading),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomRight.add(const Alignment(0, -0.32)),
-                    child: GestureDetector(
-                      onTapDown: (_) => _controller.reverse(),
-                      onTapUp: (_) => _controller.forward(),
-                      onTapCancel: () => _controller.forward(),
-                      onTap: () => _handlePickAvatar(),
-                      child: ScaleTransition(
-                        scale: _controller,
-                        child: Container(
-                          padding: EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surface,
-                            shape: BoxShape.circle,
-                          ),
-                          child: HugeIcon(icon: HugeIconsStrokeRounded.camera01, size: 18),
-                        ),
-                      ),
+      backgroundColor: Colors.transparent, // Let Container handle background
+      child: Container(
+        decoration: BoxDecoration(
+          color: scheme.surfaceDim,
+          borderRadius: const BorderRadius.only(
+            topRight: Radius.circular(32),
+            bottomRight: Radius.circular(32),
+          ),
+          border: Border(
+            right: BorderSide(color: Colors.white.withAlpha(10), width: 1.5),
+          ),
+        ),
+        child: SafeArea(
+          top: false,
+          bottom: true,
+          child: Column(
+            children: [
+              // ── Custom Premium Header ──────────────────────────────────────
+              GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pop(); // Close drawer
+                  context.push('/profile'); // Open profile
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 60, 24, 28),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withAlpha(10),
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(32),
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                    border: Border(
+                      bottom: BorderSide(color: Colors.white.withAlpha(10), width: 1),
                     ),
                   ),
-                ],
+                  child: Row(
+                    children: [
+                      // Simple User Avatar
+                      CircleAvatar(
+                        radius: 28,
+                        backgroundColor: Colors.grey.shade900,
+                        backgroundImage: CachedNetworkImageProvider(photoUrl),
+                      ),
+                      const SizedBox(width: 16),
+                      // User Info
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    displayName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      letterSpacing: -0.2,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Icon(Icons.verified_rounded, color: Colors.amber, size: 14),
+                              ],
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              email,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(180),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            // Quick badge
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withAlpha(120),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: Colors.amber.withAlpha(100), width: 0.5),
+                              ),
+                              child: const Text(
+                                'PRO MEMBER',
+                                style: TextStyle(
+                                  color: Colors.amber,
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.chevron_right_rounded, color: Colors.white.withAlpha(180), size: 22),
+                    ],
+                  ),
+                ),
               ),
-            ),
-            currentAccountPictureSize: const Size.square(81),
-            otherAccountsPictures: [],
-            onDetailsPressed: () {
-              Fluttertoast.showToast(msg: 'User ID: ${user?.id ?? 'N/A'}');
-            },
 
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer),
+              const SizedBox(height: 16),
+
+              // ── Drawer Options List ─────────────────────────────────────────
+              Expanded(
+                child: ListView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  children: [
+                    _buildDrawerSectionHeader('EXPLORE & DISCOVER'),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.home01,
+                      title: 'Home Feed',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/home');
+                      },
+                    ),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.search01,
+                      title: 'Search & Explore',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/search');
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildDrawerSectionHeader('MY COLLECTION'),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.musicNoteSquare02,
+                      title: 'Music Library',
+                      badge: 'Local',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.go('/library');
+                      },
+                    ),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.favourite,
+                      title: 'Liked Songs',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.push('/liked-songs');
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    _buildDrawerSectionHeader('PERSONALIZATION'),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.user,
+                      title: 'My Profile',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.push('/profile');
+                      },
+                    ),
+                    _buildDrawerTile(
+                      context: context,
+                      icon: HugeIconsStrokeRounded.settings01,
+                      title: 'App Settings',
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        context.push('/settings');
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Bottom Logout Option ────────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withAlpha(20),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.redAccent.withAlpha(40), width: 1),
+                  ),
+                  child: _buildDrawerTile(
+                    context: context,
+                    icon: HugeIconsStrokeRounded.logout02,
+                    title: 'Sign Out',
+                    iconColor: Colors.redAccent,
+                    textColor: Colors.redAccent,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      ref.read(authenticationServiceProvider).signOut();
+                    },
+                  ),
+                ),
+              ),
+            ],
           ),
-          ListTile(
-            leading: const HugeIcon(icon: HugeIconsStrokeRounded.logout02),
-            title: const Text('Logout', style: TextStyle(fontFamily: appFontFamily)),
-            onTap: () => ref.read(authenticationServiceProvider).signOut(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, top: 12, bottom: 8),
+      child: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.grey,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDrawerTile({
+    required BuildContext context,
+    required List<List<dynamic>> icon,
+    required String title,
+    required VoidCallback onTap,
+    Color? iconColor,
+    Color? textColor,
+    String? badge,
+  }) {
+    final defaultIconColor = Colors.white.withAlpha(200);
+    final defaultTextColor = Colors.white.withAlpha(225);
+    final scheme = Theme.of(context).colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        onTap: onTap,
+        dense: true,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        hoverColor: Colors.white.withAlpha(15),
+        leading: HugeIcon(
+          icon: icon,
+          color: iconColor ?? defaultIconColor,
+          size: 20,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: textColor ?? defaultTextColor,
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            fontFamily: appFontFamily,
+            letterSpacing: -0.2,
           ),
-        ],
+        ),
+        trailing: badge != null
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: scheme.primary.withAlpha(40),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: scheme.primary.withAlpha(80), width: 0.5),
+                ),
+                child: Text(
+                  badge,
+                  style: TextStyle(
+                    color: scheme.primary,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              )
+            : Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 11,
+                color: Colors.white.withAlpha(80),
+              ),
       ),
     );
   }

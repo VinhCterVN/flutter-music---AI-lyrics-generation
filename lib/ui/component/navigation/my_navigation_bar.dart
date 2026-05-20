@@ -30,14 +30,15 @@ class MyNavigationBar extends ConsumerWidget {
       child: Stack(
         children: [
           Positioned.fill(
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black],
-                ),
-              ),
+            child: ShaderMask(
+              shaderCallback: (bounds) => const LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.black54, Colors.black],
+                stops: [0.0, 0.5, 1.0],
+              ).createShader(bounds),
+              blendMode: BlendMode.srcIn,
+              child: const ColoredBox(color: Colors.black),
             ),
           ),
           if (hasTrack)
@@ -191,7 +192,11 @@ class _NavBarItemState extends State<NavBarItem> with SingleTickerProviderStateM
               const SizedBox(height: 4),
               Text(
                 widget.name,
-                style: TextStyle(fontSize: 12, color: widget.selected ? colorScheme.onSurface : Colors.grey),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: widget.selected ? colorScheme.onSurface : Colors.grey,
+                  letterSpacing: -0.25,
+                ),
               ),
             ],
           ),

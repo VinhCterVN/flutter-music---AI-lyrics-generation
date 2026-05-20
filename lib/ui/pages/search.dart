@@ -1,8 +1,11 @@
+import 'dart:math';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/ui/component/element/press_scale.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class SearchPage extends ConsumerWidget {
   const SearchPage({super.key});
@@ -15,16 +18,18 @@ class SearchPage extends ConsumerWidget {
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            pinned: true,
+            floating: true,
+            pinned: false,
+            toolbarHeight: 48,
             scrolledUnderElevation: 0,
-            expandedHeight: 140,
             backgroundColor: scheme.surfaceDim,
             leading: Padding(
               padding: const EdgeInsets.only(left: 16),
               child: CircleAvatar(backgroundImage: CachedNetworkImageProvider('https://i.pravatar.cc/150')),
             ),
+            leadingWidth: 50,
             title: const Text(
-              'Flussic',
+              'Search',
               style: TextStyle(fontFamily: appFontFamily, fontSize: 26, fontWeight: FontWeight.w900),
             ),
             actions: [
@@ -33,25 +38,11 @@ class SearchPage extends ConsumerWidget {
                 onPressed: () {},
               ),
             ],
-            bottom: PreferredSize(
-              preferredSize: const Size.fromHeight(60),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: Container(
-                  height: 45,
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8)),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      hintText: "Search...",
-                      hintStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
-                      prefixIcon: Icon(Icons.search_rounded, color: Colors.black87),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          ),
+
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _SearchBarDelegate(topPadding: MediaQuery.paddingOf(context).top),
           ),
 
           SliverToBoxAdapter(child: _buildAdSection("Featured Ads")),
@@ -70,14 +61,14 @@ class SearchPage extends ConsumerWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Container(
                   decoration: BoxDecoration(
-                    color: Colors.primaries[index % Colors.primaries.length].withValues(alpha: 0.8),
+                    color: Colors.primaries[index % Colors.primaries.length].withValues(alpha: 0.95),
                     borderRadius: BorderRadius.circular(15),
                     boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
                   ),
                   alignment: Alignment.center,
                   child: Text(
                     "Category $index",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: -0.25),
                   ),
                 ),
                 childCount: 100,
@@ -104,7 +95,7 @@ class SearchPage extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: 5,
             itemBuilder: (context, index) {
-              final randomImage = 'https://picsum.photos/200/300?random=$index';
+              final randomImage = 'https://picsum.photos/200/300?random=${index + Random().nextInt(1000)}';
               return PressScale(
                 child: Container(
                   width: 130,
@@ -122,4 +113,52 @@ class SearchPage extends ConsumerWidget {
       ],
     );
   }
+}
+
+class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
+  const _SearchBarDelegate({required this.topPadding});
+
+  final double topPadding;
+
+  static const _searchBarHeight = 48.0;
+  static const _verticalPadding = 4.0;
+
+  double get _extent => topPadding + _searchBarHeight + (_verticalPadding * 2);
+
+  @override
+  double get minExtent => _extent;
+
+  @override
+  double get maxExtent => _extent;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final scheme = Theme.of(context).colorScheme;
+    return Container(
+      padding: EdgeInsets.only(top: topPadding),
+      color: scheme.surfaceDim,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, _verticalPadding, 16, _verticalPadding * 2),
+        child: Container(
+          height: _searchBarHeight,
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
+          child: const TextField(
+            decoration: InputDecoration(
+              hintText: "What should we listen to?",
+              hintStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, letterSpacing: -0.25),
+              prefixIcon: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: Colors.black87),
+              ),
+              border: InputBorder.none,
+              contentPadding: EdgeInsets.symmetric(vertical: 10),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _SearchBarDelegate oldDelegate) => topPadding != oldDelegate.topPadding;
 }
