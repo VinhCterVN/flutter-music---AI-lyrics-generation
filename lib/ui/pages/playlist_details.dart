@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -46,6 +48,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   UIState _tracksState = UIState.loading;
   String _errorMessage = '';
   bool _isUploadingPhoto = false;
+  bool _showCoverShadow = false;
+  Timer? _coverShadowTimer;
 
   @override
   void initState() {
@@ -67,10 +71,20 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
       setState(() => _state = UIState.ready);
       await _fetchTracks();
     });
+    _scheduleCoverShadowAfterHero();
+  }
+
+  void _scheduleCoverShadowAfterHero() {
+    _coverShadowTimer?.cancel();
+    _coverShadowTimer = Timer(const Duration(milliseconds: 760), () {
+      if (!mounted) return;
+      setState(() => _showCoverShadow = true);
+    });
   }
 
   @override
   void dispose() {
+    _coverShadowTimer?.cancel();
     super.dispose();
     _controller.dispose();
   }
@@ -214,16 +228,20 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                           children: [
                             Expanded(
                               child: Center(
-                                child: Container(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 220),
+                                  curve: Curves.easeOutCubic,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(4),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(100),
-                                        blurRadius: 12,
-                                        offset: const Offset(0, 6),
-                                      ),
-                                    ],
+                                    boxShadow: _showCoverShadow
+                                        ? [
+                                            BoxShadow(
+                                              color: Colors.black.withAlpha(100),
+                                              blurRadius: 12,
+                                              offset: const Offset(0, 6),
+                                            ),
+                                          ]
+                                        : const [],
                                   ),
                                   clipBehavior: Clip.antiAlias,
                                   child: AspectRatio(
