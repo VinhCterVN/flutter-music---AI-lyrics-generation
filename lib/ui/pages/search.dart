@@ -49,6 +49,13 @@ class SearchPage extends ConsumerWidget {
 
           SliverToBoxAdapter(child: _buildAdSection("Recent Promotions")),
 
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+              child: Text("Categories", style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+            ),
+          ),
+
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverGrid(

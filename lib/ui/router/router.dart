@@ -1,18 +1,20 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/artist_provider.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/ui/pages/artist_details.dart';
 import 'package:flutter_ai_music/ui/pages/auth/auth_login.dart';
+import 'package:flutter_ai_music/ui/pages/bolt.dart';
 import 'package:flutter_ai_music/ui/pages/library.dart';
 import 'package:flutter_ai_music/ui/pages/liked_songs_page.dart';
 import 'package:flutter_ai_music/ui/pages/playlist_details.dart';
+import 'package:flutter_ai_music/ui/pages/profile.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
-import 'package:flutter_ai_music/ui/pages/profile.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -58,16 +60,16 @@ GoRouter createRouter(Ref ref) {
                 name: 'PlaylistDetailsPage',
                 pageBuilder: (context, state) {
                   final id = state.pathParameters['id']!;
+                  final initialPlaylist = state.extra is Playlist ? state.extra as Playlist : null;
                   return CustomTransitionPage(
                     key: state.pageKey,
                     opaque: false,
                     barrierDismissible: true,
                     barrierColor: Colors.black54,
-                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 1),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                    transitionDuration: const Duration(milliseconds: 520),
+                    reverseTransitionDuration: const Duration(milliseconds: 360),
+                    transitionsBuilder: (context, ani1, ani2, child) => FadeTransition(
+                      opacity: CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic),
                       child: child,
                     ),
                     child: Dismissible(
@@ -75,7 +77,7 @@ GoRouter createRouter(Ref ref) {
                       onDismissed: (_) => context.pop(),
                       movementDuration: const Duration(milliseconds: 300),
                       direction: DismissDirection.startToEnd,
-                      child: Material(child: PlaylistDetails(playlistId: id)),
+                      child: Material(child: PlaylistDetails(playlistId: id, initialPlaylist: initialPlaylist)),
                     ),
                   );
                 },
@@ -156,7 +158,7 @@ GoRouter createRouter(Ref ref) {
             routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const SettingsPage())],
+            routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/library', name: 'LibraryPage', builder: (context, state) => const LibraryPage())],
@@ -164,16 +166,8 @@ GoRouter createRouter(Ref ref) {
         ],
       ),
       GoRoute(name: 'LoginPage', path: '/login', builder: (context, state) => const AuthScreen()),
-      GoRoute(
-        name: 'ProfilePage',
-        path: '/profile',
-        builder: (context, state) => const ProfilePage(),
-      ),
-      GoRoute(
-        name: 'SettingsPage',
-        path: '/settings',
-        builder: (context, state) => const SettingsPage(),
-      ),
+      GoRoute(name: 'ProfilePage', path: '/profile', builder: (context, state) => const ProfilePage()),
+      GoRoute(name: 'SettingsPage', path: '/settings', builder: (context, state) => const SettingsPage()),
       GoRoute(
         path: '/search_detail',
         pageBuilder: (context, state) {

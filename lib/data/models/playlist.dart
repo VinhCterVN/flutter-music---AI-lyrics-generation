@@ -1,10 +1,15 @@
+import 'dart:ui';
+
 import 'package:flutter_ai_music/data/models/track.dart';
 
 class Playlist {
+  static const defaultAmbientColor = Color(0xFF2505B0);
+
   final String id;
   final String userId;
   final String name;
   final String? photoUrl;
+  final Color ambientColor;
   final PlaylistType type;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -18,6 +23,7 @@ class Playlist {
     required this.photoUrl,
     required this.createdAt,
     required this.updatedAt,
+    this.ambientColor = defaultAmbientColor,
     this.type = PlaylistType.playlist,
     this.tracks = const [],
     this.trackIds = const [],
@@ -25,7 +31,8 @@ class Playlist {
 
   factory Playlist.fromJson(Map<String, dynamic> json) {
     final playlistsTracks = json['playlists_tracks'] as List?;
-    final trackIds = playlistsTracks?.map((e) => e['track_id'] as int).toList() ?? [];
+    final trackIds =
+        playlistsTracks?.map((e) => e['track_id'] as int).toList() ?? [];
 
     return Playlist(
       id: json['id'] as String,
@@ -38,6 +45,32 @@ class Playlist {
     );
   }
 
+  Playlist copyWith({
+    String? id,
+    String? userId,
+    String? name,
+    String? photoUrl,
+    Color? ambientColor,
+    PlaylistType? type,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<Track>? tracks,
+    List<int>? trackIds,
+  }) {
+    return Playlist(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      name: name ?? this.name,
+      photoUrl: photoUrl ?? this.photoUrl,
+      ambientColor: ambientColor ?? this.ambientColor,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      tracks: tracks ?? this.tracks,
+      trackIds: trackIds ?? this.trackIds,
+    );
+  }
+
   bool containsTrack(int trackId) => trackIds.contains(trackId);
 }
 
@@ -45,10 +78,7 @@ class WeeklyHistory {
   final List<int> trackIds;
   final DateTime listenedAt;
 
-  const WeeklyHistory({
-    required this.trackIds,
-    required this.listenedAt,
-  });
+  const WeeklyHistory({required this.trackIds, required this.listenedAt});
 
   factory WeeklyHistory.fromJson(Map<String, dynamic> json) {
     final trackIds = (json['track_ids'] as List).map((e) => e as int).toList();
@@ -64,6 +94,4 @@ class WeeklyHistory {
   }
 }
 
-enum PlaylistType {
-  favorite, playlist
-}
+enum PlaylistType { favorite, playlist }

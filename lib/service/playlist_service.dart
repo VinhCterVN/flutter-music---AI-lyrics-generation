@@ -1,4 +1,5 @@
 import 'package:flutter_ai_music/data/models/playlist.dart';
+import 'package:flutter_ai_music/utils/functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -14,18 +15,35 @@ class PlaylistService {
     final userId = ref.read(currentUserProvider)?.id;
     if (userId == null) throw Exception('User not logged in');
 
-    final existing = await _supabase.from('favourites').select().eq('track_id', trackId).single().maybeSingle();
+    final existing = await _supabase
+        .from('favourites')
+        .select()
+        .eq('track_id', trackId)
+        .single()
+        .maybeSingle();
 
     if (existing != null) {
-      await _supabase.from('favourites').delete().eq('user_id', userId).eq('track_id', trackId);
+      await _supabase
+          .from('favourites')
+          .delete()
+          .eq('user_id', userId)
+          .eq('track_id', trackId);
       return 'removed';
     }
     await _supabase.from('favourites').insert({'track_id': trackId});
     return 'added';
   }
 
-  Future<Playlist> createPlaylist(String name, {String? photoUrl, List<int> initialTrackIds = const []}) async {
-    final response = await _supabase.from('playlists').insert({'name': name, 'photo_url': photoUrl}).select().single();
+  Future<Playlist> createPlaylist(
+    String name, {
+    String? photoUrl,
+    List<int> initialTrackIds = const [],
+  }) async {
+    final response = await _supabase
+        .from('playlists')
+        .insert({'name': name, 'photo_url': photoUrl})
+        .select()
+        .single();
     if (initialTrackIds.isNotEmpty) {
       final playlistId = response['id'] as String;
       final tracksToInsert = initialTrackIds
@@ -41,7 +59,7 @@ class PlaylistService {
           """)
         .eq('id', response['id'])
         .single();
-    return Playlist.fromJson(fullResponse);
+    return _hydratePlaylist(Playlist.fromJson(fullResponse));
   }
 
   Future<List<Playlist>> getPlaylists() async {
@@ -49,7 +67,10 @@ class PlaylistService {
           id, user_id, name, photo_url, created_at, updated_at,
           playlists_tracks (track_id)
           """);
-    return (response as List).map((e) => Playlist.fromJson(e)).toList();
+    final playlists = (response as List)
+        .map((e) => Playlist.fromJson(e))
+        .toList();
+    return Future.wait(playlists.map(_hydratePlaylist));
   }
 
   Future<List<Playlist>> getPlaylistByIds(List<String> ids) async {
@@ -61,33 +82,57 @@ class PlaylistService {
           playlists_tracks (track_id)
           """)
         .inFilter('id', ids);
-    return (response as List).map((e) => Playlist.fromJson(e)).toList();
+    final playlists = (response as List)
+        .map((e) => Playlist.fromJson(e))
+        .toList();
+    return Future.wait(playlists.map(_hydratePlaylist));
   }
 
   Future<List<int>> getTrackIdsInPlaylist(String playlistId) async {
-    final response = await _supabase.from('playlists_tracks').select('track_id').eq('playlist_id', playlistId);
+    final response = await _supabase
+        .from('playlists_tracks')
+        .select('track_id')
+        .eq('playlist_id', playlistId);
     return (response as List).map((e) => e['track_id'] as int).toList();
   }
 
   Future<void> addTrackToPlaylist(String playlistId, int trackId) async {
-    await _supabase.from('playlists_tracks').insert({'playlist_id': playlistId, 'track_id': trackId});
+    await _supabase.from('playlists_tracks').insert({
+      'playlist_id': playlistId,
+      'track_id': trackId,
+    });
   }
 
-  Future<void> addTracksToPlaylist(String playlistId, List<int> trackIds) async {
-    final tracksToInsert = trackIds.map((trackId) => {'playlist_id': playlistId, 'track_id': trackId}).toList();
+  Future<void> addTracksToPlaylist(
+    String playlistId,
+    List<int> trackIds,
+  ) async {
+    final tracksToInsert = trackIds
+        .map((trackId) => {'playlist_id': playlistId, 'track_id': trackId})
+        .toList();
     await _supabase.from('playlists_tracks').insert(tracksToInsert);
   }
 
   Future<void> removeTrackFromPlaylist(String playlistId, int trackId) async {
-    await _supabase.from('playlists_tracks').delete().eq('playlist_id', playlistId).eq('track_id', trackId);
+    await _supabase
+        .from('playlists_tracks')
+        .delete()
+        .eq('playlist_id', playlistId)
+        .eq('track_id', trackId);
   }
 
   Future<void> updatePlaylistPhoto(String playlistId, String photoUrl) async {
-    await _supabase.from('playlists').update({'photo_url': photoUrl}).eq('id', playlistId);
+    await _supabase
+        .from('playlists')
+        .update({'photo_url': photoUrl})
+        .eq('id', playlistId);
   }
 
   Future<void> renamePlaylist(String playlistId, String newName) async {
-    await _supabase.from('playlists').update({'name': newName}).eq('id', playlistId);
+    await _supabase
+        .from('playlists')
+        .update({'name': newName})
+        .eq('id', playlistId);
   }
 
   Future<void> deletePlaylist(String playlistId) async {
@@ -137,7 +182,31 @@ class PlaylistService {
             playlist.trackIds.addAll(tracksForThisPlaylist.cast<int>());
           }
 
-          return playlists;
+          return Future.wait(playlists.map(_hydratePlaylist));
         });
+  }
+
+  Future<Playlist> _hydratePlaylist(Playlist playlist) async {
+    final photoUrl = await _resolvePlaylistPhotoUrl(playlist);
+    final ambientColor = await getDominantColor(photoUrl);
+    return playlist.copyWith(photoUrl: photoUrl, ambientColor: ambientColor);
+  }
+
+  Future<String> _resolvePlaylistPhotoUrl(Playlist playlist) async {
+    if (playlist.photoUrl != null) return playlist.photoUrl!;
+    if (playlist.trackIds.isEmpty) {
+      return "https://i.pravatar.cc/300?u=${playlist.id}";
+    }
+
+    final response = await _supabase
+        .from("tracks")
+        .select("images (url)")
+        .eq('id', playlist.trackIds.first)
+        .maybeSingle();
+    final images = response?['images'] as List?;
+    final firstImage = images?.isNotEmpty == true
+        ? images!.first['url'] as String?
+        : null;
+    return firstImage ?? "https://i.pravatar.cc/300?u=${playlist.id}";
   }
 }

@@ -26,7 +26,10 @@ class WebAppLayout extends StatelessWidget {
       backgroundColor: theme.colorScheme.surfaceDim,
       body: Row(
         children: [
-          _WebSidebar(selectedIndex: navigationShell.currentIndex, onDestinationSelected: navigationShell.goBranch),
+          _WebSidebar(
+            selectedIndex: navigationShell.currentIndex,
+            onDestinationSelected: navigationShell.goBranch,
+          ),
           Expanded(
             child: Column(
               children: [
@@ -35,10 +38,14 @@ class WebAppLayout extends StatelessWidget {
                   child: DecoratedBox(
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                      ),
                     ),
                     child: ClipRRect(
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(8)),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(8),
+                      ),
                       child: navigationShell,
                     ),
                   ),
@@ -70,15 +77,21 @@ GoRouter createWebRouter(WidgetRef ref) {
     },
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) => WebAppLayout(navigationShell: navigationShell),
+        builder: (context, state, navigationShell) =>
+            WebAppLayout(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/home', name: 'WebHomePage', builder: (_, _) => const WebHomePage()),
+              GoRoute(
+                path: '/home',
+                name: 'WebHomePage',
+                builder: (_, _) => const WebHomePage(),
+              ),
               GoRoute(
                 path: '/playlist/:id',
                 name: 'WebPlaylistDetailsPage',
-                builder: (context, state) => PlaylistDetails(playlistId: state.pathParameters['id']!),
+                builder: (context, state) =>
+                    PlaylistDetails(playlistId: state.pathParameters['id']!),
               ),
               GoRoute(
                 path: '/liked-songs',
@@ -93,24 +106,44 @@ GoRouter createWebRouter(WidgetRef ref) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/search', name: 'WebSearchPage', builder: (_, _) => const WebSearchPage())],
+            routes: [
+              GoRoute(
+                path: '/search',
+                name: 'WebSearchPage',
+                builder: (_, _) => const WebSearchPage(),
+              ),
+            ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/library', name: 'WebLibraryPage', builder: (_, _) => const WebLibraryPage())],
+            routes: [
+              GoRoute(
+                path: '/library',
+                name: 'WebLibraryPage',
+                builder: (_, _) => const WebLibraryPage(),
+              ),
+            ],
           ),
         ],
       ),
-      GoRoute(path: '/login', name: 'WebLoginPage', builder: (context, state) => const AuthScreen()),
+      GoRoute(
+        path: '/login',
+        name: 'WebLoginPage',
+        builder: (context, state) => const AuthScreen(),
+      ),
       GoRoute(
         path: '/',
-        builder: (_, _) => const Scaffold(body: Center(child: CircularProgressIndicator())),
+        builder: (_, _) =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
       ),
     ],
   );
 }
 
 class _WebSidebar extends ConsumerWidget {
-  const _WebSidebar({required this.selectedIndex, required this.onDestinationSelected});
+  const _WebSidebar({
+    required this.selectedIndex,
+    required this.onDestinationSelected,
+  });
 
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
@@ -119,14 +152,19 @@ class _WebSidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final playlists = ref.watch(webPlaylistsProvider).asData?.value ?? const [];
-    final favourites = ref.watch(webFavouriteTracksProvider).asData?.value ?? const [];
+    final favourites =
+        ref.watch(webFavouriteTracksProvider).asData?.value ?? const [];
 
     return Container(
       width: 248,
       padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        border: Border(right: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35))),
+        border: Border(
+          right: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.35),
+          ),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +173,12 @@ class _WebSidebar extends ConsumerWidget {
             children: [
               Image.asset('assets/icons/space.png', width: 36, height: 36),
               const SizedBox(width: 10),
-              Text('Flussic', style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w900)),
+              Text(
+                'Flussic',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 28),
@@ -158,7 +201,12 @@ class _WebSidebar extends ConsumerWidget {
             onTap: () => onDestinationSelected(2),
           ),
           const SizedBox(height: 24),
-          Text('Collections', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+          Text(
+            'Collections',
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
           const SizedBox(height: 10),
           _PlaylistShortcut(
             color: theme.colorScheme.primary,
@@ -181,7 +229,9 @@ class _WebSidebar extends ConsumerWidget {
             onPressed: () => context.go('/search'),
             icon: const Icon(Icons.auto_awesome),
             label: const Text('New Mix'),
-            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(44)),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(44),
+            ),
           ),
         ],
       ),
@@ -190,7 +240,12 @@ class _WebSidebar extends ConsumerWidget {
 }
 
 class _SidebarDestination extends StatelessWidget {
-  const _SidebarDestination({required this.icon, required this.label, required this.selected, required this.onTap});
+  const _SidebarDestination({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final IconData icon;
   final String label;
@@ -210,18 +265,28 @@ class _SidebarDestination extends StatelessWidget {
           height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
-            color: selected ? theme.colorScheme.primary.withValues(alpha: 0.16) : Colors.transparent,
+            color: selected
+                ? theme.colorScheme.primary.withValues(alpha: 0.16)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
           ),
           child: Row(
             children: [
-              FaIcon(icon, size: 17, color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant),
+              FaIcon(
+                icon,
+                size: 17,
+                color: selected
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.onSurfaceVariant,
+              ),
               const SizedBox(width: 12),
               Text(
                 label,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-                  color: selected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -233,7 +298,12 @@ class _SidebarDestination extends StatelessWidget {
 }
 
 class _PlaylistShortcut extends StatelessWidget {
-  const _PlaylistShortcut({required this.color, required this.title, required this.subtitle, required this.onTap});
+  const _PlaylistShortcut({
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
   final Color color;
   final String title;
@@ -255,7 +325,10 @@ class _PlaylistShortcut extends StatelessWidget {
             Container(
               width: 38,
               height: 38,
-              decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(7)),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(7),
+              ),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -263,12 +336,19 @@ class _PlaylistShortcut extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, maxLines: 1, overflow: TextOverflow.ellipsis, style: theme.textTheme.bodyMedium),
+                  Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
                   Text(
                     subtitle,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -314,7 +394,11 @@ class _WebTopBarState extends ConsumerState<_WebTopBar> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceDim,
-        border: Border(bottom: BorderSide(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.24))),
+        border: Border(
+          bottom: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.24),
+          ),
+        ),
       ),
       child: Row(
         children: [
@@ -345,15 +429,21 @@ class _WebTopBarState extends ConsumerState<_WebTopBar> {
                 ref.read(trackSearchQueryProvider.notifier).state = value;
                 context.go('/search');
               },
-              padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 14)),
-              backgroundColor: WidgetStatePropertyAll(theme.colorScheme.surfaceContainerLow),
+              padding: const WidgetStatePropertyAll(
+                EdgeInsets.symmetric(horizontal: 14),
+              ),
+              backgroundColor: WidgetStatePropertyAll(
+                theme.colorScheme.surfaceContainerLow,
+              ),
               elevation: const WidgetStatePropertyAll(0),
             ),
           ),
           const Spacer(),
           IconButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('No new notifications')));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No new notifications')),
+              );
             },
             icon: const Icon(Icons.notifications_none),
             tooltip: 'Notifications',
@@ -364,7 +454,10 @@ class _WebTopBarState extends ConsumerState<_WebTopBar> {
             backgroundColor: theme.colorScheme.primaryContainer,
             child: Text(
               initial,
-              style: TextStyle(color: theme.colorScheme.onPrimaryContainer, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: theme.colorScheme.onPrimaryContainer,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],

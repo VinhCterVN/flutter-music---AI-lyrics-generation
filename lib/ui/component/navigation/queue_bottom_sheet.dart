@@ -20,6 +20,8 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
     final queue = ref.watch(queueProvider);
     final currentTrack = ref.watch(currentTrackProvider).value!;
     final scheme = Theme.of(context).colorScheme;
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final imageSize = (48 * dpr).round();
 
     return Container(
       decoration: BoxDecoration(
@@ -48,7 +50,14 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
                   child: ClipRRect(
                     clipBehavior: Clip.antiAlias,
                     borderRadius: BorderRadius.circular(4),
-                    child: CachedNetworkImage(imageUrl: currentTrack.images.first, fit: BoxFit.cover),
+                    child: CachedNetworkImage(
+                      imageUrl: currentTrack.images.first,
+                      fit: BoxFit.cover,
+                      memCacheWidth: imageSize,
+                      memCacheHeight: imageSize,
+                      maxWidthDiskCache: imageSize,
+                      maxHeightDiskCache: imageSize,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -123,6 +132,10 @@ class _QueueBottomSheetState extends ConsumerState<QueueBottomSheet> with Ticker
                                 child: CachedNetworkImage(
                                   imageUrl: (tag["images"] as List<String>).first,
                                   fit: BoxFit.cover,
+                                  memCacheWidth: imageSize,
+                                  memCacheHeight: imageSize,
+                                  maxWidthDiskCache: imageSize,
+                                  maxHeightDiskCache: imageSize,
                                 ),
                               ),
                             ),

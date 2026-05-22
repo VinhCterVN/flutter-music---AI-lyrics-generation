@@ -4,9 +4,7 @@ import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/home/animated_home_section.dart';
 import 'package:flutter_ai_music/ui/component/element/press_scale.dart';
-import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../provider/track_provider.dart';
@@ -119,77 +117,76 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
     setState(() => _photoUrl = track.first.images.first);
   }
 
-  Future<void> _playPlaylist(Playlist playlist) async {
-    try {
-      if (playlist.trackIds.isEmpty) {
-        Fluttertoast.showToast(msg: 'Playlist is empty');
-        return;
-      }
-      final trackIdStrings = playlist.trackIds.map((id) => id.toString()).toList();
-      final tracks = await ref.read(trackServiceProvider).getTracksByIds(trackIdStrings);
-      if (tracks.isEmpty) {
-        Fluttertoast.showToast(msg: 'No tracks found in playlist');
-        return;
-      }
-      if (!mounted) return;
-      AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: 0);
-    } catch (e) {
-      Fluttertoast.showToast(msg: 'Error playing playlist: $e');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final dpr = MediaQuery.of(context).devicePixelRatio;
+    final imageSize = (64 * dpr).round();
+    final playlist = widget.playlist;
+    final heroPrefix = 'playlist-${playlist.id}';
+
     return PressScale(
       key: widget.key,
-      onTap: () => context.push('/playlist/${widget.playlist.id}'),
-      onLongPress: () => showPlaylistOptions(context, playlist: widget.playlist, photoUrl: _photoUrl),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white70.withAlpha(30),
-          borderRadius: BorderRadius.circular(4),
-          boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4, offset: const Offset(0, 2))],
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
+      onTap: () => context.push('/playlist/${playlist.id}', extra: playlist.copyWith(photoUrl: _photoUrl)),
+      onLongPress: () => showPlaylistOptions(context, playlist: playlist, photoUrl: _photoUrl),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white70.withAlpha(30),
               borderRadius: BorderRadius.circular(4),
-              child: SizedBox(
-                width: 48,
-                height: 48,
-                child: GestureDetector(
-                  onTap: () => _playPlaylist(widget.playlist),
-                  child: _photoUrl == null
-                      ? Container(
-                          color: Colors.grey.shade800,
-                          child: Center(child: const Icon(Icons.music_note, color: Colors.white54)),
-                        )
-                      : CachedNetworkImage(
-                          imageUrl: _photoUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(color: Colors.grey.shade800),
-                          errorWidget: (_, __, ___) => Container(
+              boxShadow: [BoxShadow(color: Colors.black.withAlpha(50), blurRadius: 4, offset: const Offset(0, 2))],
+            ),
+          ),
+          Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: Hero(
+                    tag: '$heroPrefix-image',
+                    child: _photoUrl == null
+                        ? Container(
                             color: Colors.grey.shade800,
-                            child: const Icon(Icons.music_note, color: Colors.white54),
+                            child: Center(child: const Icon(Icons.music_note, color: Colors.white54)),
+                          )
+                        : CachedNetworkImage(
+                            imageUrl: _photoUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(color: Colors.grey.shade800),
+                            errorWidget: (_, __, ___) => Container(
+                              color: Colors.grey.shade800,
+                              child: const Icon(Icons.music_note, color: Colors.white54),
+                            ),
+                            memCacheWidth: imageSize,
+                            memCacheHeight: imageSize,
+                            maxWidthDiskCache: imageSize,
+                            maxHeightDiskCache: imageSize,
                           ),
-                        ),
+                  ),
                 ),
               ),
-            ),
-            // Title
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  widget.playlist.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Hero(
+                    tag: '$heroPrefix-title',
+                    flightShuttleBuilder: (_, animation, __, ___, toHeroContext) =>
+                        FadeTransition(opacity: animation, child: toHeroContext.widget),
+                    child: Text(
+                      playlist.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

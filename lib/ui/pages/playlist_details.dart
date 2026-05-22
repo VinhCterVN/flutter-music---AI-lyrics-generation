@@ -8,6 +8,7 @@ import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/playlist_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/service/api_service.dart';
+import 'package:flutter_ai_music/ui/component/element/home/animated_home_section.dart';
 import 'package:flutter_ai_music/ui/component/element/playlist_author.dart';
 import 'package:flutter_ai_music/ui/layout/loading_scaffold.dart';
 import 'package:flutter_ai_music/utils/extensions.dart';
@@ -24,8 +25,9 @@ import '../component/navigation/fullscreen_image_page.dart';
 
 class PlaylistDetails extends ConsumerStatefulWidget {
   final String playlistId;
+  final Playlist? initialPlaylist;
 
-  const PlaylistDetails({super.key, required this.playlistId});
+  const PlaylistDetails({super.key, required this.playlistId, this.initialPlaylist});
 
   @override
   ConsumerState<PlaylistDetails> createState() => _PlaylistDetailsState();
@@ -35,12 +37,13 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   late final ScrollController _controller;
   late Playlist _playlist;
 
-  late String _photoUrl;
-  late Color _ambientColor;
+  String? _photoUrl;
+  Color _ambientColor = Playlist.defaultAmbientColor;
 
   double titleOpacity = 1.0;
   List<Track> _tracks = [];
-  UIState _state = UIState.loading;
+  late UIState _state = widget.initialPlaylist == null ? UIState.loading : UIState.ready;
+  UIState _tracksState = UIState.loading;
   String _errorMessage = '';
   bool _isUploadingPhoto = false;
 
@@ -48,12 +51,19 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   void initState() {
     super.initState();
     _controller = ScrollController();
+    final initialPlaylist = widget.initialPlaylist;
+    if (initialPlaylist != null) {
+      _playlist = initialPlaylist;
+      _photoUrl = initialPlaylist.photoUrl;
+      _ambientColor = initialPlaylist.ambientColor;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _fetchPlaylist();
-      if (_state == UIState.error) return;
-      await _loadPhotoUrl();
-      await _fetchAmbientColor();
-      if (!mounted) return;
+      if (widget.initialPlaylist == null) {
+        await _fetchPlaylist();
+        if (_state == UIState.error) return;
+      }
+      if (_photoUrl == null) await _loadPhotoUrl();
+      if (!mounted || _state == UIState.error) return;
       setState(() => _state = UIState.ready);
       await _fetchTracks();
     });
@@ -76,7 +86,12 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
       });
       return;
     }
-    setState(() => _playlist = res.first);
+    final playlist = res.first;
+    setState(() {
+      _playlist = playlist;
+      _photoUrl = playlist.photoUrl;
+      _ambientColor = playlist.ambientColor;
+    });
   }
 
   Future<void> _loadPhotoUrl() async {
@@ -100,12 +115,20 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   }
 
   Future<void> _fetchTracks() async {
+    setState(() => _tracksState = UIState.loading);
     final tracks = await ref
         .read(trackServiceProvider)
         .getTracksByIds(_playlist.trackIds.map((e) => e.toString()).toList());
     if (!mounted) return;
-    setState(() => _tracks = tracks);
+    setState(() {
+      _tracks = tracks;
+      _tracksState = UIState.ready;
+    });
   }
+
+  String get _resolvedPhotoUrl => _photoUrl ?? "https://i.pravatar.cc/300?u=${_playlist.id}";
+
+  String get _heroPrefix => 'playlist-${_playlist.id}';
 
   Future<void> _playTrack(WidgetRef ref, List<Track> allTracks, int selectedIndex) async {
     try {
@@ -210,20 +233,25 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                         PageRouteBuilder(
                                           opaque: false,
                                           barrierColor: Colors.black54,
-                                          pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: _photoUrl),
+                                          pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: _resolvedPhotoUrl),
                                         ),
                                       ),
                                       onLongPress: _handlePickCoverPhoto,
                                       child: Stack(
                                         fit: StackFit.expand,
                                         children: [
-                                          CachedNetworkImage(
-                                            imageUrl: _photoUrl,
-                                            fit: BoxFit.cover,
-                                            placeholder: (_, __) => Container(color: Colors.grey.shade800),
-                                            errorWidget: (_, __, ___) => Container(
-                                              color: Colors.grey.shade800,
-                                              child: const Icon(Icons.music_note, color: Colors.white54),
+                                          Hero(
+                                            tag: '$_heroPrefix-image',
+                                            child: Material(
+                                              color: Colors.transparent,
+                                              child: CachedNetworkImage(
+                                                imageUrl: _resolvedPhotoUrl,
+                                                fit: BoxFit.cover,
+                                                errorWidget: (_, __, ___) => Container(
+                                                  color: Colors.grey.shade800,
+                                                  child: const Icon(Icons.music_note, color: Colors.white54),
+                                                ),
+                                              ),
                                             ),
                                           ),
                                           // Upload overlay
@@ -272,11 +300,17 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                               },
                               child: Padding(
                                 padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Text(
-                                  _playlist.name,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28),
+                                child: Hero(
+                                  tag: '$_heroPrefix-title',
+                                  flightShuttleBuilder: (_, animation, __, ___, toHeroContext) {
+                                    return FadeTransition(opacity: animation, child: toHeroContext.widget);
+                                  },
+                                  child: Text(
+                                    _playlist.name,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28),
+                                  ),
                                 ),
                               ),
                             ),
@@ -317,7 +351,11 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                     padding: const EdgeInsets.all(3),
                                     child: ClipRRect(
                                       borderRadius: BorderRadius.circular(4),
-                                      child: CachedNetworkImage(imageUrl: _photoUrl, fit: BoxFit.cover, scale: 1.1),
+                                      child: CachedNetworkImage(
+                                        imageUrl: _resolvedPhotoUrl,
+                                        fit: BoxFit.cover,
+                                        scale: 1.1,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -351,7 +389,9 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                     ),
                   ),
 
-                  if (_tracks.isEmpty)
+                  if (_tracksState == UIState.loading)
+                    const SliverToBoxAdapter(child: _PlaylistTracksSkeleton())
+                  else if (_tracks.isEmpty)
                     SliverToBoxAdapter(child: Center(child: const Text("No tracks found.")))
                   else
                     SliverPadding(
@@ -518,6 +558,43 @@ class PlaylistHeaderDelegate extends SliverPersistentHeaderDelegate {
   @override
   bool shouldRebuild(covariant PlaylistHeaderDelegate oldDelegate) {
     return maxHeight != oldDelegate.maxHeight || minHeight != oldDelegate.minHeight || child != oldDelegate.child;
+  }
+}
+
+class _PlaylistTracksSkeleton extends StatelessWidget {
+  const _PlaylistTracksSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      child: Column(
+        children: List.generate(
+          8,
+          (index) => Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Row(
+              children: [
+                const HomeSectionSkeletonBox(width: 44, height: 44, borderRadius: 6),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      HomeSectionSkeletonBox(width: index.isEven ? double.infinity : 180, height: 14, borderRadius: 7),
+                      const SizedBox(height: 8),
+                      HomeSectionSkeletonBox(width: index.isEven ? 132 : 96, height: 12, borderRadius: 6),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                const HomeSectionSkeletonBox(width: 22, height: 22, borderRadius: 11),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
