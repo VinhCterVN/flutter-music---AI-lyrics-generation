@@ -49,6 +49,8 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   String _errorMessage = '';
   bool _isUploadingPhoto = false;
   bool _showCoverShadow = false;
+  bool _isPopping = false;
+  bool _allowPop = false;
   Timer? _coverShadowTimer;
 
   @override
@@ -77,9 +79,24 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
   void _scheduleCoverShadowAfterHero() {
     _coverShadowTimer?.cancel();
     _coverShadowTimer = Timer(const Duration(milliseconds: 760), () {
-      if (!mounted) return;
+      if (!mounted || _isPopping) return;
       setState(() => _showCoverShadow = true);
     });
+  }
+
+  Future<void> _popAfterHidingCoverShadow() async {
+    if (_isPopping) return;
+    _isPopping = true;
+    _coverShadowTimer?.cancel();
+
+    if (_showCoverShadow && mounted) {
+      setState(() => _showCoverShadow = false);
+      await Future<void>.delayed(const Duration(milliseconds: 230));
+    }
+
+    if (!mounted) return;
+    setState(() => _allowPop = true);
+    context.pop();
   }
 
   @override
@@ -194,314 +211,325 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
     return switch (_state) {
       UIState.loading => const LoadingScaffold(),
       UIState.error => _buildErrorScaffold(),
-      _ => Scaffold(
-        backgroundColor: mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
-        body: Stack(
-          clipBehavior: Clip.antiAlias,
-          children: [
-            Positioned.fill(
-              child: CustomScrollView(
-                controller: _controller,
-                cacheExtent: 2000,
-                slivers: [
-                  SliverPersistentHeader(
-                    delegate: PlaylistHeaderDelegate(
-                      minHeight: height * 0.425,
-                      maxHeight: height * 0.565,
-                      child: Container(
-                        padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: AlignmentGeometry.topCenter,
-                            end: AlignmentGeometry.bottomCenter,
-                            // stops: const [0.0, 0.75, 1.0],
-                            colors: [
-                              mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.white, 0.1)]),
-                              mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.black54, 0.1)]),
-                              mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
-                            ],
+      _ => PopScope(
+        canPop: _allowPop,
+        onPopInvokedWithResult: (didPop, result) {
+          if (didPop) return;
+          _popAfterHidingCoverShadow();
+        },
+        child: Scaffold(
+          backgroundColor: mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
+          body: Stack(
+            clipBehavior: Clip.antiAlias,
+            children: [
+              Positioned.fill(
+                child: CustomScrollView(
+                  controller: _controller,
+                  cacheExtent: 2000,
+                  slivers: [
+                    SliverPersistentHeader(
+                      delegate: PlaylistHeaderDelegate(
+                        minHeight: height * 0.425,
+                        maxHeight: height * 0.565,
+                        child: Container(
+                          padding: EdgeInsets.fromLTRB(18, topPadding + 18, 18, 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: AlignmentGeometry.topCenter,
+                              end: AlignmentGeometry.bottomCenter,
+                              // stops: const [0.0, 0.75, 1.0],
+                              colors: [
+                                mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.white, 0.1)]),
+                                mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.black54, 0.1)]),
+                                mixColors([MapEntry(_ambientColor, 0.25), MapEntry(Colors.black54, 0.75)]),
+                              ],
+                            ),
+                            // border: Border.all(color: Colors.red, width: 2),
                           ),
-                          // border: Border.all(color: Colors.red, width: 2),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 220),
-                                  curve: Curves.easeOutCubic,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    boxShadow: _showCoverShadow
-                                        ? [
-                                            BoxShadow(
-                                              color: Colors.black.withAlpha(100),
-                                              blurRadius: 12,
-                                              offset: const Offset(0, 6),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Center(
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 220),
+                                    curve: Curves.easeOutCubic,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(4),
+                                      boxShadow: _showCoverShadow
+                                          ? [
+                                              BoxShadow(
+                                                color: Colors.black.withAlpha(100),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 6),
+                                              ),
+                                            ]
+                                          : const [],
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: AspectRatio(
+                                      aspectRatio: 1,
+                                      child: GestureDetector(
+                                        onTap: () => Navigator.of(context, rootNavigator: true).push(
+                                          PageRouteBuilder(
+                                            opaque: false,
+                                            barrierColor: Colors.black54,
+                                            pageBuilder: (_, __, ___) =>
+                                                FullscreenImagePage(imageUrl: _resolvedPhotoUrl),
+                                          ),
+                                        ),
+                                        onLongPress: _handlePickCoverPhoto,
+                                        child: Stack(
+                                          fit: StackFit.expand,
+                                          children: [
+                                            Hero(
+                                              tag: '$_heroPrefix-image',
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: CachedNetworkImage(
+                                                  imageUrl: _resolvedPhotoUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorWidget: (_, __, ___) => Container(
+                                                    color: Colors.grey.shade800,
+                                                    child: const Icon(Icons.music_note, color: Colors.white54),
+                                                  ),
+                                                ),
+                                              ),
                                             ),
-                                          ]
-                                        : const [],
-                                  ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: AspectRatio(
-                                    aspectRatio: 1,
-                                    child: GestureDetector(
-                                      onTap: () => Navigator.of(context, rootNavigator: true).push(
-                                        PageRouteBuilder(
-                                          opaque: false,
-                                          barrierColor: Colors.black54,
-                                          pageBuilder: (_, __, ___) => FullscreenImagePage(imageUrl: _resolvedPhotoUrl),
+                                            // Upload overlay
+                                            AnimatedOpacity(
+                                              opacity: _isUploadingPhoto ? 1.0 : 0.0,
+                                              duration: const Duration(milliseconds: 200),
+                                              child: Container(
+                                                color: Colors.black54,
+                                                child: const Center(
+                                                  child: CircularProgressIndicator(
+                                                    color: Colors.white,
+                                                    strokeWidth: 2.5,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            // Long-press hint badge (visible when not uploading)
+                                            if (!_isUploadingPhoto)
+                                              Align(
+                                                alignment: Alignment.bottomRight,
+                                                child: Padding(
+                                                  padding: const EdgeInsets.all(8),
+                                                  child: Container(
+                                                    padding: const EdgeInsets.all(6),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.black45,
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons.camera_alt_rounded,
+                                                      size: 16,
+                                                      color: Colors.white70,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                          ],
                                         ),
                                       ),
-                                      onLongPress: _handlePickCoverPhoto,
-                                      child: Stack(
-                                        fit: StackFit.expand,
-                                        children: [
-                                          Hero(
-                                            tag: '$_heroPrefix-image',
-                                            child: Material(
-                                              color: Colors.transparent,
-                                              child: CachedNetworkImage(
-                                                imageUrl: _resolvedPhotoUrl,
-                                                fit: BoxFit.cover,
-                                                errorWidget: (_, __, ___) => Container(
-                                                  color: Colors.grey.shade800,
-                                                  child: const Icon(Icons.music_note, color: Colors.white54),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                          // Upload overlay
-                                          AnimatedOpacity(
-                                            opacity: _isUploadingPhoto ? 1.0 : 0.0,
-                                            duration: const Duration(milliseconds: 200),
-                                            child: Container(
-                                              color: Colors.black54,
-                                              child: const Center(
-                                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-                                              ),
-                                            ),
-                                          ),
-                                          // Long-press hint badge (visible when not uploading)
-                                          if (!_isUploadingPhoto)
-                                            Align(
-                                              alignment: Alignment.bottomRight,
-                                              child: Padding(
-                                                padding: const EdgeInsets.all(8),
-                                                child: Container(
-                                                  padding: const EdgeInsets.all(6),
-                                                  decoration: BoxDecoration(
-                                                    color: Colors.black45,
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: const Icon(
-                                                    Icons.camera_alt_rounded,
-                                                    size: 16,
-                                                    color: Colors.white70,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                        ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              VisibilityDetector(
+                                key: const Key("playlist_title_visibility_detector"),
+                                onVisibilityChanged: (info) {
+                                  if (!mounted) return;
+                                  setState(() => titleOpacity = info.visibleFraction.clamp(0.0, 1.0));
+                                },
+                                child: Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 16),
+                                  child: Hero(
+                                    tag: '$_heroPrefix-title',
+                                    flightShuttleBuilder: (_, animation, __, ___, toHeroContext) {
+                                      return FadeTransition(opacity: animation, child: toHeroContext.widget);
+                                    },
+                                    child: Text(
+                                      _playlist.name,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              PlaylistAuthor(userId: _playlist.userId, playlist: _playlist),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  spacing: 8,
+                                  children: [
+                                    const HugeIcon(icon: HugeIconsStrokeRounded.playlist01, color: Colors.white54),
+                                    Text(
+                                      "${_playlist.type.name.capitalize()} • ${formatDateTime(_playlist.createdAt)}",
+                                      textAlign: TextAlign.left,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.white.withAlpha((0.7 * 255).toInt()),
+                                        letterSpacing: (-0.25),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              Row(
+                                spacing: 4,
+                                children: [
+                                  Container(
+                                    width: 36,
+                                    height: 48,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: Colors.white54, width: 2),
+                                    ),
+                                    clipBehavior: Clip.antiAlias,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(3),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: CachedNetworkImage(
+                                          imageUrl: _resolvedPhotoUrl,
+                                          fit: BoxFit.cover,
+                                          scale: 1.1,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            VisibilityDetector(
-                              key: const Key("playlist_title_visibility_detector"),
-                              onVisibilityChanged: (info) {
-                                if (!mounted) return;
-                                setState(() => titleOpacity = info.visibleFraction.clamp(0.0, 1.0));
-                              },
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: Hero(
-                                  tag: '$_heroPrefix-title',
-                                  flightShuttleBuilder: (_, animation, __, ___, toHeroContext) {
-                                    return FadeTransition(opacity: animation, child: toHeroContext.widget);
-                                  },
-                                  child: Text(
-                                    _playlist.name,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 28),
+                                  IconButton(
+                                    onPressed: () => Fluttertoast.showToast(msg: 'Download feature coming soon!'),
+                                    icon: const HugeIcon(icon: HugeIconsStrokeRounded.downloadCircle01),
                                   ),
-                                ),
-                              ),
-                            ),
-                            PlaylistAuthor(userId: _playlist.userId, playlist: _playlist),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                spacing: 8,
-                                children: [
-                                  const HugeIcon(icon: HugeIconsStrokeRounded.playlist01, color: Colors.white54),
-                                  Text(
-                                    "${_playlist.type.name.capitalize()} • ${formatDateTime(_playlist.createdAt)}",
-                                    textAlign: TextAlign.left,
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.white.withAlpha((0.7 * 255).toInt()),
-                                      letterSpacing: (-0.25),
+                                  IconButton(
+                                    onPressed: () {},
+                                    icon: const HugeIcon(icon: HugeIconsStrokeRounded.share08),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {},
+                                    icon: const HugeIcon(icon: HugeIconsStrokeRounded.moreVertical),
+                                  ),
+                                  const Spacer(),
+                                  IconButton(
+                                    style: IconButton.styleFrom(
+                                      backgroundColor: Colors.greenAccent.shade400,
+                                      foregroundColor: Colors.black,
+                                      padding: const EdgeInsets.all(0),
                                     ),
+                                    onPressed: () => _playTrack(ref, _tracks, 0),
+                                    icon: const Icon(Icons.play_arrow_rounded),
                                   ),
                                 ],
                               ),
-                            ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
 
-                            Row(
-                              spacing: 4,
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 48,
-                                  margin: const EdgeInsets.only(right: 8),
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.white54, width: 2),
+                    if (_tracksState == UIState.loading)
+                      const SliverToBoxAdapter(child: _PlaylistTracksSkeleton())
+                    else if (_tracks.isEmpty)
+                      SliverToBoxAdapter(child: Center(child: const Text("No tracks found.")))
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        sliver: SliverReorderableList(
+                          itemCount: _tracks.length,
+                          onReorder: (oldIndex, newIndex) {
+                            setState(() {
+                              if (newIndex > oldIndex) newIndex--;
+                              final track = _tracks.removeAt(oldIndex);
+                              _tracks.insert(newIndex, track);
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            final track = _tracks[index];
+                            return ReorderableDelayedDragStartListener(
+                              key: ValueKey(track.id),
+                              index: index,
+                              child: ListTile(
+                                title: Text(
+                                  track.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: (-0.15),
                                   ),
-                                  clipBehavior: Clip.antiAlias,
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(3),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: CachedNetworkImage(
-                                        imageUrl: _resolvedPhotoUrl,
-                                        fit: BoxFit.cover,
-                                        scale: 1.1,
-                                      ),
-                                    ),
-                                  ),
                                 ),
-                                IconButton(
-                                  onPressed: () => Fluttertoast.showToast(msg: 'Download feature coming soon!'),
-                                  icon: const HugeIcon(icon: HugeIconsStrokeRounded.downloadCircle01),
+                                subtitle: Text(
+                                  track.artistName ?? "Unknown Artist",
+                                  style: TextStyle(fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
                                 ),
-                                IconButton(
-                                  onPressed: () {},
-                                  icon: const HugeIcon(icon: HugeIconsStrokeRounded.share08),
+                                trailing: ReorderableDragStartListener(
+                                  index: index,
+                                  child: const Icon(Icons.drag_handle, color: Colors.white54),
                                 ),
-                                IconButton(
-                                  onPressed: () {},
-                                  icon: const HugeIcon(icon: HugeIconsStrokeRounded.moreVertical),
-                                ),
-                                const Spacer(),
-                                IconButton(
-                                  style: IconButton.styleFrom(
-                                    backgroundColor: Colors.greenAccent.shade400,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.all(0),
-                                  ),
-                                  onPressed: () => _playTrack(ref, _tracks, 0),
-                                  icon: const Icon(Icons.play_arrow_rounded),
-                                ),
-                              ],
-                            ),
-                          ],
+                                onTap: () => _playTrack(ref, _tracks, index),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                    SliverToBoxAdapter(child: SizedBox(height: 150)),
+                  ],
+                ),
+              ),
+              Align(
+                alignment: Alignment.topCenter,
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 100),
+                  opacity: 1.0 - titleOpacity,
+                  child: Container(
+                    height: 86,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.white, 0.1)]),
+                          _ambientColor,
+                        ],
+                      ),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
+                      child: Center(
+                        child: Text(
+                          _playlist.name,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
                         ),
                       ),
                     ),
                   ),
-
-                  if (_tracksState == UIState.loading)
-                    const SliverToBoxAdapter(child: _PlaylistTracksSkeleton())
-                  else if (_tracks.isEmpty)
-                    SliverToBoxAdapter(child: Center(child: const Text("No tracks found.")))
-                  else
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      sliver: SliverReorderableList(
-                        itemCount: _tracks.length,
-                        onReorder: (oldIndex, newIndex) {
-                          setState(() {
-                            if (newIndex > oldIndex) newIndex--;
-                            final track = _tracks.removeAt(oldIndex);
-                            _tracks.insert(newIndex, track);
-                          });
-                        },
-                        itemBuilder: (context, index) {
-                          final track = _tracks[index];
-                          return ReorderableDelayedDragStartListener(
-                            key: ValueKey(track.id),
-                            index: index,
-                            child: ListTile(
-                              title: Text(
-                                track.name,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: (-0.15),
-                                ),
-                              ),
-                              subtitle: Text(
-                                track.artistName ?? "Unknown Artist",
-                                style: TextStyle(fontSize: 14, color: Colors.white.withAlpha((0.7 * 255).toInt())),
-                              ),
-                              trailing: ReorderableDragStartListener(
-                                index: index,
-                                child: const Icon(Icons.drag_handle, color: Colors.white54),
-                              ),
-                              onTap: () => _playTrack(ref, _tracks, index),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                  SliverToBoxAdapter(child: SizedBox(height: 150)),
-                ],
+                ),
               ),
-            ),
-            Align(
-              alignment: Alignment.topCenter,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 100),
-                opacity: 1.0 - titleOpacity,
-                child: Container(
-                  height: 86,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        mixColors([MapEntry(_ambientColor, 0.9), MapEntry(Colors.white, 0.1)]),
-                        _ambientColor,
-                      ],
-                    ),
-                  ),
-                  child: Padding(
-                    padding: EdgeInsets.only(top: MediaQuery.of(context).padding.top),
-                    child: Center(
-                      child: Text(
-                        _playlist.name,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-                      ),
+
+              Align(
+                alignment: AlignmentDirectional.topStart,
+                child: SafeArea(
+                  top: true,
+                  child: GestureDetector(
+                    onTap: _popAfterHidingCoverShadow,
+                    child: ClipOval(
+                      child: Padding(padding: const EdgeInsets.all(12), child: const Icon(Icons.arrow_back_rounded)),
                     ),
                   ),
                 ),
               ),
-            ),
-
-            Align(
-              alignment: AlignmentDirectional.topStart,
-              child: SafeArea(
-                top: true,
-                child: GestureDetector(
-                  onTap: context.pop,
-                  child: ClipOval(
-                    child: Padding(padding: const EdgeInsets.all(12), child: const Icon(Icons.arrow_back_rounded)),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     };

@@ -110,7 +110,7 @@ class SearchPage extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: Colors.blueGrey[100 * ((index % 5) + 1)],
                     borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(image: NetworkImage(randomImage), fit: BoxFit.cover),
+                    image: DecorationImage(image: CachedNetworkImageProvider(randomImage), fit: BoxFit.cover),
                   ),
                 ),
               );
