@@ -13,6 +13,7 @@ import 'package:flutter_ai_music/ui/pages/liked_songs_page.dart';
 import 'package:flutter_ai_music/ui/pages/playlist_details.dart';
 import 'package:flutter_ai_music/ui/pages/profile.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
+import 'package:flutter_ai_music/ui/pages/genre_detail.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -155,7 +156,36 @@ GoRouter createRouter(Ref ref) {
             ],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage())],
+            routes: [
+              GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage()),
+              GoRoute(
+                path: '/genres/:genre',
+                name: 'GenreDetailPage',
+                pageBuilder: (context, state) {
+                  final genre = state.pathParameters['genre']!;
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    opaque: false,
+                    barrierDismissible: true,
+                    barrierColor: Colors.black54,
+                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 1),
+                        end: Offset.zero,
+                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                      child: child,
+                    ),
+                    child: Dismissible(
+                      key: Key('genre_details_$genre'),
+                      onDismissed: (_) => context.pop(),
+                      movementDuration: const Duration(milliseconds: 300),
+                      direction: DismissDirection.startToEnd,
+                      child: Material(child: GenreDetailPage(genre: genre)),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/bolt', name: 'BoltPage', builder: (context, state) => const BoltPage())],

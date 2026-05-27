@@ -277,4 +277,12 @@ class TrackService {
               .toList();
         });
   }
+
+  Future<List<Track>> getTracksByGenre(String genreName) async {
+    final tracks = await searchTracks('');
+    final targetLower = genreName.trim().toLowerCase();
+    return tracks.where((track) {
+      return track.genres.any((g) => g.trim().toLowerCase() == targetLower);
+    }).toList();
+  }
 }

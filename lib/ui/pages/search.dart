@@ -1,10 +1,12 @@
-import 'dart:math';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/data/models/track.dart';
+import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/press_scale.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
+import 'package:flutter_ai_music/utils/audio_helper.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hugeicons/hugeicons.dart';
 
 class SearchPage extends ConsumerWidget {
@@ -13,6 +15,10 @@ class SearchPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
+    final featuredTracksAsync = ref.watch(featuredTracksProvider(10));
+    final likedTracksAsync = ref.watch(likedTracksProvider);
+    final genresAsync = ref.watch(allGenresProvider);
+
     return Scaffold(
       backgroundColor: scheme.surfaceDim,
       body: CustomScrollView(
@@ -45,40 +51,101 @@ class SearchPage extends ConsumerWidget {
             delegate: _SearchBarDelegate(topPadding: MediaQuery.paddingOf(context).top),
           ),
 
-          SliverToBoxAdapter(child: _buildAdSection("Featured Ads")),
+          SliverToBoxAdapter(
+            child: _buildTrackHorizontalSection(context, ref, "Featured Tracks", featuredTracksAsync),
+          ),
 
-          SliverToBoxAdapter(child: _buildAdSection("Recent Promotions")),
+          SliverToBoxAdapter(
+            child: _buildTrackHorizontalSection(context, ref, "Liked Tracks", likedTracksAsync),
+          ),
 
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-              child: Text("Categories", style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800)),
+              padding: const EdgeInsets.fromLTRB(16, 26, 16, 8),
+              child: Text("Categories", style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Colors.white)),
             ),
           ),
 
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverGrid(
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.5,
-              ),
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Container(
-                  decoration: BoxDecoration(
-                    color: Colors.primaries[index % Colors.primaries.length].withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(15),
-                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4, offset: Offset(0, 2))],
+          genresAsync.when(
+            data: (genres) {
+              if (genres.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(24.0),
+                    child: Center(child: Text('No genres found', style: TextStyle(color: Colors.white54))),
                   ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    "Category $index",
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, letterSpacing: -0.25),
+                );
+              }
+
+              return SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverGrid(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.5,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final genreName = genres[index];
+                      final hash = genreName.toLowerCase().hashCode;
+                      final colors = [
+                        const Color(0xFF673AB7), // Deep Purple
+                        const Color(0xFF3F51B5), // Indigo
+                        const Color(0xFF2196F3), // Blue
+                        const Color(0xFF009688), // Teal
+                        const Color(0xFF4CAF50), // Green
+                        const Color(0xFFFFC107), // Amber
+                        const Color(0xFFFF9800), // Orange
+                        const Color(0xFFFF5722), // Deep Orange
+                        const Color(0xFFE91E63), // Pink
+                        const Color(0xFF9C27B0), // Purple
+                      ];
+                      final genreColor = colors[hash.abs() % colors.length];
+
+                      return PressScale(
+                        onTap: () {
+                          context.push('/genres/$genreName');
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: genreColor.withAlpha((0.95 * 255).toInt()),
+                            borderRadius: BorderRadius.circular(15),
+                            boxShadow: const [
+                              BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
+                            ],
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            genreName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              letterSpacing: -0.25,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                    childCount: genres.length,
                   ),
                 ),
-                childCount: 100,
+              );
+            },
+            loading: () => const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(40.0),
+                child: Center(child: CircularProgressIndicator(color: Colors.white)),
+              ),
+            ),
+            error: (error, _) => SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Center(
+                  child: Text('Failed to load genres: $error', style: const TextStyle(color: Colors.redAccent)),
+                ),
               ),
             ),
           ),
@@ -87,34 +154,84 @@ class SearchPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildAdSection(String title) {
+  Widget _buildTrackHorizontalSection(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    AsyncValue<List<Track>> tracksAsync,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-          child: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+          child: Text(title, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: Colors.white)),
         ),
         SizedBox(
-          height: 180,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              final randomImage = 'https://picsum.photos/200/300?random=${index + Random().nextInt(1000)}';
-              return PressScale(
-                child: Container(
-                  width: 130,
-                  margin: const EdgeInsets.symmetric(horizontal: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.blueGrey[100 * ((index % 5) + 1)],
-                    borderRadius: BorderRadius.circular(12),
-                    image: DecorationImage(image: CachedNetworkImageProvider(randomImage), fit: BoxFit.cover),
-                  ),
-                ),
+          height: 195,
+          child: tracksAsync.when(
+            data: (tracks) {
+              if (tracks.isEmpty) {
+                return const Center(
+                  child: Text('No tracks found', style: TextStyle(color: Colors.white38, fontSize: 14)),
+                );
+              }
+              return ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: tracks.length,
+                itemBuilder: (context, index) {
+                  final track = tracks[index];
+                  final image = track.images.isNotEmpty ? track.images.first : '';
+                  return PressScale(
+                    onTap: () {
+                      AudioHelper.playTrackFromList(ref, allTracks: tracks, selectedIndex: index);
+                    },
+                    child: Container(
+                      width: 130,
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            height: 130,
+                            width: 130,
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade900,
+                              borderRadius: BorderRadius.circular(12),
+                              image: image.isNotEmpty
+                                  ? DecorationImage(image: CachedNetworkImageProvider(image), fit: BoxFit.cover)
+                                  : null,
+                            ),
+                            child: image.isEmpty
+                                ? const Center(child: Icon(Icons.music_note, color: Colors.white30, size: 40))
+                                : null,
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            track.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            track.artistName ?? 'Unknown Artist',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(fontSize: 12, color: Colors.white70),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               );
             },
+            loading: () => const Center(child: CircularProgressIndicator(color: Colors.white)),
+            error: (error, _) => Center(
+              child: Text('Error: $error', style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+            ),
           ),
         ),
       ],
