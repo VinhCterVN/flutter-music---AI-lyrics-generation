@@ -1,4 +1,6 @@
 class LyricsLine {
+  static const emptyTextPlaceholder = '♪';
+
   final Duration startTime;
   final Duration endTime;
   final String text;
@@ -19,7 +21,7 @@ class LyricsLine {
     final startTime = Duration(minutes: startMin) + Duration(milliseconds: (startSec * 1000).round());
     final resolvedEndTime = endTime != null && endTime > startTime ? endTime : startTime + const Duration(seconds: 5);
 
-    final cleaned = text.replaceAll(RegExp(r'[\r\n]+'), '').trim();
+    final cleaned = _normalizeText(text);
     return LyricsLine(startTime: startTime, endTime: resolvedEndTime, text: cleaned);
   }
 
@@ -30,7 +32,12 @@ class LyricsLine {
     return LyricsLine(
       startTime: Duration(milliseconds: (start * 1000).toInt()),
       endTime: Duration(milliseconds: (end * 1000).toInt()),
-      text: json['text'] as String,
+      text: _normalizeText(json['text'] as String),
     );
+  }
+
+  static String _normalizeText(String text) {
+    final cleaned = text.replaceAll(RegExp(r'[\r\n]+'), '').trim();
+    return cleaned.isEmpty ? emptyTextPlaceholder : cleaned;
   }
 }

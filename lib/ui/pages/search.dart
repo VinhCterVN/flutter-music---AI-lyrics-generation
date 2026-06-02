@@ -110,7 +110,12 @@ class SearchPage extends ConsumerWidget {
                         },
                         child: Container(
                           decoration: BoxDecoration(
-                            color: genreColor.withAlpha((0.95 * 255).toInt()),
+                            // color: genreColor.withAlpha((0.95 * 255).toInt()),
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [genreColor, genreColor.withAlpha(100)]
+                            ),
                             borderRadius: BorderRadius.circular(15),
                             boxShadow: const [
                               BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2))
