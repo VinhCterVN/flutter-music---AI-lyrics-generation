@@ -15,6 +15,7 @@ import 'package:flutter_ai_music/ui/pages/profile.dart';
 import 'package:flutter_ai_music/ui/pages/search.dart';
 import 'package:flutter_ai_music/ui/pages/genre_detail.dart';
 import 'package:flutter_ai_music/ui/pages/search_detail.dart';
+import 'package:flutter_ai_music/ui/pages/new_search_detail.dart';
 import 'package:flutter_ai_music/ui/pages/setting.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -69,10 +70,11 @@ GoRouter createRouter(Ref ref) {
                     barrierColor: Colors.black54,
                     transitionDuration: const Duration(milliseconds: 520),
                     reverseTransitionDuration: const Duration(milliseconds: 360),
-                    transitionsBuilder: (context, ani1, ani2, child) => FadeTransition(
-                      opacity: CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic),
-                      child: child,
-                    ),
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        FadeTransition(
+                          opacity: CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic),
+                          child: child,
+                        ),
                     child: Dismissible(
                       key: const Key('playlist_details_dismissible'),
                       onDismissed: (_) => context.pop(),
@@ -92,13 +94,14 @@ GoRouter createRouter(Ref ref) {
                     opaque: false,
                     barrierDismissible: true,
                     barrierColor: Colors.black54,
-                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 1),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
-                      child: child,
-                    ),
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                          child: child,
+                        ),
                     child: Dismissible(
                       key: const Key('liked_songs_dismissible'),
                       onDismissed: (_) => context.pop(),
@@ -119,7 +122,9 @@ GoRouter createRouter(Ref ref) {
                 pageBuilder: (context, state) {
                   final artistTypeParam = state.pathParameters['artistType'] ?? ArtistType.SpotifyArtist.name;
                   final artistId = state.pathParameters['artistId'] ?? tempArtistRouteId;
-                  final artistType = ArtistType.values.where((type) => type.name == artistTypeParam).first;
+                  final artistType = ArtistType.values
+                      .where((type) => type.name == artistTypeParam)
+                      .first;
                   final query = state.uri.queryParameters;
 
                   return CustomTransitionPage(
@@ -127,13 +132,14 @@ GoRouter createRouter(Ref ref) {
                     opaque: false,
                     barrierDismissible: true,
                     barrierColor: Colors.black54,
-                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 1),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
-                      child: child,
-                    ),
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                          child: child,
+                        ),
                     child: Dismissible(
                       key: const Key('artist_details_dismissible'),
                       onDismissed: (_) => context.pop(),
@@ -159,6 +165,23 @@ GoRouter createRouter(Ref ref) {
             routes: [
               GoRoute(path: '/search', name: 'SearchPage', builder: (context, state) => const SearchPage()),
               GoRoute(
+                path: '/new_search_detail',
+                pageBuilder: (context, state) {
+                  final extra = state.extra as Map<String, dynamic>?;
+                  return CustomTransitionPage(
+                    key: state.pageKey,
+                    opaque: false,
+                    barrierDismissible: true,
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        FadeTransition(
+                          opacity: CurvedAnimation(parent: ani1, curve: Curves.easeIn),
+                          child: child,
+                        ),
+                    child: NewSearchDetailPage(initialQuery: extra?['query']),
+                  );
+                },
+              ),
+              GoRoute(
                 path: '/genres/:genre',
                 name: 'GenreDetailPage',
                 pageBuilder: (context, state) {
@@ -168,13 +191,14 @@ GoRouter createRouter(Ref ref) {
                     opaque: false,
                     barrierDismissible: true,
                     barrierColor: Colors.black54,
-                    transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 1),
-                        end: Offset.zero,
-                      ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
-                      child: child,
-                    ),
+                    transitionsBuilder: (context, ani1, ani2, child) =>
+                        SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 1),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: ani1, curve: Curves.easeOutCubic)),
+                          child: child,
+                        ),
                     child: Dismissible(
                       key: Key('genre_details_$genre'),
                       onDismissed: (_) => context.pop(),
@@ -206,10 +230,11 @@ GoRouter createRouter(Ref ref) {
             key: state.pageKey,
             opaque: false,
             barrierDismissible: true,
-            transitionsBuilder: (context, ani1, ani2, child) => SlideTransition(
-              position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
-              child: child,
-            ),
+            transitionsBuilder: (context, ani1, ani2, child) =>
+                SlideTransition(
+                  position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(ani1),
+                  child: child,
+                ),
             child: Dismissible(
               key: const Key('search_detail_dismissible'),
               onDismissed: (_) => context.pop(),

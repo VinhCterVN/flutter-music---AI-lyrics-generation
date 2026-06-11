@@ -273,9 +273,7 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
           child: Material(
             color: Colors.transparent,
             child: GestureDetector(
-              onTap: () {
-                context.push('/new_search_detail');
-              },
+              onTap: () => context.push('/new_search_detail'),
               child: Container(
                 height: _searchBarHeight,
                 decoration: BoxDecoration(
@@ -296,7 +294,7 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
                         child: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: Colors.black87),
                       ),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                      contentPadding: EdgeInsets.fromLTRB(0, 8, 0, 12),
                     ),
                   ),
                 ),
