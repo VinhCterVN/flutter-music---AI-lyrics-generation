@@ -21,28 +21,22 @@ class AppDrawer extends ConsumerWidget {
 
     return Drawer(
       key: const Key('app_drawer'),
-      backgroundColor: Colors.transparent, // Let Container handle background
+      backgroundColor: Colors.transparent,
       child: Container(
         decoration: BoxDecoration(
           color: scheme.surfaceDim,
-          borderRadius: const BorderRadius.only(
-            topRight: Radius.circular(32),
-            bottomRight: Radius.circular(32),
-          ),
-          border: Border(
-            right: BorderSide(color: Colors.white.withAlpha(10), width: 1.5),
-          ),
+          borderRadius: const BorderRadius.only(topRight: Radius.circular(32), bottomRight: Radius.circular(32)),
+          border: Border(right: BorderSide(color: Colors.white.withAlpha(10), width: 1.5)),
         ),
         child: SafeArea(
           top: false,
           bottom: true,
           child: Column(
             children: [
-              // ── Custom Premium Header ──────────────────────────────────────
               GestureDetector(
                 onTap: () {
-                  Navigator.of(context).pop(); // Close drawer
-                  context.push('/profile'); // Open profile
+                  Navigator.of(context).pop();
+                  context.push('/profile');
                 },
                 child: Container(
                   width: double.infinity,
@@ -54,20 +48,17 @@ class AppDrawer extends ConsumerWidget {
                       bottomLeft: Radius.circular(24),
                       bottomRight: Radius.circular(24),
                     ),
-                    border: Border(
-                      bottom: BorderSide(color: Colors.white.withAlpha(10), width: 1),
-                    ),
+                    border: Border(bottom: BorderSide(color: Colors.white.withAlpha(10), width: 1)),
                   ),
                   child: Row(
                     children: [
-                      // Simple User Avatar
                       CircleAvatar(
                         radius: 28,
                         backgroundColor: Colors.grey.shade900,
                         backgroundImage: CachedNetworkImageProvider(photoUrl),
                       ),
                       const SizedBox(width: 16),
-                      // User Info
+
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -104,7 +95,7 @@ class AppDrawer extends ConsumerWidget {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            // Quick badge
+
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
@@ -133,7 +124,6 @@ class AppDrawer extends ConsumerWidget {
 
               const SizedBox(height: 16),
 
-              // ── Drawer Options List ─────────────────────────────────────────
               Expanded(
                 child: ListView(
                   physics: const BouncingScrollPhysics(),
@@ -207,7 +197,6 @@ class AppDrawer extends ConsumerWidget {
                 ),
               ),
 
-              // ── Bottom Logout Option ────────────────────────────────────────
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                 child: Container(
@@ -241,12 +230,7 @@ class AppDrawer extends ConsumerWidget {
       padding: const EdgeInsets.only(left: 12, top: 12, bottom: 8),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.grey,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 1.5,
-        ),
+        style: const TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 1.5),
       ),
     );
   }
@@ -271,11 +255,7 @@ class AppDrawer extends ConsumerWidget {
         dense: true,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         hoverColor: Colors.white.withAlpha(15),
-        leading: HugeIcon(
-          icon: icon,
-          color: iconColor ?? defaultIconColor,
-          size: 20,
-        ),
+        leading: HugeIcon(icon: icon, color: iconColor ?? defaultIconColor, size: 20),
         title: Text(
           title,
           style: TextStyle(
@@ -296,18 +276,10 @@ class AppDrawer extends ConsumerWidget {
                 ),
                 child: Text(
                   badge,
-                  style: TextStyle(
-                    color: scheme.primary,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: TextStyle(color: scheme.primary, fontSize: 9, fontWeight: FontWeight.w700),
                 ),
               )
-            : Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 11,
-                color: Colors.white.withAlpha(80),
-              ),
+            : Icon(Icons.arrow_forward_ios_rounded, size: 11, color: Colors.white.withAlpha(80)),
       ),
     );
   }

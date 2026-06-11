@@ -268,19 +268,39 @@ class _SearchBarDelegate extends SliverPersistentHeaderDelegate {
       color: scheme.surfaceDim,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, _verticalPadding, 16, _verticalPadding * 2),
-        child: Container(
-          height: _searchBarHeight,
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4)),
-          child: const TextField(
-            decoration: InputDecoration(
-              hintText: "What should we listen to?",
-              hintStyle: TextStyle(color: Colors.black87, fontWeight: FontWeight.w700, letterSpacing: -0.25),
-              prefixIcon: Padding(
-                padding: EdgeInsets.all(8.0),
-                child: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: Colors.black87),
+        child: Hero(
+          tag: 'search_bar_hero',
+          child: Material(
+            color: Colors.transparent,
+            child: GestureDetector(
+              onTap: () {
+                context.push('/new_search_detail');
+              },
+              child: Container(
+                height: _searchBarHeight,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const AbsorbPointer(
+                  child: TextField(
+                    decoration: InputDecoration(
+                      hintText: "What should we listen to?",
+                      hintStyle: TextStyle(
+                        color: Colors.black87,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.25,
+                      ),
+                      prefixIcon: Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: Colors.black87),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                    ),
+                  ),
+                ),
               ),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(vertical: 10),
             ),
           ),
         ),
