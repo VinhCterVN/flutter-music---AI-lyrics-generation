@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_ai_music/ui/theme/theme.dart';
 
 import '../../../../data/models/track.dart';
 import '../../../../utils/widgets.dart';
@@ -29,7 +30,10 @@ class PlayingAppBar extends StatelessWidget {
         ),
       ],
       flexibleSpace: const FlexibleSpaceBar(
-        title: Text('Playing View', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+        title: Text(
+          'Playing View',
+          style: TextStyle(fontFamily: appFontFamily, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+        ),
         centerTitle: true,
       ),
       backgroundColor: Colors.transparent,

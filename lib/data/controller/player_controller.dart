@@ -30,12 +30,38 @@ class PlayerController {
       return;
     }
 
-    final wasPlaying = player.playing;
-    final currentPosition = player.position;
-    final currentIndex = player.currentIndex ?? queue.currentIndex;
+    final insertIndex = queue.nextInsertionIndex;
+    final newSources = tracks.toAudioSources();
+    ref.read(queueProvider.notifier).insertNext(newSources, tracks);
 
-    ref.read(queueProvider.notifier).insertNext(tracks.toAudioSources(), tracks);
-    await _reloadQueue(initialIndex: currentIndex, initialPosition: currentPosition, autoPlay: wasPlaying);
+    await player.insertAudioSources(insertIndex, newSources);
+    final updatedQueue = ref.read(queueProvider);
+    final audioHandlerAsync = ref.read(audioHandlerProvider);
+    audioHandlerAsync.whenData((handler) async {
+      await handler.updateQueueFromTracks(
+        updatedQueue.rawTracks,
+        initialIndex: player.currentIndex ?? updatedQueue.currentIndex,
+      );
+    });
+  }
+
+  /// Moves a queued track from [oldIndex] to [newIndex] (both absolute indices
+  /// into the full queue). Mutates the live playlist in place so the currently
+  /// playing track keeps going without a reload.
+  Future<void> reorderQueue(int oldIndex, int newIndex) async {
+    if (oldIndex == newIndex) return;
+
+    ref.read(queueProvider.notifier).reorder(oldIndex, newIndex);
+    await player.moveAudioSource(oldIndex, newIndex);
+
+    final updatedQueue = ref.read(queueProvider);
+    final audioHandlerAsync = ref.read(audioHandlerProvider);
+    audioHandlerAsync.whenData((handler) async {
+      await handler.updateQueueFromTracks(
+        updatedQueue.rawTracks,
+        initialIndex: player.currentIndex ?? updatedQueue.currentIndex,
+      );
+    });
   }
 
   Future<void> loadQueue() async {

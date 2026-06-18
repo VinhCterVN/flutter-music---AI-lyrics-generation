@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_ai_music/data/models/playlist.dart';
 import 'package:flutter_ai_music/data/models/search.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
@@ -184,6 +185,21 @@ class _NewSearchDetailPageState extends ConsumerState<NewSearchDetailPage> with 
     }
   }
 
+  Future<void> _handleBack() async {
+    final focus = FocusManager.instance.primaryFocus;
+    if (focus == null || !focus.hasFocus) {
+      if (mounted) context.pop();
+      return;
+    }
+    focus.unfocus();
+    const timeout = Duration(milliseconds: 2000);
+    final stopwatch = Stopwatch()..start();
+    while (mounted && MediaQuery.of(context).viewInsets.bottom > 0 && stopwatch.elapsed < timeout) {
+      await SchedulerBinding.instance.endOfFrame;
+    }
+    if (mounted) context.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -215,7 +231,7 @@ class _NewSearchDetailPageState extends ConsumerState<NewSearchDetailPage> with 
       child: Row(
         children: [
           IconButton(
-            onPressed: () => context.pop(),
+            onPressed: _handleBack,
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
           ),
           Expanded(

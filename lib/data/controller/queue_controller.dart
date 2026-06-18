@@ -64,6 +64,19 @@ class QueueController extends StateNotifier<QueueState> {
     );
   }
 
+  void reorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) return;
+    if (oldIndex < 0 || oldIndex >= state.tracks.length) return;
+    if (newIndex < 0 || newIndex >= state.tracks.length) return;
+
+    final updatedTracks = List<AudioSource>.from(state.tracks);
+    final updatedRawTracks = List<Track>.from(state.rawTracks);
+    updatedTracks.insert(newIndex, updatedTracks.removeAt(oldIndex));
+    updatedRawTracks.insert(newIndex, updatedRawTracks.removeAt(oldIndex));
+
+    state = state.copyWith(tracks: updatedTracks, rawTracks: updatedRawTracks);
+  }
+
   void updateTrackAtIndex(int index, Track updatedTrack) {
     final newRawTracks = List<Track>.from(state.rawTracks);
     newRawTracks[index] = updatedTrack;
