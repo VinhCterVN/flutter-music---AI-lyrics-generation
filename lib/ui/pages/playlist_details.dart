@@ -284,14 +284,18 @@ class _PlaylistDetailsState extends ConsumerState<PlaylistDetails> {
                                           children: [
                                             Hero(
                                               tag: '$_heroPrefix-image',
-                                              child: Material(
-                                                color: Colors.transparent,
-                                                child: CachedNetworkImage(
-                                                  imageUrl: _resolvedPhotoUrl,
-                                                  fit: BoxFit.cover,
-                                                  errorWidget: (_, __, ___) => Container(
-                                                    color: Colors.grey.shade800,
-                                                    child: const Icon(Icons.music_note, color: Colors.white54),
+                                              // Clip inside the Hero so the rounded corners fly with it.
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(4),
+                                                child: Material(
+                                                  color: Colors.transparent,
+                                                  child: CachedNetworkImage(
+                                                    imageUrl: _resolvedPhotoUrl,
+                                                    fit: BoxFit.cover,
+                                                    errorWidget: (_, __, ___) => Container(
+                                                      color: Colors.grey.shade800,
+                                                      child: const Icon(Icons.music_note, color: Colors.white54),
+                                                    ),
                                                   ),
                                                 ),
                                               ),

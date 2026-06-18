@@ -231,14 +231,14 @@ class _QueueItem extends StatelessWidget {
                 children: [
                   Text(
                     tag["title"] as String? ?? 'Unknown',
-                    style: TextStyle(color: scheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600),
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
                   Text(
                     (tag["artistName"] as String?) ?? ArtistType.SpotifyArtist.name,
-                    style: TextStyle(color: scheme.onSurfaceVariant, fontSize: 14),
+                    style: TextStyle(fontSize: 12, color: Colors.white.withAlpha((0.6 * 255).toInt())),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),

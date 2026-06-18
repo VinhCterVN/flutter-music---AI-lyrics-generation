@@ -140,13 +140,14 @@ class _QuickPlayCardState extends ConsumerState<_QuickPlayCard> {
           ),
           Row(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Hero(
-                    tag: '$heroPrefix-image',
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Hero(
+                  tag: '$heroPrefix-image',
+                  // Clip inside the Hero so the rounded corners fly with it.
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
                     child: _photoUrl == null
                         ? Container(
                             color: Colors.grey.shade800,
