@@ -89,5 +89,7 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: false
-  image_path: assets/icons/space.png
-  adaptive_icon_background: "#000000"
+  image_path: assets/icons/flussic.png
+  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground: assets/icons/flussic_fg.png
+  adaptive_icon_foreground_inset: 0

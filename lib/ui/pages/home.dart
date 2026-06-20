@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/auth_provider.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/ui/component/element/featured_tracks_section.dart';
+import 'package:flutter_ai_music/ui/component/element/home/genre_discovery_section.dart';
 import 'package:flutter_ai_music/ui/component/element/home/home_discovery_sections.dart';
+import 'package:flutter_ai_music/ui/component/element/home/quick_picks_section.dart';
 import 'package:flutter_ai_music/ui/component/element/top_categories.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -36,8 +38,12 @@ class _HomePageState extends ConsumerState<HomePage> {
   void initState() {
     super.initState();
     _controller = ScrollController();
-    _dynamicHomeSections = [const HomeDiscoverySections(), const SliverToBoxAdapter(child: RecentTracksSection())]
-      ..shuffle();
+    _dynamicHomeSections =
+        [
+          const HomeDiscoverySections(),
+          const SliverToBoxAdapter(child: QuickPicksSection()),
+          const SliverToBoxAdapter(child: RecentTracksSection()),
+        ]..shuffle();
   }
 
   @override
@@ -163,6 +169,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           ),
           const SliverPadding(padding: EdgeInsets.fromLTRB(18, 0, 18, 12), sliver: TopCategories()),
           const SliverToBoxAdapter(child: FeaturedTracksSection()),
+          const SliverToBoxAdapter(child: GenreDiscoverySection()),
           const SliverToBoxAdapter(child: RecentlyPlayedSection()),
           ..._dynamicHomeSections,
           SliverToBoxAdapter(child: SizedBox(height: 200)),
