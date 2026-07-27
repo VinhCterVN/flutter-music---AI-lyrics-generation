@@ -48,3 +48,5 @@ app.*.map.json
 .agent/
 .editorconfig
 package.json
+
+.claude
