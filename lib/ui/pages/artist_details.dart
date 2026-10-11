@@ -52,7 +52,7 @@ class _ArtistDetailsPageState extends ConsumerState<ArtistDetailsPage> {
           backgroundColor: scheme.surfaceDim,
           body: CustomScrollView(
             slivers: [
-              SliverAppBar(
+              SliverAppBar(   
                 pinned: true,
                 expandedHeight: 320,
                 flexibleSpace: LayoutBuilder(

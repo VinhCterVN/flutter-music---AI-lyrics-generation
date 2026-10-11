@@ -49,4 +49,4 @@ app.*.map.json
 .editorconfig
 package.json
 
-.claude
+.claude/

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class AppExitService {
@@ -7,19 +6,12 @@ class AppExitService {
   const AppExitService._();
 
   static Future<void> closeTask() async {
-    if (kIsWeb) return;
-
-    if (defaultTargetPlatform == TargetPlatform.android) {
-      try {
-        await _channel.invokeMethod<void>('finishAndRemoveTask');
-      } on PlatformException {
-        await SystemNavigator.pop(animated: true);
-      } on MissingPluginException {
-        await SystemNavigator.pop(animated: true);
-      }
-      return;
+    try {
+      await _channel.invokeMethod<void>('finishAndRemoveTask');
+    } on PlatformException {
+      await SystemNavigator.pop(animated: true);
+    } on MissingPluginException {
+      await SystemNavigator.pop(animated: true);
     }
-
-    await SystemNavigator.pop(animated: true);
   }
 }
