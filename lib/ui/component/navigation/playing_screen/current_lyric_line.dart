@@ -5,6 +5,7 @@ import '../../../../data/models/lyric_line.dart';
 import '../../../../data/models/track.dart';
 import '../../../../provider/audio_provider.dart';
 import '../../../../provider/lyrics_provider.dart';
+import '../../../../provider/user_preferences_provider.dart';
 import '../lyrics_display.dart';
 
 /// A single synced lyric that opens the full lyrics view when tapped.
@@ -24,6 +25,7 @@ class CurrentLyricLine extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (!ref.watch(showAnimatedLyricsProvider)) return const SizedBox(height: 50);
     final streamedLyrics = ref.watch(lyricsStreamProvider(track.id)).value;
     final lyrics = streamedLyrics != null && streamedLyrics.isNotEmpty
         ? streamedLyrics

@@ -5,6 +5,7 @@ import 'package:flutter_ai_music/data/models/lyric_line.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/provider/lyrics_provider.dart';
+import 'package:flutter_ai_music/provider/user_preferences_provider.dart';
 import 'package:flutter_ai_music/ui/component/navigation/lyrics_display.dart';
 import 'package:flutter_ai_music/ui/component/navigation/playing_screen/current_lyric_line.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +41,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            showAnimatedLyricsProvider.overrideWith((ref) => true),
             progressProvider.overrideWith((ref) => progress.stream),
             lyricsStreamProvider(
               track.id,
@@ -112,6 +114,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          showAnimatedLyricsProvider.overrideWith((ref) => true),
           progressProvider.overrideWith(
             (ref) => Stream.value(
               TrackProgress(const Duration(seconds: 3), Duration.zero, null),
@@ -138,6 +141,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            showAnimatedLyricsProvider.overrideWith((ref) => true),
             progressProvider.overrideWith(
               (ref) => Stream.value(
                 TrackProgress(Duration.zero, Duration.zero, null),
@@ -171,6 +175,35 @@ void main() {
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+
+  testWidgets('disabled preview keeps spacing without loading lyrics', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          showAnimatedLyricsProvider.overrideWith((ref) => false),
+          lyricsStreamProvider(
+            track.id,
+          ).overrideWith((ref) => throw StateError('Lyrics must not load')),
+          lyricsFutureProvider(
+            track,
+          ).overrideWith((ref) => throw StateError('Lyrics must not fetch')),
+          progressProvider.overrideWith(
+            (ref) => throw StateError('Progress must not subscribe'),
+          ),
+        ],
+        child: MaterialApp(
+          home: Scaffold(body: CurrentLyricLine(track: track)),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byType(AnimatedSwitcher), findsNothing);
+    expect(find.byType(GestureDetector), findsNothing);
+    expect(tester.getSize(find.byType(CurrentLyricLine)).height, 50);
+    expect(tester.takeException(), isNull);
+  });
 }
 
 class _RouteObserver extends NavigatorObserver {

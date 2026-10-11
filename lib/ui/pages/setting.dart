@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
+import 'package:flutter_ai_music/data/models/user_preferences.dart';
+import 'package:flutter_ai_music/provider/user_preferences_provider.dart';
+import 'package:flutter_ai_music/ui/component/element/preference_save_indicator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_riverpod/legacy.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:hugeicons/styles/stroke_rounded.dart';
-
-// Simple state provider for Settings
-final equalizerEnabledProvider = StateProvider<bool>((ref) => false);
-final ambientColorEnabledProvider = StateProvider<bool>((ref) => true);
-final autoDownloadEnabledProvider = StateProvider<bool>((ref) => false);
-final audioQualityProvider = StateProvider<String>((ref) => 'High');
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({super.key});
@@ -60,10 +56,12 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
 
-    final equalizerEnabled = ref.watch(equalizerEnabledProvider);
-    final ambientColorEnabled = ref.watch(ambientColorEnabledProvider);
-    final autoDownloadEnabled = ref.watch(autoDownloadEnabledProvider);
-    final audioQuality = ref.watch(audioQualityProvider);
+    final settings = ref.watch(userPreferencesProvider);
+    final preferences = settings.preferences;
+    final equalizerEnabled = preferences.equalizerEnabled;
+    final ambientColorEnabled = preferences.ambientColorEnabled;
+    final autoDownloadEnabled = preferences.autoDownloadEnabled;
+    final audioQuality = preferences.audioQuality;
 
     return Scaffold(
       backgroundColor: scheme.surfaceDim,
@@ -100,6 +98,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                 children: [
+                  const PreferencesSyncBanner(),
                   // ── Category: Audio settings ────────────────────────────────
                   _buildCategoryHeader('AUDIO & PLAYBACK'),
                   _buildSettingsCard([
@@ -109,9 +108,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       subtitle: 'Currently set to $audioQuality Quality',
                       currentValue: audioQuality,
                       options: const ['Standard', 'High', 'Extreme'],
+                      preferenceKey: PreferenceKey.audioQuality,
                       onChanged: (val) {
                         if (val != null) {
-                          ref.read(audioQualityProvider.notifier).state = val;
+                          ref.read(userPreferencesProvider.notifier).setPreference(PreferenceKey.audioQuality, val);
                           Fluttertoast.showToast(msg: 'Audio quality set to $val');
                         }
                       },
@@ -122,8 +122,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       title: 'Equalizer',
                       subtitle: 'Enhance your sound with custom EQ preset',
                       value: equalizerEnabled,
+                      preferenceKey: PreferenceKey.equalizerEnabled,
                       onChanged: (val) {
-                        ref.read(equalizerEnabledProvider.notifier).state = val;
+                        ref.read(userPreferencesProvider.notifier).setPreference(PreferenceKey.equalizerEnabled, val);
                         Fluttertoast.showToast(msg: val ? 'Equalizer enabled' : 'Equalizer disabled');
                       },
                     ),
@@ -133,12 +134,27 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       title: 'Auto-Downloads',
                       subtitle: 'Automatically download liked songs locally',
                       value: autoDownloadEnabled,
+                      preferenceKey: PreferenceKey.autoDownloadEnabled,
                       onChanged: (val) {
-                        ref.read(autoDownloadEnabledProvider.notifier).state = val;
+                        ref.read(userPreferencesProvider.notifier).setPreference(PreferenceKey.autoDownloadEnabled, val);
                       },
                     ),
                   ]),
 
+                  const SizedBox(height: 24),
+
+                  _buildCategoryHeader('LYRICS'),
+                  _buildSettingsCard([
+                    _buildSwitchTile(
+                      icon: HugeIconsStrokeRounded.musicNoteSquare02,
+                      title: 'Animated Lyric Line',
+                      subtitle: 'Show the current lyric below album artwork',
+                      value: preferences.showAnimatedLyrics,
+                      preferenceKey: PreferenceKey.showAnimatedLyrics,
+                      onChanged: (value) => ref.read(userPreferencesProvider.notifier)
+                          .setPreference(PreferenceKey.showAnimatedLyrics, value),
+                    ),
+                  ]),
                   const SizedBox(height: 24),
 
                   // ── Category: Appearance ────────────────────────────────────
@@ -149,8 +165,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       title: 'Dynamic Ambient Color',
                       subtitle: 'Background adapts to track cover color',
                       value: ambientColorEnabled,
+                      preferenceKey: PreferenceKey.ambientColorEnabled,
                       onChanged: (val) {
-                        ref.read(ambientColorEnabledProvider.notifier).state = val;
+                        ref.read(userPreferencesProvider.notifier).setPreference(PreferenceKey.ambientColorEnabled, val);
                       },
                     ),
                     const Divider(color: Colors.white10, height: 1),
@@ -248,7 +265,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         border: Border.all(color: Colors.white.withAlpha(10), width: 1),
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(children: children),
+      child: Material(type: MaterialType.transparency, child: Column(children: children)),
     );
   }
 
@@ -258,6 +275,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required String subtitle,
     required bool value,
     required ValueChanged<bool> onChanged,
+    required PreferenceKey preferenceKey,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -272,9 +290,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 2),
-        child: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withAlpha(140))),
+        child: _buildPreferenceSubtitle(subtitle, preferenceKey),
       ),
-      trailing: Switch.adaptive(value: value, activeColor: Theme.of(context).colorScheme.primary, onChanged: onChanged),
+      trailing: Switch.adaptive(
+        value: value,
+        activeThumbColor: Theme.of(context).colorScheme.primary,
+        onChanged: ref.watch(userPreferencesProvider).isReady ? onChanged : null,
+      ),
     );
   }
 
@@ -337,6 +359,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     required String currentValue,
     required List<String> options,
     required ValueChanged<String?> onChanged,
+    required PreferenceKey preferenceKey,
   }) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -351,7 +374,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 2),
-        child: Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withAlpha(140))),
+        child: _buildPreferenceSubtitle(subtitle, preferenceKey),
       ),
       trailing: DropdownButton<String>(
         value: currentValue,
@@ -362,8 +385,19 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         items: options.map((String value) {
           return DropdownMenuItem<String>(value: value, child: Text(value));
         }).toList(),
-        onChanged: onChanged,
+        onChanged: ref.watch(userPreferencesProvider).isReady ? onChanged : null,
       ),
+    );
+  }
+
+  Widget _buildPreferenceSubtitle(String subtitle, PreferenceKey key) {
+    final status = ref.watch(userPreferencesProvider).statusFor(key);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.white.withAlpha(140))),
+        PreferenceSaveIndicator(status: status),
+      ],
     );
   }
 }

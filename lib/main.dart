@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/provider/audio_provider.dart';
 import 'package:flutter_ai_music/ui/router/router.dart';
+import 'package:flutter_ai_music/ui/layout/preferences_startup_gate.dart';
 import 'package:flutter_ai_music/ui/theme/theme.dart';
 import 'package:flutter_ai_music/ui/theme/util.dart';
 import 'package:flutter_displaymode/flutter_displaymode.dart';
@@ -33,6 +34,7 @@ class MyApp extends ConsumerWidget {
       darkTheme: theme.dark(),
       themeMode: ThemeMode.dark,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) => PreferencesStartupGate(child: child ?? const SizedBox.shrink()),
     );
   }
 }
