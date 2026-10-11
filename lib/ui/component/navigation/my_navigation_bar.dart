@@ -81,8 +81,8 @@ class MyNavigationBar extends ConsumerWidget {
                     routes.length,
                     (index) => NavBarItem(
                       name: routes[index]['name'] as String,
-                      icon: routes[index]['icon'] as IconData,
-                      activeIcon: routes[index]['active_icon'] as IconData,
+                      icon: routes[index]['icon'] as FaIconData,
+                      activeIcon: routes[index]['active_icon'] as FaIconData,
                       selected: currentIndex == index,
                       onTap: () => onTap(index),
                     ),
@@ -99,8 +99,8 @@ class MyNavigationBar extends ConsumerWidget {
 
 class NavBarItem extends StatefulWidget {
   final String name;
-  final IconData icon;
-  final IconData activeIcon;
+  final FaIconData icon;
+  final FaIconData activeIcon;
   final bool selected;
   final VoidCallback onTap;
 

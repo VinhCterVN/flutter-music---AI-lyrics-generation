@@ -9,6 +9,7 @@ import '../element/artist_card.dart';
 import '../element/button/large_lyrics_button.dart';
 import 'playing_screen/album_artwork.dart';
 import 'playing_screen/audio_waveform_section.dart';
+import 'playing_screen/current_lyric_line.dart';
 import 'playing_screen/playback_controls.dart';
 import 'playing_screen/playing_app_bar.dart';
 import 'playing_screen/progress_bar.dart';
@@ -210,7 +211,11 @@ class _PlayingScreenState extends ConsumerState<PlayingScreen>
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       AlbumArtwork(imageUrl: currentTrack.images.firstOrNull, pulseAnimation: _pulseAnimation),
-                      const SizedBox(height: 50),
+                      CurrentLyricLine(
+                        key: ValueKey(currentTrack.id),
+                        track: currentTrack,
+                        position: _isUserSeeking ? Duration(milliseconds: _sliderProgress.toInt()) : null,
+                      ),
                       TrackInfo(track: currentTrack),
                       const SizedBox(height: 16),
                       ProgressBar(
