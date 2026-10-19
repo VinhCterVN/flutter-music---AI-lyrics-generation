@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_ai_music/data/models/track.dart';
 import 'package:flutter_ai_music/provider/track_provider.dart';
 import 'package:flutter_ai_music/utils/audio_helper.dart';
-import 'package:flutter_ai_music/utils/functions.dart';
 import 'package:flutter_ai_music/utils/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,29 +34,35 @@ class GenreDetailPage extends ConsumerWidget {
     final genreColor = _getGenreColor(genre);
     final size = MediaQuery.sizeOf(context);
 
-    final bgColor = mixColors([MapEntry(genreColor, 0.25), const MapEntry(Colors.black, 0.75)]);
+    const bgColor = Color(0xFF121212);
+    // Keep the genre hue as a muted accent rather than a vivid full-page wash.
+    final mutedGenreColor = HSLColor.fromColor(genreColor)
+        .withSaturation(0.28)
+        .withLightness(0.32)
+        .toColor();
     final tracksAsyncValue = ref.watch(tracksByGenreProvider(genre));
 
     return Scaffold(
       backgroundColor: bgColor,
       body: Stack(
         children: [
-          // Background Gradient header
+          // A subdued header tint fades into the neutral track-list surface.
           Positioned(
             top: 0,
             left: 0,
             right: 0,
-            height: size.height * 0.45,
+            height: (size.height * 0.4).clamp(240.0, 360.0),
             child: Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    genreColor.withAlpha((0.85 * 255).toInt()),
-                    genreColor.withAlpha((0.3 * 255).toInt()),
-                    Colors.transparent,
+                    Color.lerp(bgColor, mutedGenreColor, 0.45)!,
+                    Color.lerp(bgColor, mutedGenreColor, 0.16)!,
+                    bgColor,
                   ],
+                  stops: const [0, 0.5, 1],
                 ),
               ),
             ),
@@ -153,7 +158,7 @@ class GenreDetailPage extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(Icons.music_off_outlined, size: 64, color: Colors.white30),
+                              Icon(Icons.music_off_outlined, size: 64, color: Colors.white30),
                               SizedBox(height: 16),
                               Text(
                                 'No tracks found for this genre',
