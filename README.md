@@ -1,107 +1,87 @@
 # Flussic
 
-A Flutter music player app with Spotify-powered artist metadata, Supabase-backed data, realtime recent listening history, playlists, search, lyrics, and a polished now-playing experience.
+Flussic is a Flutter-based music app focused on streamed playback, Spotify artist discovery, personal listening history, and a polished local-first listening experience.
+
+This project combines mobile music UX with Supabase-backed data, Riverpod state management, and external metadata sources to create a personal music app inspired by modern streaming interfaces.
 
 ## Overview
 
-Flussic is a personal music app project built with Flutter. It combines:
+Flussic includes:
 
-- app-managed playback and queue control
-- Spotify artist enrichment
-- Supabase as the main backend/data source
-- local caching with SQLite
-- recent listening history and discovery sections
-- playlist, liked songs, artist, search, and lyrics flows
-
-## Preview
-
-Place your screenshots or hosted media URLs below later.
-
-### App Screens
-
-<table>
-  <tr>
-    <td align="center">
-      <img src="https://res.cloudinary.com/dtf1ao1ds/image/upload/v1778139026/dnojl6wth7lxlpliamty.jpg" alt="Home Screen" width="220" />
-      <br />
-      <sub>Home</sub>
-    </td>
-    <td align="center">
-      <img src="https://res.cloudinary.com/dtf1ao1ds/image/upload/v1778139026/kkguuh3yeshtlbtfgwid.jpg" alt="Now Playing" width="220" />
-      <br />
-      <sub>Now Playing</sub>
-    </td>
-    <td align="center">
-      <img src="https://res.cloudinary.com/dtf1ao1ds/image/upload/v1778139027/skp576ueorcrc0dniunq.jpg" alt="Artist Details" width="220" />
-      <br />
-      <sub>Artist Details</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center">
-      <img src="https://res.cloudinary.com/dtf1ao1ds/image/upload/v1778139026/tou1guk8u66pdqftkebn.jpg" alt="Search" width="220" />
-      <br />
-      <sub>Search</sub>
-    </td>
-    <td align="center">
-      <img src="https://res.cloudinary.com/dtf1ao1ds/image/upload/v1778139027/mhpccwrdqqcrc7tpxikv.jpg" alt="Library / Playlists" width="220" />
-      <br />
-      <sub>Library / Playlists</sub>
-    </td>
-    <td align="center">
-      <img src="IMAGE_URL_SETTINGS_OR_LIKED" alt="Settings or Liked Songs" width="220" />
-      <br />
-      <sub>Settings / Liked Songs</sub>
-    </td>
-  </tr>
-</table>
+- audio playback with `just_audio` and `audio_service`
+- queue, repeat, shuffle, and local playback controls
+- Spotify artist and music metadata enrichment
+- Supabase-powered recent listening and personalization flows
+- search, library, playlists, liked songs, and artist detail screens
+- local media browsing and playback support
+- responsive dark themed interface
 
 ## Features
 
-- Stream and play tracks with `just_audio` and `audio_service`
-- Manage playback queue, add-next behavior, repeat, and shuffle
-- Show artist details using Spotify artist data
-- Track listening history and surface unique recently played tracks
-- Realtime recent tracks updates from Supabase
-- Discovery sections for top listened and suggested tracks
-- Search tracks and browse artist pages
-- Liked songs and playlist flows
-- Lyrics-related UI components
-- Local storage and caching for tracks/artists
-- Local folder audio support with `on_audio_query` and file picker
+- Play audio from app-managed queues and local sources
+- Browse search, artist, and library pages
+- View artist details with Spotify metadata and summaries
+- Track recently played items and surface listening discovery sections
+- Manage liked songs and playlist data through the app
+- Support local folder audio with `on_audio_query` and `file_picker`
+- Store user preferences and app state locally
+- Use custom app theming and fonts for a branded music UI
 
 ## Tech Stack
 
 - Flutter
+- Dart
 - Riverpod
+- Go Router
 - Supabase
 - Spotify Web API
-- just_audio
-- audio_service
-- SQLite (`sqflite`)
-- Go Router
+- `just_audio` and `audio_service`
+- `sqflite`
+- `flutter_dotenv`
+- `cached_network_image`
+- `shared_preferences`
+- `flutter_secure_storage`
 
 ## Project Structure
 
 ```text
-lib/
-  data/         models, controllers, local database helpers
-  provider/     Riverpod providers
-  service/      backend, Spotify, audio, and search services
-  ui/           pages, components, navigation, theme
-  utils/        shared helpers
+.
+├── android/                 # Android project files
+├── assets/                  # Animations, icons, images, videos, fonts
+├── lib/
+│   ├── data/                # Models, repositories, database helpers
+│   ├── provider/            # Riverpod providers and app state
+│   ├── service/             # API, audio, Spotify, Supabase, and utility services
+│   ├── ui/                  # Screens, widgets, router, theme, layout
+│   ├── utils/               # Shared helper functions and widgets
+│   ├── main.dart            # App bootstrap and theme setup
+├── test/                    # Tests
+├── .env.example             # Environment variable template
+├── schema.sql               # Database schema / SQL setup
+├── pubspec.yaml             # Flutter package configuration
+├── README.md                # Project documentation
+└── analysis_options.yaml    # Lint configuration
 ```
 
 ## Requirements
 
-- Flutter SDK compatible with `sdk: ^3.9.0`
+Before running the app, make sure you have:
+
+- Flutter SDK 3.9 or newer
+- Android Studio / Xcode for device builds if needed
 - A Supabase project
 - Spotify API credentials
-- Cloudinary credentials for media upload flows
+- A valid `.env` configuration
 
-## Environment Variables
+## Environment Setup
 
-Create a `.env` file in the project root.
+Copy the sample environment file and fill in the values:
+
+```bash
+cp .env.example .env
+```
+
+Then define the required variables:
 
 ```env
 SUPABASE_URL=your_supabase_url
@@ -109,64 +89,63 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 SPOTIFY_CLIENT_ID=your_spotify_client_id
 SPOTIFY_CLIENT_SECRET=your_spotify_client_secret
-
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-CLOUDINARY_UPLOAD_PRESET=your_upload_preset
 ```
 
-You can start from [.env.example](D:/Projects/flutter/flutter_ai_music/.env.example).
+The project also includes support for additional integration variables in the sample template at [.env.example](.env.example).
 
 ## Getting Started
 
-1. Clone the repository.
-2. Install Flutter dependencies:
+1. Install dependencies:
 
 ```bash
 flutter pub get
 ```
 
-3. Create `.env` from `.env.example` and fill in your credentials.
-4. Make sure your Supabase schema/data is available.
-5. Run the app:
+2. Create your local environment file from [.env.example](.env.example).
+
+3. Configure Supabase and ensure your database is initialized using [schema.sql](schema.sql).
+
+4. Run the app:
 
 ```bash
 flutter run
 ```
 
-## Backend Notes
+For Android builds, you can use:
 
-- Supabase is initialized in [main.dart](D:/Projects/flutter/flutter_ai_music/lib/main.dart).
-- Database structure/setup artifacts live in [schema.sql](D:/Projects/flutter/flutter_ai_music/schema.sql).
-- Spotify artist metadata is fetched through the app service layer and cached locally.
+```bash
+flutter run -d android
+```
 
-## Main Screens
+## App Bootstrap and Backend Wiring
 
-- Home
-- Search
-- Artist Details
-- Liked Songs
-- Playlist Details
-- Recent Tracks
-- Local Folder Songs
-- Settings
-- Now Playing
+The app entry point initializes environment variables, sets up display mode, and starts Supabase in [lib/main.dart](lib/main.dart).
+
+The database schema and related SQL setup are located in [schema.sql](schema.sql).
 
 ## Development Notes
 
 - The app uses custom fonts such as `SpotifyMixUI` and `Klavika`.
-- Assets are stored under `assets/animations`, `assets/icons`, `assets/images`, and `assets/videos`.
-- Some features depend on backend data quality and configured external services.
+- Assets live in the `assets/` directory, including animations, icons, images, and videos.
+- Some screens rely on external backend data and configured API credentials.
+- This app is best treated as a feature-rich personal project rather than a drop-in production SaaS starter.
+
+## Testing
+
+Run the project tests with:
+
+```bash
+flutter test
+```
 
 ## Roadmap Ideas
 
-- Add tests for providers and service layers
-- Improve offline playback and caching flows
-- Add richer playlist management
-- Expand track/album details
-- Polish authentication and onboarding
+- improve offline caching and fallback playback strategies
+- expand playlist and album detail management
+- add stronger test coverage for providers and services
+- improve onboarding and authentication flows
+- polish mobile UX details and accessibility improvements
 
 ## License
 
-MIT License =))
+This project is distributed under the MIT License unless otherwise noted in the repository.
